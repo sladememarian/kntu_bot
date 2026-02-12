@@ -4,7 +4,7 @@
 
 import io
 import os
-import random
+import urllib.request
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from PIL import Image, ImageDraw, ImageFont
@@ -15,37 +15,72 @@ from storage import (
 )
 from strings import STRINGS
 
+# ---------- Icon cache & downloader ----------
+_icon_cache: dict = {}
+
+
+def _download_icon(codepoint: str, size: int = 40):
+    """Download a Twemoji PNG and cache it. Falls back to None."""
+    if codepoint in _icon_cache:
+        return _icon_cache[codepoint].resize((size, size), Image.LANCZOS)
+    base = "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72"
+    for variant in [codepoint, codepoint + "-fe0f", codepoint.replace("-fe0f", "")]:
+        try:
+            url = f"{base}/{variant}.png"
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            data = urllib.request.urlopen(req, timeout=5).read()
+            img = Image.open(io.BytesIO(data)).convert("RGBA")
+            _icon_cache[codepoint] = img
+            return img.resize((size, size), Image.LANCZOS)
+        except Exception:
+            continue
+    return None
+
+
 # ---------- Shop Catalog ----------
 SHOP_ITEMS = {
     "clothes": {
-        "tshirt":    {"name_fa": "تی‌شرت 👕", "name_en": "T-Shirt 👕", "price": 80, "emoji": "👕", "color": (70, 130, 180)},
-        "hoodie":    {"name_fa": "هودی 🧥", "name_en": "Hoodie 🧥", "price": 150, "emoji": "🧥", "color": (139, 69, 19)},
-        "jacket":    {"name_fa": "کاپشن 🧥", "name_en": "Jacket 🧥", "price": 250, "emoji": "🧥", "color": (50, 50, 50)},
-        "suit":      {"name_fa": "کت و شلوار 🤵", "name_en": "Suit 🤵", "price": 400, "emoji": "🤵", "color": (25, 25, 112)},
-        "dress":     {"name_fa": "لباس مجلسی 👗", "name_en": "Dress 👗", "price": 350, "emoji": "👗", "color": (220, 20, 60)},
+        "tshirt":    {"name_fa": "تی‌شرت", "name_en": "T-Shirt", "price": 80, "icon": "1f455", "color": (70, 130, 180)},
+        "jeans":     {"name_fa": "شلوار جین", "name_en": "Jeans", "price": 100, "icon": "1f456", "color": (30, 80, 160)},
+        "hoodie":    {"name_fa": "هودی", "name_en": "Hoodie", "price": 150, "icon": "1f9e5", "color": (139, 69, 19)},
+        "kimono":    {"name_fa": "کیمونو", "name_en": "Kimono", "price": 180, "icon": "1f458", "color": (178, 34, 34)},
+        "dress":     {"name_fa": "لباس مجلسی", "name_en": "Dress", "price": 220, "icon": "1f457", "color": (220, 20, 60)},
+        "jacket":    {"name_fa": "کاپشن", "name_en": "Jacket", "price": 280, "icon": "1f9e5", "color": (50, 50, 50)},
+        "lab_coat":  {"name_fa": "روپوش آزمایشگاه", "name_en": "Lab Coat", "price": 320, "icon": "1f97c", "color": (240, 240, 240)},
+        "suit":      {"name_fa": "کت و شلوار", "name_en": "Suit", "price": 450, "icon": "1f454", "color": (25, 25, 112)},
     },
     "accessories": {
-        "watch":     {"name_fa": "ساعت ⌚", "name_en": "Watch ⌚", "price": 200, "emoji": "⌚", "color": (218, 165, 32)},
-        "glasses":   {"name_fa": "عینک 🕶", "name_en": "Sunglasses 🕶", "price": 120, "emoji": "🕶", "color": (30, 30, 30)},
-        "hat":       {"name_fa": "کلاه 🎩", "name_en": "Hat 🎩", "price": 100, "emoji": "🎩", "color": (60, 60, 60)},
-        "necklace":  {"name_fa": "گردنبند 📿", "name_en": "Necklace 📿", "price": 180, "emoji": "📿", "color": (255, 215, 0)},
-        "bracelet":  {"name_fa": "دستبند 📿", "name_en": "Bracelet 📿", "price": 130, "emoji": "📿", "color": (192, 192, 192)},
+        "scarf":     {"name_fa": "شال", "name_en": "Scarf", "price": 70, "icon": "1f9e3", "color": (200, 50, 50)},
+        "cap":       {"name_fa": "کلاه کپ", "name_en": "Cap", "price": 85, "icon": "1f9e2", "color": (30, 100, 200)},
+        "glasses":   {"name_fa": "عینک آفتابی", "name_en": "Sunglasses", "price": 120, "icon": "1f576-fe0f", "color": (30, 30, 30)},
+        "bracelet":  {"name_fa": "دستبند", "name_en": "Bracelet", "price": 140, "icon": "1f4ff", "color": (192, 192, 192)},
+        "necklace":  {"name_fa": "گردنبند", "name_en": "Necklace", "price": 190, "icon": "1f4ff", "color": (255, 215, 0)},
+        "watch":     {"name_fa": "ساعت", "name_en": "Watch", "price": 230, "icon": "231a", "color": (218, 165, 32)},
+        "tophat":    {"name_fa": "کلاه شعبده‌باز", "name_en": "Top Hat", "price": 300, "icon": "1f3a9", "color": (40, 40, 40)},
+        "crown":     {"name_fa": "تاج پادشاهی", "name_en": "Royal Crown", "price": 800, "icon": "1f451", "color": (255, 200, 0)},
     },
     "shoes": {
-        "sneakers":  {"name_fa": "کتونی 👟", "name_en": "Sneakers 👟", "price": 160, "emoji": "👟", "color": (255, 255, 255)},
-        "boots":     {"name_fa": "بوت 🥾", "name_en": "Boots 🥾", "price": 220, "emoji": "🥾", "color": (101, 67, 33)},
-        "heels":     {"name_fa": "پاشنه بلند 👠", "name_en": "Heels 👠", "price": 280, "emoji": "👠", "color": (255, 0, 0)},
-        "sandals":   {"name_fa": "صندل 🩴", "name_en": "Sandals 🩴", "price": 90, "emoji": "🩴", "color": (210, 180, 140)},
+        "sandals":   {"name_fa": "صندل", "name_en": "Sandals", "price": 70, "icon": "1fa74", "color": (210, 180, 140)},
+        "flats":     {"name_fa": "کفش تخت", "name_en": "Ballet Flats", "price": 110, "icon": "1f97f", "color": (200, 150, 100)},
+        "sneakers":  {"name_fa": "کتونی", "name_en": "Sneakers", "price": 160, "icon": "1f45f", "color": (255, 255, 255)},
+        "loafers":   {"name_fa": "کفش رسمی", "name_en": "Loafers", "price": 190, "icon": "1f45e", "color": (100, 60, 30)},
+        "boots":     {"name_fa": "بوت", "name_en": "Boots", "price": 230, "icon": "1f97e", "color": (101, 67, 33)},
+        "heels":     {"name_fa": "پاشنه بلند", "name_en": "High Heels", "price": 280, "icon": "1f460", "color": (255, 0, 0)},
+        "skates":    {"name_fa": "اسکیت یخ", "name_en": "Ice Skates", "price": 350, "icon": "26f8-fe0f", "color": (100, 180, 255)},
     },
     "socks": {
-        "basic_sock":  {"name_fa": "جوراب ساده 🧦", "name_en": "Basic Socks 🧦", "price": 30, "emoji": "🧦", "color": (200, 200, 200)},
-        "fancy_sock":  {"name_fa": "جوراب فانتزی 🧦", "name_en": "Fancy Socks 🧦", "price": 60, "emoji": "🧦", "color": (138, 43, 226)},
-        "sport_sock":  {"name_fa": "جوراب ورزشی 🧦", "name_en": "Sport Socks 🧦", "price": 50, "emoji": "🧦", "color": (0, 128, 0)},
+        "basic_sock":  {"name_fa": "جوراب ساده", "name_en": "Basic Socks", "price": 25, "icon": "1f9e6", "color": (200, 200, 200)},
+        "sport_sock":  {"name_fa": "جوراب ورزشی", "name_en": "Sport Socks", "price": 45, "icon": "1f9e6", "color": (0, 128, 0)},
+        "fancy_sock":  {"name_fa": "جوراب فانتزی", "name_en": "Fancy Socks", "price": 65, "icon": "1f9e6", "color": (138, 43, 226)},
+        "wool_sock":   {"name_fa": "جوراب پشمی", "name_en": "Wool Socks", "price": 85, "icon": "1f9e6", "color": (180, 120, 60)},
+        "knee_sock":   {"name_fa": "جوراب ساق‌بلند", "name_en": "Knee Socks", "price": 120, "icon": "1f9e6", "color": (60, 60, 60)},
     },
     "rings": {
-        "ring":        {"name_fa": "حلقه ساده 💍", "name_en": "Simple Ring 💍", "price": 200, "emoji": "💍", "color": (192, 192, 192)},
-        "gold_ring":   {"name_fa": "حلقه طلا 💍", "name_en": "Gold Ring 💍", "price": 500, "emoji": "💍", "color": (255, 215, 0)},
-        "diamond_ring": {"name_fa": "حلقه الماس 💎", "name_en": "Diamond Ring 💎", "price": 800, "emoji": "💎", "color": (185, 242, 255)},
+        "ring":          {"name_fa": "حلقه ساده", "name_en": "Simple Ring", "price": 200, "icon": "1f48d", "color": (192, 192, 192)},
+        "gold_ring":     {"name_fa": "حلقه طلا", "name_en": "Gold Ring", "price": 500, "icon": "1f48d", "color": (255, 215, 0)},
+        "emerald_ring":  {"name_fa": "حلقه زمرد", "name_en": "Emerald Ring", "price": 600, "icon": "1f49a", "color": (0, 180, 80)},
+        "ruby_ring":     {"name_fa": "حلقه یاقوت", "name_en": "Ruby Ring", "price": 700, "icon": "2764-fe0f", "color": (200, 20, 20)},
+        "diamond_ring":  {"name_fa": "حلقه الماس", "name_en": "Diamond Ring", "price": 900, "icon": "1f48e", "color": (185, 242, 255)},
     },
 }
 
@@ -77,50 +112,56 @@ def _render_shop_image(category: str, lang: str) -> io.BytesIO:
 
     font = _get_font(16)
     font_title = _get_font(22)
-    font_emoji = _get_font(28)
     font_price = _get_font(14)
 
     item_h = 60
     pad = 20
-    W = 420
+    W = 440
     H = 60 + len(items) * (item_h + 10) + pad
 
-    img = Image.new("RGB", (W, H), BG_COLOR)
+    img = Image.new("RGBA", (W, H), BG_COLOR + (255,))
     draw = ImageDraw.Draw(img)
 
-    # Title
-    title = f"🛒 {cat_name}"
-    tb = draw.textbbox((0, 0), title, font=font_title)
-    draw.text(((W - tb[2] + tb[0]) // 2, 14), title, fill=TITLE_COLOR, font=font_title)
+    # Title bar
+    draw.rounded_rectangle([0, 0, W, 48], radius=12, fill=(49, 50, 68))
+    tb = draw.textbbox((0, 0), cat_name, font=font_title)
+    draw.text(((W - tb[2] + tb[0]) // 2, 10), cat_name, fill=TITLE_COLOR, font=font_title)
 
-    y = 55
+    y = 58
     for item_id, info in items.items():
         name = info["name_fa"] if lang == "fa" else info["name_en"]
         price = info["price"]
-        color = info["color"]
 
         # Item box
         draw.rounded_rectangle([pad, y, W - pad, y + item_h], radius=10, fill=BOX_FILL)
 
-        # Color swatch
-        draw.rounded_rectangle([pad + 10, y + 10, pad + 50, y + item_h - 10], radius=6, fill=color)
+        # Icon from Twemoji (fallback: colored swatch)
+        icon_img = _download_icon(info["icon"], 40)
+        if icon_img:
+            img.paste(icon_img, (pad + 10, y + 10), icon_img)
+        else:
+            draw.rounded_rectangle(
+                [pad + 10, y + 10, pad + 50, y + item_h - 10],
+                radius=6, fill=info["color"],
+            )
 
         # Name
-        draw.text((pad + 62, y + 8), name, fill=TEXT_COLOR, font=font)
+        draw.text((pad + 60, y + 8), name, fill=TEXT_COLOR, font=font)
 
         # Price
-        price_text = f"{price}$"
-        draw.text((pad + 62, y + 32), price_text, fill=PRICE_COLOR, font=font_price)
+        draw.text((pad + 60, y + 32), f"{price}$", fill=PRICE_COLOR, font=font_price)
 
-        # ID
-        id_text = f"/{item_id}" if lang == "en" else f"/{item_id}"
+        # Buy command hint
+        id_text = f"/buy {item_id}"
         ptb = draw.textbbox((0, 0), id_text, font=font_price)
         draw.text((W - pad - (ptb[2] - ptb[0]) - 10, y + 32), id_text, fill=(150, 150, 170), font=font_price)
 
         y += item_h + 10
 
+    out = Image.new("RGB", img.size, BG_COLOR)
+    out.paste(img, mask=img.split()[3])
     buf = io.BytesIO()
-    img.save(buf, format="PNG")
+    out.save(buf, format="PNG")
     buf.seek(0)
     return buf
 
@@ -128,36 +169,37 @@ def _render_shop_image(category: str, lang: str) -> io.BytesIO:
 def _render_item_image(item_id: str, info: dict, lang: str) -> io.BytesIO:
     """Render a card for a single purchased item."""
     name = info["name_fa"] if lang == "fa" else info["name_en"]
-    color = info["color"]
 
-    W, H = 300, 200
+    W, H = 300, 220
     font = _get_font(18)
-    font_big = _get_font(40)
     font_sm = _get_font(14)
 
-    img = Image.new("RGB", (W, H), BG_COLOR)
+    img = Image.new("RGBA", (W, H), BG_COLOR + (255,))
     draw = ImageDraw.Draw(img)
 
-    # Colored circle as item representation
-    cx, cy = W // 2, 80
-    draw.ellipse([cx - 40, cy - 40, cx + 40, cy + 40], fill=color, outline=(255, 255, 255), width=3)
+    # Decorative circle background
+    cx, cy = W // 2, 85
+    draw.ellipse([cx - 48, cy - 48, cx + 48, cy + 48],
+                 fill=info["color"], outline=(255, 255, 255), width=3)
 
-    # Emoji in center
-    etb = draw.textbbox((0, 0), info["emoji"], font=font_big)
-    ew = etb[2] - etb[0]
-    draw.text((cx - ew // 2, cy - 20), info["emoji"], font=font_big)
+    # Twemoji icon in center
+    icon_img = _download_icon(info["icon"], 60)
+    if icon_img:
+        img.paste(icon_img, (cx - 30, cy - 30), icon_img)
 
     # Name
     ntb = draw.textbbox((0, 0), name, font=font)
-    draw.text(((W - ntb[2] + ntb[0]) // 2, 140), name, fill=TEXT_COLOR, font=font)
+    draw.text(((W - ntb[2] + ntb[0]) // 2, 150), name, fill=TEXT_COLOR, font=font)
 
     # Purchased label
-    label = "✅ خریداری شد!" if lang == "fa" else "✅ Purchased!"
+    label = "خریداری شد!" if lang == "fa" else "Purchased!"
     ltb = draw.textbbox((0, 0), label, font=font_sm)
-    draw.text(((W - ltb[2] + ltb[0]) // 2, 170), label, fill=PRICE_COLOR, font=font_sm)
+    draw.text(((W - ltb[2] + ltb[0]) // 2, 180), label, fill=PRICE_COLOR, font=font_sm)
 
+    out = Image.new("RGB", img.size, BG_COLOR)
+    out.paste(img, mask=img.split()[3])
     buf = io.BytesIO()
-    img.save(buf, format="PNG")
+    out.save(buf, format="PNG")
     buf.seek(0)
     return buf
 

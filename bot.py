@@ -150,6 +150,9 @@ def main():
     app.add_handler(CommandHandler("kill", use_ability_cmd))
     app.add_handler(CommandHandler("slap", use_ability_cmd))
     app.add_handler(CommandHandler("tickle", use_ability_cmd))
+    app.add_handler(CommandHandler("poke", use_ability_cmd))
+    app.add_handler(CommandHandler("bite", use_ability_cmd))
+    app.add_handler(CommandHandler("pat", use_ability_cmd))
 
     # Persian Calendar
     app.add_handler(CommandHandler("calendar", calendar_cmd))
