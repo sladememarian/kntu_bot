@@ -1,38 +1,157 @@
 # ==========================================
-# KNTU Bot 25 — Persistent Data Store (JSON)
+# KNTU Bot 25 — Persistent Data Store (PostgreSQL + JSON fallback)
 # ==========================================
 
 import json
 import os
 import threading
+import logging
+
+logger = logging.getLogger("kntu_bot25.storage")
 
 _DEFAULT_DATA_FILE = os.path.join(os.path.dirname(__file__), "data.json")
 DATA_FILE = os.environ.get("DATA_FILE", _DEFAULT_DATA_FILE)
+DATABASE_URL = os.environ.get("DATABASE_URL", "")
+
 _lock = threading.Lock()
 
 _DEFAULT = {
-    "group_lang": {},       # chat_id -> "fa" | "en"
-    "lagabs": {},           # chat_id -> {user_id: nickname}
-    "news_channels": {},    # chat_id -> [channel_username, ...]
+    "group_lang": {},
+    "lagabs": {},
+    "news_channels": {},
     "debug": False,
-    "seen_members": {},     # chat_id -> [user_id, ...]
-    "user_names": {},       # chat_id -> {user_id: display_name}
+    "seen_members": {},
+    "user_names": {},
 }
 
+# ---- Backend selector ----
+_use_pg = False
+_pg_pool = None
 
-def _load() -> dict:
+
+def _init_pg():
+    """Initialize PostgreSQL connection pool and create tables."""
+    global _use_pg, _pg_pool
+    if not DATABASE_URL:
+        logger.info("DATABASE_URL not set — using JSON file backend.")
+        return
+    try:
+        import psycopg2
+        import psycopg2.pool
+        _pg_pool = psycopg2.pool.ThreadedConnectionPool(1, 5, DATABASE_URL)
+        conn = _pg_pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS bot_store (
+                        id   INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+                        data JSONB NOT NULL DEFAULT '{}'::jsonb
+                    );
+                """)
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS markov_chain (
+                        id    INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+                        chain JSONB NOT NULL DEFAULT '{}'::jsonb
+                    );
+                """)
+                cur.execute("""
+                    INSERT INTO bot_store (id, data)
+                    VALUES (1, '{}'::jsonb)
+                    ON CONFLICT (id) DO NOTHING;
+                """)
+                cur.execute("""
+                    INSERT INTO markov_chain (id, chain)
+                    VALUES (1, '{}'::jsonb)
+                    ON CONFLICT (id) DO NOTHING;
+                """)
+                conn.commit()
+            _use_pg = True
+            logger.info("PostgreSQL connection established.")
+            _migrate_from_json(conn)
+        finally:
+            _pg_pool.putconn(conn)
+    except Exception as e:
+        logger.warning("PostgreSQL unavailable, falling back to JSON: %s", e)
+        _use_pg = False
+
+
+def _migrate_from_json(conn):
+    """If DB data is empty and data.json exists, import it."""
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT data FROM bot_store WHERE id = 1;")
+            row = cur.fetchone()
+            db_data = row[0] if row else {}
+            if db_data and any(k in db_data for k in
+                               ("wallets", "group_lang", "seen_members", "lagabs")):
+                logger.info("DB already has data — skipping migration.")
+                return
+            if not os.path.exists(DATA_FILE):
+                return
+            with open(DATA_FILE, "r", encoding="utf-8") as f:
+                file_data = json.load(f)
+            if not file_data:
+                return
+            cur.execute(
+                "UPDATE bot_store SET data = %s WHERE id = 1;",
+                (json.dumps(file_data, ensure_ascii=False),)
+            )
+            conn.commit()
+            logger.info("Migrated data.json (%d keys) into PostgreSQL.", len(file_data))
+    except Exception as e:
+        logger.warning("Migration from data.json failed: %s", e)
+
+
+# ---- Core I/O ----
+
+def _load_pg() -> dict:
+    conn = _pg_pool.getconn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT data FROM bot_store WHERE id = 1;")
+            row = cur.fetchone()
+            return row[0] if row else dict(_DEFAULT)
+    finally:
+        _pg_pool.putconn(conn)
+
+
+def _save_pg(data: dict):
+    conn = _pg_pool.getconn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE bot_store SET data = %s WHERE id = 1;",
+                (json.dumps(data, ensure_ascii=False),)
+            )
+            conn.commit()
+    finally:
+        _pg_pool.putconn(conn)
+
+
+def _load_file() -> dict:
     if os.path.exists(DATA_FILE):
         with open(DATA_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
     return dict(_DEFAULT)
 
 
-def _save(data: dict):
+def _save_file(data: dict):
     parent_dir = os.path.dirname(DATA_FILE)
     if parent_dir:
         os.makedirs(parent_dir, exist_ok=True)
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+def _load() -> dict:
+    return _load_pg() if _use_pg else _load_file()
+
+
+def _save(data: dict):
+    if _use_pg:
+        _save_pg(data)
+    else:
+        _save_file(data)
 
 
 def load_data() -> dict:
@@ -44,6 +163,54 @@ def save_data(data: dict):
     with _lock:
         _save(data)
 
+
+# ---- Markov chain storage ----
+
+def load_markov() -> dict:
+    with _lock:
+        if _use_pg:
+            conn = _pg_pool.getconn()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT chain FROM markov_chain WHERE id = 1;")
+                    row = cur.fetchone()
+                    return row[0] if row else {}
+            finally:
+                _pg_pool.putconn(conn)
+        else:
+            mf = os.path.join(os.path.dirname(DATA_FILE), "markov.json")
+            if os.path.exists(mf):
+                with open(mf, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            return {}
+
+
+def save_markov(chain: dict):
+    with _lock:
+        if _use_pg:
+            conn = _pg_pool.getconn()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "UPDATE markov_chain SET chain = %s WHERE id = 1;",
+                        (json.dumps(chain, ensure_ascii=False),)
+                    )
+                    conn.commit()
+            finally:
+                _pg_pool.putconn(conn)
+        else:
+            mf = os.path.join(os.path.dirname(DATA_FILE), "markov.json")
+            with open(mf, "w", encoding="utf-8") as f:
+                json.dump(chain, f, ensure_ascii=False)
+
+
+# ---- Initialize on import ----
+_init_pg()
+
+
+# ===========================================================
+# API FUNCTIONS (unchanged interface)
+# ===========================================================
 
 def get_lang(chat_id: int) -> str:
     data = load_data()
@@ -100,7 +267,6 @@ def set_debug(val: bool):
 
 
 def track_member(chat_id: int, user_id: int) -> bool:
-    """Track a member; return True if they are new (first time seen)."""
     data = load_data()
     members = data.setdefault("seen_members", {}).setdefault(str(chat_id), [])
     if user_id not in members:
@@ -128,7 +294,6 @@ def get_user_name(chat_id: int, user_id: int) -> str:
 
 
 def add_warn(chat_id: int, user_id: int) -> int:
-    """Add a warn to a user; return their new total warns."""
     data = load_data()
     warns = data.setdefault("warns", {}).setdefault(str(chat_id), {})
     current = warns.get(str(user_id), 0)
@@ -155,6 +320,7 @@ def reset_warns(chat_id: int, user_id: int):
 
 STARTING_BALANCE = 500
 
+
 def get_balance(chat_id: int, user_id: int) -> int:
     data = load_data()
     return data.get("wallets", {}).get(str(chat_id), {}).get(str(user_id), STARTING_BALANCE)
@@ -180,7 +346,6 @@ def get_all_balances(chat_id: int) -> dict:
 
 
 def get_daily_claim(chat_id: int, user_id: int) -> str:
-    """Return the date string of last daily claim, or empty string."""
     data = load_data()
     return data.get("daily_claims", {}).get(str(chat_id), {}).get(str(user_id), "")
 
@@ -243,7 +408,6 @@ def clear_jail(chat_id: int, user_id: int):
 # ---- Stocks / Investing ----
 
 def get_stocks(chat_id: int, user_id: int) -> dict:
-    """Returns {company: shares} for a user."""
     data = load_data()
     return data.get("stocks", {}).get(str(chat_id), {}).get(str(user_id), {})
 
@@ -258,7 +422,6 @@ def set_stocks(chat_id: int, user_id: int, stocks: dict):
 # ---- Daily Events ----
 
 def get_daily_event(chat_id: int) -> dict:
-    """Returns {"date": "YYYY-MM-DD", "event": "...", "effect": ...} or {}."""
     data = load_data()
     return data.get("daily_events", {}).get(str(chat_id), {})
 
@@ -293,7 +456,6 @@ def inc_riddle_count(chat_id: int, user_id: int, today: str) -> int:
 # ---- Stock buy prices (for profit tracking) ----
 
 def get_stock_costs(chat_id: int, user_id: int) -> dict:
-    """Returns {ticker: total_cost_paid}."""
     data = load_data()
     return data.get("stock_costs", {}).get(str(chat_id), {}).get(str(user_id), {})
 
@@ -308,7 +470,6 @@ def set_stock_costs(chat_id: int, user_id: int, costs: dict):
 # ---- Inventory (shop items) ----
 
 def get_inventory(chat_id: int, user_id: int) -> list:
-    """Returns list of item dicts: [{"item_id": ..., "category": ..., "name": ...}, ...]"""
     data = load_data()
     return data.get("inventory", {}).get(str(chat_id), {}).get(str(user_id), [])
 
@@ -339,6 +500,5 @@ def has_item(chat_id: int, user_id: int, item_id: str) -> bool:
 # ---- Jail list helpers ----
 
 def get_all_jailed(chat_id: int) -> dict:
-    """Returns {user_id_str: timestamp_str} for all jailed users in chat."""
     data = load_data()
     return data.get("jail", {}).get(str(chat_id), {})
