@@ -16,6 +16,7 @@ _DEFAULT = {
     "news_channels": {},    # chat_id -> [channel_username, ...]
     "debug": False,
     "seen_members": {},     # chat_id -> [user_id, ...]
+    "user_names": {},       # chat_id -> {user_id: display_name}
 }
 
 
@@ -112,6 +113,18 @@ def track_member(chat_id: int, user_id: int) -> bool:
 def get_members(chat_id: int) -> list:
     data = load_data()
     return data.get("seen_members", {}).get(str(chat_id), [])
+
+
+def set_user_name(chat_id: int, user_id: int, name: str):
+    data = load_data()
+    names = data.setdefault("user_names", {}).setdefault(str(chat_id), {})
+    names[str(user_id)] = name
+    save_data(data)
+
+
+def get_user_name(chat_id: int, user_id: int) -> str:
+    data = load_data()
+    return data.get("user_names", {}).get(str(chat_id), {}).get(str(user_id), "")
 
 
 def add_warn(chat_id: int, user_id: int) -> int:
