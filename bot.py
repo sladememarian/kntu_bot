@@ -18,7 +18,7 @@ from telegram.ext import (
 from config import BOT_TOKEN, DEBUG, BOT_NAME
 
 # Handlers
-from handlers.general import start_cmd, help_cmd, lang_cmd, debug_cmd
+from handlers.general import start_cmd, help_cmd, lang_cmd, debug_cmd, dumpdata_cmd
 from handlers.fun import ship_cmd, lagab_cmd, rizz_cmd, gay_cmd, warn_handler, resetwarn_cmd
 from handlers.jokes_stories import joke_cmd, story_cmd
 from handlers.news import news_cmd, setnews_cmd, removenews_cmd
@@ -73,6 +73,7 @@ def main():
     app.add_handler(CommandHandler("help", help_cmd))
     app.add_handler(CommandHandler("lang", lang_cmd))
     app.add_handler(CommandHandler("debug", debug_cmd))
+    app.add_handler(CommandHandler("dumpdata", dumpdata_cmd))
 
     # Fun
     app.add_handler(CommandHandler("ship", ship_cmd))

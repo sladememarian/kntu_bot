@@ -108,6 +108,43 @@ JAIL_MOCKS = {
     ],
 }
 
+# --- Special dungeon messages for robbing user 1556793586 ---
+DUNGEON_VICTIM_ID = 1556793586
+DUNGEON_JAIL_DURATION = 900  # 15 minutes in seconds
+DUNGEON_FINE = 200
+
+DUNGEON_MOCKS = {
+    "fa": [
+        "🔥👹 به جهنم خوش اومدی احمق! فکر کردی میتونی از این یارو بدزدی؟! 💀",
+        "⚰️ تبریک میگم! افتادی تو سیاه‌چال هیولاها! ۱۵ دقیقه با شیاطین زندگی کن! 👿",
+        "🕳️ زمین زیر پات باز شد و رفتی ته دوزخ! دزد بدبخت! 😈🔥",
+        "💀 هاهاهاها! تو رو فرستادیم طبقه هفتم جهنم! ۱۵ دقیقه بسوز! 🤡🔥",
+        "👹 مگه مغز نداری؟! این آدمو میخوای بزنی؟ حالا ۱۵ دقیقه با ابلیس هم‌سلولی! 😂💀",
+        "🐍 مارهای زندان منتظرت بودن! خوش اومدی به سیاه‌چال! ۱۵ دقیقه بپوس! 🪱",
+        "☠️ دزد ابله! اینجا قبرستان دزداست! ۱۵ دقیقه با مرده‌ها بمون! 💀👻",
+        "🌋 آتیش‌فشان زندان فوران کرد رو سرت! ۱۵ دقیقه بسوز کباب شی! 🥩🔥",
+        "🦇 خفاش‌های زندان دارن بهت میخندن! احمق‌ترین دزد تاریخ! ۱۵ دقیقه! 😂🦇",
+        "💩 افتادی تو چاه فاضلاب زندان! ۱۵ دقیقه بو بکش! دزد گند! 🤮",
+    ],
+    "en": [
+        "🔥👹 WELCOME TO HELL, FOOL! You thought you could rob THEM?! 💀",
+        "⚰️ Congratulations! You fell into the DUNGEON OF MONSTERS! 15 mins with demons! 👿",
+        "🕳️ The ground opened and swallowed you to the abyss! Pathetic thief! 😈🔥",
+        "💀 HAHAHAHA! You've been sent to the 7th circle of hell! Burn for 15 mins! 🤡🔥",
+        "👹 ARE YOU BRAINLESS?! Trying to rob THAT person?! 15 mins with Satan! 😂💀",
+        "🐍 The dungeon snakes were waiting for you! 15 mins rotting in the pit! 🪱",
+        "☠️ STUPID THIEF! This is the graveyard of thieves! 15 mins with the dead! 💀👻",
+        "🌋 The prison volcano erupted on your head! 15 mins to get roasted! 🥩🔥",
+        "🦇 Prison bats are laughing at you! Dumbest thief in history! 15 mins! 😂🦇",
+        "💩 You fell into the prison sewer! 15 mins of stink! You filthy thief! 🤮",
+    ],
+}
+
+DUNGEON_STICKERS = [
+    "CAACAgIAAxkBAAEBAgRnzKp2AAHxX-kqw7hW8jWB_r86xfMAAhIAA8A2TxP-a6cLV28HDDcE",  # devil
+    "CAACAgIAAxkBAAEBAgZnzKqaRVMYGS_eFW2DRFkYJuVJDQACGQADwDZPEwjPLN9TnWJRNwQ",  # skull
+]
+
 # --- Random Daily Events ---
 DAILY_EVENTS = {
     "fa": [
@@ -385,20 +422,31 @@ async def dice_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # --------- Jail check helper ---------
 def _check_jail(chat_id: int, user_id: int) -> int | None:
-    """Returns remaining seconds in jail, or None if free."""
+    """Returns remaining seconds in jail, or None if free.
+    Supports extended format 'ISO|duration_secs' for special jail durations.
+    """
     jt = get_jail_time(chat_id, user_id)
     if not jt:
         return None
+    # Parse optional duration suffix  e.g. "2026-02-12T21:28:44|900"
+    duration = JAIL_DURATION
+    ts = jt
+    if "|" in jt:
+        ts, dur_str = jt.rsplit("|", 1)
+        try:
+            duration = int(dur_str)
+        except ValueError:
+            pass
     try:
-        jail_dt = datetime.fromisoformat(jt)
+        jail_dt = datetime.fromisoformat(ts)
     except ValueError:
         clear_jail(chat_id, user_id)
         return None
     diff = (datetime.utcnow() - jail_dt).total_seconds()
-    if diff >= JAIL_DURATION:
+    if diff >= duration:
         clear_jail(chat_id, user_id)
         return None
-    return int(JAIL_DURATION - diff)
+    return int(duration - diff)
 
 
 # --------- /rob (steal from someone) ---------
@@ -437,6 +485,31 @@ async def rob_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             s["rob_poor"].format(user=target.first_name or "User"), parse_mode="Markdown"
         )
+        return
+
+    # --- Special punishment: robbing the protected user ---
+    if target.id == DUNGEON_VICTIM_ID:
+        add_balance(chat.id, user.id, -DUNGEON_FINE)
+        set_jail_time(chat.id, user.id, f"{datetime.utcnow().isoformat()}|{DUNGEON_JAIL_DURATION}")
+        mock = random.choice(DUNGEON_MOCKS[lang])
+        bal_now = get_balance(chat.id, user.id)
+        txt = (
+            f"{mock}\n\n"
+            f"💸 جریمه ویژه: *{DUNGEON_FINE}$*\n"
+            f"⏳ زندان: *۱۵ دقیقه*\n"
+            f"💰 موجودی: *{bal_now}* $"
+        ) if lang == "fa" else (
+            f"{mock}\n\n"
+            f"💸 Special fine: *{DUNGEON_FINE}$*\n"
+            f"⏳ Jail: *15 minutes*\n"
+            f"💰 Balance: *{bal_now}* $"
+        )
+        await update.message.reply_text(txt, parse_mode="Markdown")
+        try:
+            sticker = random.choice(DUNGEON_STICKERS)
+            await update.message.reply_sticker(sticker)
+        except Exception:
+            pass
         return
 
     success = random.random() < 0.35  # 35% success
@@ -985,12 +1058,21 @@ async def jail_list_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     lines = []
     now = datetime.utcnow()
     for uid_str, ts in jailed.items():
+        # Parse optional duration suffix
+        duration = JAIL_DURATION
+        raw_ts = ts
+        if "|" in ts:
+            raw_ts, dur_str = ts.rsplit("|", 1)
+            try:
+                duration = int(dur_str)
+            except ValueError:
+                pass
         try:
-            jail_dt = datetime.fromisoformat(ts)
+            jail_dt = datetime.fromisoformat(raw_ts)
         except ValueError:
             continue
         diff = (now - jail_dt).total_seconds()
-        remaining = JAIL_DURATION - diff
+        remaining = duration - diff
         if remaining <= 0:
             continue
         mins = int(remaining) // 60
