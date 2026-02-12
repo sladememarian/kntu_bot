@@ -23,6 +23,7 @@ from handlers.fun import ship_cmd, lagab_cmd, rizz_cmd, gay_cmd, warn_handler, r
 from handlers.jokes_stories import joke_cmd, story_cmd
 from handlers.news import news_cmd, setnews_cmd, removenews_cmd
 from handlers.ai_chat import ai_cmd
+from handlers.markov_ai import markov_listen, ai2_cmd, ai2stats_cmd
 from handlers.books import book_cmd
 from handlers.image_gen import imagine_cmd
 from handlers.welcome import greet_new_member, greet_via_message, track_message_members
@@ -90,6 +91,8 @@ def main():
 
     # AI
     app.add_handler(CommandHandler("ai", ai_cmd))
+    app.add_handler(CommandHandler("ai2", ai2_cmd))
+    app.add_handler(CommandHandler("ai2stats", ai2stats_cmd))
 
     # Books
     app.add_handler(CommandHandler("book", book_cmd))
@@ -188,6 +191,9 @@ def main():
 
     # ---- Track members for /ship ----
     app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, track_message_members), group=1)
+
+    # ---- Markov AI: learn from all text messages ----
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, markov_listen), group=2)
 
     # ---- Error handler ----
     async def error_handler(update, context):
