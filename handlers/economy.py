@@ -382,8 +382,8 @@ async def dice_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    # roll = random.randint(1, 6)
-    roll=6
+    roll = random.randint(1, 6)
+    # roll=6
     dice_faces = ["", "⚀", "⚁", "⚂", "⚃", "⚄", "⚅"]
     dice_display = dice_faces[roll]
 
