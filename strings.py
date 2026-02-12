@@ -39,8 +39,17 @@ STRINGS = {
             "/invest — سرمایه‌گذاری 📈\n"
             "/sell — فروش سهام 📉\n"
             "/portfolio — سبد سهام 💼\n"
+            "/profit — سود و زیان 📊\n"
             "/event — رویداد روز 🌍\n"
+            "/jail — لیست زندانیان 🔒\n"
             "/leaderboard — جدول ثروت 🏆\n\n"
+            "🛒 *فروشگاه‌ها:*\n"
+            "/shop — فروشگاه لباس 👕\n"
+            "/petshop — پت شاپ 🐾\n"
+            "/foodshop — فود شاپ 🍽\n"
+            "/abilities — فروشگاه قدرت ⚔️\n"
+            "/inventory — کوله‌پشتی 🎒\n"
+            "/gift — هدیه دادن 🎁\n\n"
             "🧠 *ابزارها:*\n"
             "/ai — هوش مصنوعی 🧠\n"
             "/imagine — ساخت تصویر 🎨\n"
@@ -50,7 +59,8 @@ STRINGS = {
             "/movie — فیلم 🎬\n"
             "/game — بازی 🎮\n"
             "/news — اخبار 📰\n"
-            "/family — خانواده 👨‍👩‍👧‍👦\n\n"
+            "/family — خانواده 👨‍👩‍👧‍👦\n"
+            "/calendar — تقویم ایران باستان 📅\n\n"
             "⚙️ /lang — زبان | /help — راهنما | /debug — دیباگ"
         ),
         "help": (
@@ -65,7 +75,7 @@ STRINGS = {
             "🔥 /truth — حقیقت\n"
             "🎲 /dare — جرئت\n"
             "🎮 /xo — بازی XO (ریپلای)\n"
-            "🧩 /riddle — چیستان\n"
+            "🧩 /riddle — چیستان (۱۵ تا در روز)\n"
             "🎱 /8ball \\[سوال\\] — گوی جادو\n"
             "📊 /howmuch \\[سوال\\] — چقدر؟\n"
             "🎯 /whois \\[سوال\\] — کی هست؟\n"
@@ -86,8 +96,17 @@ STRINGS = {
             "📈 /invest \\[شرکت\\] \\[تعداد\\] — خرید سهام\n"
             "📉 /sell \\[شرکت\\] \\[تعداد\\] — فروش سهام\n"
             "💼 /portfolio — سبد سهام\n"
+            "📊 /profit — سود و زیان سرمایه‌گذاری\n"
             "🌍 /event — رویداد روز\n"
+            "🔒 /jail — لیست زندانیان\n"
             "🏆 /leaderboard — پولدارها\n\n"
+            "🛒 *فروشگاه‌ها:*\n"
+            "👕 /shop — فروشگاه لباس و اکسسوری\n"
+            "🐾 /petshop — پت شاپ\n"
+            "🍽 /foodshop — فود شاپ\n"
+            "⚔️ /abilities — فروشگاه قدرت\n"
+            "🎒 /inventory — کوله‌پشتی\n"
+            "🎁 /gift \\[آیتم\\] — هدیه (ریپلای)\n\n"
             "🧠 *ابزارها:*\n"
             "🧠 /ai \\[سوال\\] — هوش مصنوعی\n"
             "🎨 /imagine \\[توضیح\\] — ساخت تصویر\n"
@@ -98,6 +117,7 @@ STRINGS = {
             "🎮 /game — پیشنهاد بازی\n"
             "📰 /news — اخبار\n"
             "👨‍👩‍👧‍👦 /family — درخت خانوادگی\n"
+            "📅 /calendar — تقویم ایران باستان\n"
             "⚠️ اخطار — ریپلای + اخطار (ادمین)\n"
             "🌐 /lang — تغییر زبان\n"
             "📡 /setnews \\[کانال\\] — کانال خبری\n"
@@ -204,8 +224,8 @@ STRINGS = {
         "spin_win": "🎡 {emoji} نتیجه چرخش: *+{amount}$*!\n💰 موجودی: *{balance}* $",
         "spin_nothing": "🎡 {emoji} نتیجه چرخش: هیچی!\n💰 موجودی: *{balance}* $",
         "spin_lose": "🎡 {emoji} آخ! *-{amount}$* از دست دادی!\n💰 موجودی: *{balance}* $",
-        # Savak (Jail)
-        "savak_still_jailed": "⛓️ هنوز تو ساواکی! *{mins} دقیقه و {secs} ثانیه* مونده تا آزاد شی!",
+        # Jail
+        "jail_still_jailed": "⛓️ هنوز تو زندانی! *{mins} دقیقه و {secs} ثانیه* مونده تا آزاد شی!",
         # Invest
         "invest_list": "📈 *بازار سهام امروز:*\n\n",
         "invest_usage": "❌ استفاده: /invest \\[نماد\\] \\[تعداد\\]\nمثال: `/invest AAPL 5`\nبرای لیست: /invest",
@@ -220,6 +240,51 @@ STRINGS = {
         "event_happened": "🚨 *رویداد روز: {name}*\n\n{desc}\n\n👥 تعداد تاثیرپذیر: *{affected}* نفر",
         "event_today": "📅 *رویداد امروز:* {name}\n{desc}",
         "event_none_today": "😌 امروز رویداد خاصی نبود! فردا دوباره چک کن.",
+        # Jail
+        "jail_header": "🔒 *لیست زندانیان:*\n\n",
+        "jail_empty": "✅ هیچ‌کس تو زندان نیست!",
+        # Profit
+        "profit_header": "📊 *سود و زیان سرمایه‌گذاری:*\n\n",
+        "profit_footer": "\n{emoji} مجموع: هزینه *{cost}$* | ارزش *{value}$* | سود/ضرر: *{pnl}$*",
+        # Riddle limit
+        "riddle_limit": "❌ به سقف روزانه رسیدی! (۱۵ چیستان در روز) فردا دوباره امتحان کن.",
+        # Shop
+        "shop_welcome": "🛒 *فروشگاه!*\n\nیه دسته‌بندی انتخاب کن:",
+        "shop_usage": "❌ استفاده: /shop \\[clothes|accessories|shoes|socks|rings\\]",
+        "shop_buy_usage": "🛒 برای خرید: /buy [اسم آیتم]\nمثال: /buy hoodie",
+        "buy_usage": "❌ استفاده: /buy \\[اسم آیتم\\]\nمثال: `/buy hoodie`",
+        "buy_not_found": "❌ آیتمی با این اسم پیدا نشد!",
+        "buy_no_money": "❌ پول کافی نداری! قیمت: *{price}$* | موجودی: *{balance}$*",
+        "buy_already_owned": "❌ قبلاً این آیتم رو داری!",
+        "buy_success": "✅ {item} خریداری شد! 💰 هزینه: {price}$ | موجودی: {balance}$",
+        # Inventory
+        "inventory_header": "🎒 *کوله‌پشتی {user}:*\n\n",
+        "inventory_empty": "❌ کوله‌پشتیت خالیه! از فروشگاه خرید کن.",
+        # Gift
+        "gift_usage": "❌ روی پیام کسی ریپلای کن و /gift \\[آیتم\\]",
+        "gift_not_owned": "❌ این آیتم رو نداری!",
+        "gift_done": "🎁 *{item}* به *{user}* هدیه داده شد!",
+        # Pet Shop
+        "petshop_usage": "🐾 برای خرید: /buypet [اسم حیوان]\nمثال: /buypet cat",
+        "buypet_usage": "❌ استفاده: /buypet \\[اسم حیوان\\]\nمثال: `/buypet cat`",
+        "buypet_not_found": "❌ حیوانی با این اسم پیدا نشد!",
+        "buypet_already": "❌ قبلاً این حیوان رو داری!",
+        "buypet_success": "🎉 {pet} خریدی! 💰 هزینه: {price}$ | موجودی: {balance}$",
+        # Food Shop
+        "foodshop_usage": "🍽 برای خرید: /buyfood [اسم غذا]\nمثال: /buyfood pizza",
+        "buyfood_usage": "❌ استفاده: /buyfood \\[اسم غذا\\]\nمثال: `/buyfood pizza`",
+        "buyfood_not_found": "❌ غذایی با این اسم پیدا نشد!",
+        "buyfood_success": "😋 {food} خریدی! 💰 هزینه: {price}$ | موجودی: {balance}$",
+        # Abilities
+        "abilities_usage": "⚔️ برای خرید: /buyability [قدرت]\nمثال: /buyability punch\nاستفاده: /punch (ریپلای)",
+        "buyability_usage": "❌ استفاده: /buyability \\[قدرت\\]\nمثال: `/buyability punch`",
+        "buyability_not_found": "❌ قدرتی با این اسم پیدا نشد!",
+        "buyability_already": "❌ قبلاً این قدرت رو داری!",
+        "buyability_success": "⚔️ {ability} خریداری شد! 💰 هزینه: {price}$ | موجودی: {balance}$",
+        "ability_reply_needed": "❌ روی پیام کسی ریپلای کن و قدرت رو استفاده کن!",
+        "ability_not_owned": "❌ قبلاً *{ability}* رو نخریدی! از /abilities بخر.",
+        # Family ring
+        "family_need_ring": "💍 برای ازدواج باید حلقه داشته باشی! از /shop rings حلقه بخر.",
     },
     "en": {
         "welcome_group": "🎉 Welcome {name}!\nGlad to have you here! Have a great time 🌟",
@@ -234,11 +299,15 @@ STRINGS = {
             "/wallet 👛 | /daily 📅 | /bet 🪙 | /slots 🎰\n"
             "/dice 🎲 | /rps ✂️ | /rob 🦹 | /give 💸\n"
             "/work 💼 | /spin 🎡 | /invest 📈 | /sell 📉\n"
-            "/portfolio 💼 | /event 🌍 | /leaderboard 🏆\n\n"
+            "/portfolio 💼 | /profit 📊 | /event 🌍\n"
+            "/jail 🔒 | /leaderboard 🏆\n\n"
+            "🛒 *Shops:*\n"
+            "/shop 👕 | /petshop 🐾 | /foodshop 🍽\n"
+            "/abilities ⚔️ | /inventory 🎒 | /gift 🎁\n\n"
             "🧠 *Tools:*\n"
             "/ai 🧠 | /imagine 🎨 | /music 🎵\n"
             "/book 📚 | /anime 🎌 | /movie 🎬 | /game 🎮\n"
-            "/news 📰 | /family 👨‍👩‍👧‍👦\n\n"
+            "/news 📰 | /family 👨‍👩‍👧‍👦 | /calendar 📅\n\n"
             "⚙️ /lang | /help | /debug"
         ),
         "help": (
@@ -253,7 +322,7 @@ STRINGS = {
             "🔥 /truth — Truth question\n"
             "🎲 /dare — Dare challenge\n"
             "🎮 /xo — Tic-tac-toe (reply)\n"
-            "🧩 /riddle — Riddle with reward\n"
+            "🧩 /riddle — Riddle with reward (15/day)\n"
             "🎱 /8ball \\[question\\] — Magic 8-ball\n"
             "📊 /howmuch \\[question\\] — How much %?\n"
             "🎯 /whois \\[question\\] — Who is?\n"
@@ -274,8 +343,17 @@ STRINGS = {
             "📈 /invest \\[ticker\\] \\[shares\\] — Buy stocks\n"
             "📉 /sell \\[ticker\\] \\[shares\\] — Sell stocks\n"
             "💼 /portfolio — Your stock portfolio\n"
+            "📊 /profit — Investment profit/loss\n"
             "🌍 /event — Daily world event\n"
+            "🔒 /jail — Jailed members list\n"
             "🏆 /leaderboard — Richest members\n\n"
+            "🛒 *Shops:*\n"
+            "👕 /shop — Clothing & accessories shop\n"
+            "🐾 /petshop — Pet shop\n"
+            "🍽 /foodshop — Food shop\n"
+            "⚔️ /abilities — Ability shop\n"
+            "🎒 /inventory — Your inventory\n"
+            "🎁 /gift \\[item\\] — Gift item (reply)\n\n"
             "🧠 *Tools:*\n"
             "🧠 /ai \\[question\\] — Ask AI anything\n"
             "🎨 /imagine \\[desc\\] — Generate an image\n"
@@ -286,6 +364,7 @@ STRINGS = {
             "🎮 /game — Suggest a game\n"
             "📰 /news — Latest news\n"
             "👨‍👩‍👧‍👦 /family — Family tree\n"
+            "📅 /calendar — Ancient Persian calendar\n"
             "⚠️ warn — Warn a user (reply, admin only)\n"
             "🌐 /lang — Change language\n"
             "📡 /setnews \\[channel\\] — Add news channel\n"
@@ -378,8 +457,8 @@ STRINGS = {
         "spin_win": "🎡 {emoji} Spin result: *+{amount}$*!\n💰 Balance: *{balance}* $",
         "spin_nothing": "🎡 {emoji} Spin result: Nothing this time!\n💰 Balance: *{balance}* $",
         "spin_lose": "🎡 {emoji} Oh no! You lost *-{amount}$*!\n💰 Balance: *{balance}* $",
-        # Savak (Jail)
-        "savak_still_jailed": "⛓️ You're still in SAVAK! *{mins}m {secs}s* left until you're free!",
+        # Jail
+        "jail_still_jailed": "⛓️ You're still in jail! *{mins}m {secs}s* left until you're free!",
         # Invest
         "invest_list": "📈 *Today's Stock Market:*\n\n",
         "invest_usage": "❌ Usage: /invest \\[ticker\\] \\[shares\\]\nExample: `/invest AAPL 5`\nFor list: /invest",
@@ -394,5 +473,50 @@ STRINGS = {
         "event_happened": "🚨 *Today's Event: {name}*\n\n{desc}\n\n👥 Affected: *{affected}* members",
         "event_today": "📅 *Today's Event:* {name}\n{desc}",
         "event_none_today": "😌 No special event today! Check again tomorrow.",
+        # Jail
+        "jail_header": "🔒 *Jailed Members:*\n\n",
+        "jail_empty": "✅ No one is in jail!",
+        # Profit
+        "profit_header": "📊 *Investment Profit/Loss:*\n\n",
+        "profit_footer": "\n{emoji} Total: Cost *{cost}$* | Value *{value}$* | P/L: *{pnl}$*",
+        # Riddle limit
+        "riddle_limit": "❌ You've reached the daily limit! (15 riddles/day) Try again tomorrow.",
+        # Shop
+        "shop_welcome": "🛒 *Shop!*\n\nPick a category:",
+        "shop_usage": "❌ Usage: /shop \\[clothes|accessories|shoes|socks|rings\\]",
+        "shop_buy_usage": "🛒 To buy: /buy [item name]\nExample: /buy hoodie",
+        "buy_usage": "❌ Usage: /buy \\[item name\\]\nExample: `/buy hoodie`",
+        "buy_not_found": "❌ Item not found!",
+        "buy_no_money": "❌ Not enough money! Price: *{price}$* | Balance: *{balance}$*",
+        "buy_already_owned": "❌ You already own this item!",
+        "buy_success": "✅ {item} purchased! 💰 Cost: {price}$ | Balance: {balance}$",
+        # Inventory
+        "inventory_header": "🎒 *{user}'s Inventory:*\n\n",
+        "inventory_empty": "❌ Your inventory is empty! Buy from the shop.",
+        # Gift
+        "gift_usage": "❌ Reply to someone and use /gift \\[item\\]",
+        "gift_not_owned": "❌ You don't own this item!",
+        "gift_done": "🎁 *{item}* gifted to *{user}*!",
+        # Pet Shop
+        "petshop_usage": "🐾 To buy: /buypet [pet name]\nExample: /buypet cat",
+        "buypet_usage": "❌ Usage: /buypet \\[pet name\\]\nExample: `/buypet cat`",
+        "buypet_not_found": "❌ Pet not found!",
+        "buypet_already": "❌ You already own this pet!",
+        "buypet_success": "🎉 You got {pet}! 💰 Cost: {price}$ | Balance: {balance}$",
+        # Food Shop
+        "foodshop_usage": "🍽 To buy: /buyfood [food name]\nExample: /buyfood pizza",
+        "buyfood_usage": "❌ Usage: /buyfood \\[food name\\]\nExample: `/buyfood pizza`",
+        "buyfood_not_found": "❌ Food not found!",
+        "buyfood_success": "😋 You bought {food}! 💰 Cost: {price}$ | Balance: {balance}$",
+        # Abilities
+        "abilities_usage": "⚔️ To buy: /buyability [ability]\nExample: /buyability punch\nUse: /punch (reply)",
+        "buyability_usage": "❌ Usage: /buyability \\[ability\\]\nExample: `/buyability punch`",
+        "buyability_not_found": "❌ Ability not found!",
+        "buyability_already": "❌ You already own this ability!",
+        "buyability_success": "⚔️ {ability} purchased! 💰 Cost: {price}$ | Balance: {balance}$",
+        "ability_reply_needed": "❌ Reply to someone's message to use the ability!",
+        "ability_not_owned": "❌ You don't own *{ability}*! Buy it from /abilities.",
+        # Family ring
+        "family_need_ring": "💍 You need a ring to propose! Buy one from /shop rings.",
     },
 }

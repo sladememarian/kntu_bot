@@ -218,7 +218,7 @@ def set_last_spin(chat_id: int, user_id: int, timestamp: str):
     save_data(data)
 
 
-# ---- Jail (Savak) ----
+# ---- Jail ----
 
 def get_jail_time(chat_id: int, user_id: int) -> str:
     data = load_data()
@@ -268,3 +268,77 @@ def set_daily_event(chat_id: int, event_data: dict):
     events = data.setdefault("daily_events", {})
     events[str(chat_id)] = event_data
     save_data(data)
+
+
+# ---- Riddle daily limit ----
+
+def get_riddle_count(chat_id: int, user_id: int) -> tuple[str, int]:
+    data = load_data()
+    entry = data.get("riddle_counts", {}).get(str(chat_id), {}).get(str(user_id), {})
+    return entry.get("date", ""), entry.get("count", 0)
+
+
+def inc_riddle_count(chat_id: int, user_id: int, today: str) -> int:
+    data = load_data()
+    rc = data.setdefault("riddle_counts", {}).setdefault(str(chat_id), {})
+    entry = rc.get(str(user_id), {})
+    if entry.get("date") != today:
+        entry = {"date": today, "count": 0}
+    entry["count"] += 1
+    rc[str(user_id)] = entry
+    save_data(data)
+    return entry["count"]
+
+
+# ---- Stock buy prices (for profit tracking) ----
+
+def get_stock_costs(chat_id: int, user_id: int) -> dict:
+    """Returns {ticker: total_cost_paid}."""
+    data = load_data()
+    return data.get("stock_costs", {}).get(str(chat_id), {}).get(str(user_id), {})
+
+
+def set_stock_costs(chat_id: int, user_id: int, costs: dict):
+    data = load_data()
+    sc = data.setdefault("stock_costs", {}).setdefault(str(chat_id), {})
+    sc[str(user_id)] = costs
+    save_data(data)
+
+
+# ---- Inventory (shop items) ----
+
+def get_inventory(chat_id: int, user_id: int) -> list:
+    """Returns list of item dicts: [{"item_id": ..., "category": ..., "name": ...}, ...]"""
+    data = load_data()
+    return data.get("inventory", {}).get(str(chat_id), {}).get(str(user_id), [])
+
+
+def add_inventory_item(chat_id: int, user_id: int, item: dict):
+    data = load_data()
+    inv = data.setdefault("inventory", {}).setdefault(str(chat_id), {}).setdefault(str(user_id), [])
+    inv.append(item)
+    save_data(data)
+
+
+def remove_inventory_item(chat_id: int, user_id: int, item_id: str) -> bool:
+    data = load_data()
+    inv = data.get("inventory", {}).get(str(chat_id), {}).get(str(user_id), [])
+    for i, it in enumerate(inv):
+        if it.get("item_id") == item_id:
+            inv.pop(i)
+            save_data(data)
+            return True
+    return False
+
+
+def has_item(chat_id: int, user_id: int, item_id: str) -> bool:
+    inv = get_inventory(chat_id, user_id)
+    return any(it.get("item_id") == item_id for it in inv)
+
+
+# ---- Jail list helpers ----
+
+def get_all_jailed(chat_id: int) -> dict:
+    """Returns {user_id_str: timestamp_str} for all jailed users in chat."""
+    data = load_data()
+    return data.get("jail", {}).get(str(chat_id), {})

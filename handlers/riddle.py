@@ -6,10 +6,11 @@ import random
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 
-from storage import get_lang, add_balance, get_balance
+from storage import get_lang, add_balance, get_balance, get_riddle_count, inc_riddle_count
 from strings import STRINGS
 
 RIDDLE_REWARD = 50
+RIDDLE_DAILY_LIMIT = 15
 
 RIDDLES = {
     "fa": [
@@ -57,6 +58,16 @@ async def riddle_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     lang = get_lang(chat.id)
     s = STRINGS[lang]
     user = update.effective_user
+
+    # Check daily limit
+    from datetime import date
+    today = date.today().isoformat()
+    rd_date, rd_count = get_riddle_count(chat.id, user.id)
+    if rd_date == today and rd_count >= RIDDLE_DAILY_LIMIT:
+        await update.message.reply_text(s["riddle_limit"], parse_mode="Markdown")
+        return
+
+    inc_riddle_count(chat.id, user.id, today)
 
     riddle = random.choice(RIDDLES[lang])
     options = riddle["options"][:]
