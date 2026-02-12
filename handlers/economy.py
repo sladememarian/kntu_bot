@@ -14,6 +14,7 @@ from storage import (
     get_jail_time, set_jail_time, clear_jail,
     get_stocks, set_stocks,
     get_daily_event, set_daily_event,
+    set_user_name, get_user_name,
 )
 from strings import STRINGS
 
@@ -127,6 +128,14 @@ DAILY_EVENTS = {
 
 
 # --------- /wallet ---------
+def _display_name(user) -> str:
+    return (user.full_name or user.first_name or "User").strip()
+
+
+def _remember_user(chat_id: int, user):
+    set_user_name(chat_id, user.id, _display_name(user))
+
+
 async def wallet_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
     lang = get_lang(chat.id)
@@ -137,6 +146,7 @@ async def wallet_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         user = update.effective_user
 
+    _remember_user(chat.id, user)
     bal = get_balance(chat.id, user.id)
     name = user.first_name or "User"
     await update.message.reply_text(
@@ -151,6 +161,7 @@ async def daily_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     lang = get_lang(chat.id)
     s = STRINGS[lang]
     user = update.effective_user
+    _remember_user(chat.id, user)
 
     today = date.today().isoformat()
     last = get_daily_claim(chat.id, user.id)
@@ -182,11 +193,15 @@ async def leaderboard_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     lines = []
     medals = ["🥇", "🥈", "🥉"]
     for i, (uid, bal) in enumerate(sorted_users):
+        uid_int = int(uid)
+        name = get_user_name(chat.id, uid_int)
         try:
-            member = await context.bot.get_chat_member(chat.id, int(uid))
-            name = member.user.first_name or "User"
+            member = await context.bot.get_chat_member(chat.id, uid_int)
+            name = _display_name(member.user)
+            set_user_name(chat.id, uid_int, name)
         except Exception:
-            name = f"User {uid}"
+            if not name:
+                name = f"User {uid}"
         medal = medals[i] if i < 3 else f"*{i+1}.*"
         lines.append(f"{medal} {name} — *{bal}* $")
 
@@ -200,6 +215,7 @@ async def bet_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     lang = get_lang(chat.id)
     s = STRINGS[lang]
     user = update.effective_user
+    _remember_user(chat.id, user)
 
     if not context.args or not context.args[0].isdigit():
         await update.message.reply_text(s["bet_usage"], parse_mode="Markdown")
@@ -241,6 +257,7 @@ async def slots_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     lang = get_lang(chat.id)
     s = STRINGS[lang]
     user = update.effective_user
+    _remember_user(chat.id, user)
 
     amount = 50  # default bet
     if context.args and context.args[0].isdigit():
@@ -293,6 +310,7 @@ async def dice_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     lang = get_lang(chat.id)
     s = STRINGS[lang]
     user = update.effective_user
+    _remember_user(chat.id, user)
 
     if len(context.args) < 2:
         await update.message.reply_text(s["dice_usage"], parse_mode="Markdown")
@@ -377,6 +395,7 @@ async def rob_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     lang = get_lang(chat.id)
     s = STRINGS[lang]
     user = update.effective_user
+    _remember_user(chat.id, user)
 
     # Check jail
     remaining = _check_jail(chat.id, user.id)
@@ -394,6 +413,7 @@ async def rob_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     target = update.message.reply_to_message.from_user
+    _remember_user(chat.id, target)
     if target.id == user.id or target.is_bot:
         await update.message.reply_text(s["rob_usage"], parse_mode="Markdown")
         return
@@ -440,12 +460,14 @@ async def give_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     lang = get_lang(chat.id)
     s = STRINGS[lang]
     user = update.effective_user
+    _remember_user(chat.id, user)
 
     if not update.message.reply_to_message or not context.args or not context.args[0].isdigit():
         await update.message.reply_text(s["give_usage"], parse_mode="Markdown")
         return
 
     target = update.message.reply_to_message.from_user
+    _remember_user(chat.id, target)
     if target.id == user.id or target.is_bot:
         return
 
@@ -478,6 +500,7 @@ async def rps_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     lang = get_lang(chat.id)
     s = STRINGS[lang]
     user = update.effective_user
+    _remember_user(chat.id, user)
 
     if len(context.args) < 2:
         await update.message.reply_text(s["rps_usage"], parse_mode="Markdown")
@@ -543,6 +566,7 @@ async def work_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     lang = get_lang(chat.id)
     s = STRINGS[lang]
     user = update.effective_user
+    _remember_user(chat.id, user)
 
     last = get_last_work(chat.id, user.id)
     now = datetime.utcnow()
@@ -577,6 +601,7 @@ async def spin_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     lang = get_lang(chat.id)
     s = STRINGS[lang]
     user = update.effective_user
+    _remember_user(chat.id, user)
 
     last = get_last_spin(chat.id, user.id)
     now = datetime.utcnow()
@@ -635,6 +660,7 @@ async def invest_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     lang = get_lang(chat.id)
     s = STRINGS[lang]
     user = update.effective_user
+    _remember_user(chat.id, user)
 
     # /invest  → show all companies & prices
     if not context.args:
@@ -690,6 +716,7 @@ async def sell_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     lang = get_lang(chat.id)
     s = STRINGS[lang]
     user = update.effective_user
+    _remember_user(chat.id, user)
 
     if len(context.args) < 2 or not context.args[1].isdigit():
         await update.message.reply_text(s["sell_usage"], parse_mode="Markdown")
@@ -735,6 +762,7 @@ async def portfolio_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     lang = get_lang(chat.id)
     s = STRINGS[lang]
     user = update.effective_user
+    _remember_user(chat.id, user)
 
     stocks = get_stocks(chat.id, user.id)
     if not stocks:
@@ -768,6 +796,7 @@ async def event_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     lang = get_lang(chat.id)
     s = STRINGS[lang]
     user = update.effective_user
+    _remember_user(chat.id, user)
 
     today = date.today().isoformat()
     evt = get_daily_event(chat.id)
