@@ -1,10 +1,11 @@
 # ==========================================
-# KNTU Bot 25 — Abilities Shop (Punch, Hug, Kiss, Kill)
+# KNTU Bot 25 — Abilities Shop
 # ==========================================
 
 import io
 import os
 import random
+import urllib.request
 from telegram import Update
 from telegram.ext import ContextTypes
 from PIL import Image, ImageDraw, ImageFont
@@ -15,13 +16,38 @@ from storage import (
 )
 from strings import STRINGS
 
+# ---------- Icon cache & downloader ----------
+_icon_cache: dict = {}
+
+
+def _download_icon(codepoint: str, size: int = 40):
+    if codepoint in _icon_cache:
+        return _icon_cache[codepoint].resize((size, size), Image.LANCZOS)
+    base = "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72"
+    for variant in [codepoint, codepoint + "-fe0f", codepoint.replace("-fe0f", "")]:
+        try:
+            url = f"{base}/{variant}.png"
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            data = urllib.request.urlopen(req, timeout=5).read()
+            img = Image.open(io.BytesIO(data)).convert("RGBA")
+            _icon_cache[codepoint] = img
+            return img.resize((size, size), Image.LANCZOS)
+        except Exception:
+            continue
+    return None
+
+
+# ---------- Abilities Catalog ----------
 ABILITIES = {
-    "punch":  {"name_fa": "مشت 👊", "name_en": "Punch 👊", "price": 100, "emoji": "👊", "color": (220, 50, 50)},
-    "hug":    {"name_fa": "بغل 🤗", "name_en": "Hug 🤗", "price": 80, "emoji": "🤗", "color": (255, 182, 193)},
-    "kiss":   {"name_fa": "بوسه 💋", "name_en": "Kiss 💋", "price": 120, "emoji": "💋", "color": (255, 20, 147)},
-    "kill":   {"name_fa": "کشتن 💀", "name_en": "Kill 💀", "price": 300, "emoji": "💀", "color": (30, 30, 30)},
-    "slap":   {"name_fa": "سیلی 🫲", "name_en": "Slap 🫲", "price": 90, "emoji": "🫲", "color": (200, 100, 50)},
-    "tickle": {"name_fa": "قلقلک 😆", "name_en": "Tickle 😆", "price": 70, "emoji": "😆", "color": (255, 255, 100)},
+    "pat":    {"name_fa": "نوازش", "name_en": "Pat", "price": 60, "icon": "1f932", "color": (180, 220, 255)},
+    "poke":   {"name_fa": "سیخونک", "name_en": "Poke", "price": 70, "icon": "1f446", "color": (100, 200, 100)},
+    "tickle": {"name_fa": "قلقلک", "name_en": "Tickle", "price": 75, "icon": "1f606", "color": (255, 255, 100)},
+    "hug":    {"name_fa": "بغل", "name_en": "Hug", "price": 85, "icon": "1f917", "color": (255, 182, 193)},
+    "slap":   {"name_fa": "سیلی", "name_en": "Slap", "price": 95, "icon": "1faf2", "color": (200, 100, 50)},
+    "punch":  {"name_fa": "مشت", "name_en": "Punch", "price": 110, "icon": "1f44a", "color": (220, 50, 50)},
+    "kiss":   {"name_fa": "بوسه", "name_en": "Kiss", "price": 125, "icon": "1f48b", "color": (255, 20, 147)},
+    "bite":   {"name_fa": "گاز", "name_en": "Bite", "price": 150, "icon": "1f9b7", "color": (200, 200, 200)},
+    "kill":   {"name_fa": "کشتن", "name_en": "Kill", "price": 300, "icon": "1f480", "color": (30, 30, 30)},
 }
 
 # Action messages when ability is used
@@ -98,6 +124,42 @@ ACTION_MSGS = {
             "😆 *{user}* wiggled their fingers on *{target}*'s belly! Hahaha! 🤣",
         ],
     },
+    "poke": {
+        "fa": [
+            "👆 *{user}* سیخونک زد به *{target}*! هی! 😤",
+            "👆 *{user}* انگشتشو فرو کرد تو پهلوی *{target}*! 😂",
+            "👆💥 *{user}* یه سیخونک زد به *{target}*! ول کن! 😅",
+        ],
+        "en": [
+            "👆 *{user}* poked *{target}*! Hey! 😤",
+            "👆 *{user}* poked *{target}* in the ribs! 😂",
+            "👆💥 *{user}* gave *{target}* a poke! Stop it! 😅",
+        ],
+    },
+    "bite": {
+        "fa": [
+            "🦷💥 *{user}* گاز گرفت *{target}* رو! آخ! 😱",
+            "🧛 *{user}* مثل خون‌آشام *{target}* رو گاز گرفت!",
+            "😬🦷 *{user}* یه گاز محکم از *{target}* گرفت! اوووچ! 😤",
+        ],
+        "en": [
+            "🦷💥 *{user}* bit *{target}*! Ouch! 😱",
+            "🧛 *{user}* bit *{target}* like a vampire!",
+            "😬🦷 *{user}* took a big bite on *{target}*! Oww! 😤",
+        ],
+    },
+    "pat": {
+        "fa": [
+            "🤲 *{user}* سر *{target}* رو نوازش کرد! آفرین! 🥰",
+            "🤲✨ *{user}* آروم سر *{target}* رو ناز کرد! چه مهربون! 💕",
+            "🤲 *{user}* دست کشید رو سر *{target}*! خوبه! 😊",
+        ],
+        "en": [
+            "🤲 *{user}* patted *{target}*'s head! Good job! 🥰",
+            "🤲✨ *{user}* gently patted *{target}*! So sweet! 💕",
+            "🤲 *{user}* gave *{target}* a head pat! Nice! 😊",
+        ],
+    },
 }
 
 BG_COLOR = (30, 30, 46)
@@ -107,7 +169,7 @@ TITLE_COLOR = (137, 180, 250)
 PRICE_COLOR = (166, 227, 161)
 
 
-def _get_font(size: int) -> ImageFont.FreeTypeFont:
+def _get_font(size):
     for p in ["C:\\Windows\\Fonts\\tahoma.ttf",
               "C:\\Windows\\Fonts\\arial.ttf",
               "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"]:
@@ -116,33 +178,39 @@ def _get_font(size: int) -> ImageFont.FreeTypeFont:
     return ImageFont.load_default()
 
 
-def _render_abilities_image(lang: str) -> io.BytesIO:
+def _render_abilities_image(lang):
     font = _get_font(16)
     font_title = _get_font(22)
     font_price = _get_font(14)
 
     item_h = 60
     pad = 20
-    W = 420
+    W = 440
     H = 60 + len(ABILITIES) * (item_h + 10) + pad
 
-    img = Image.new("RGB", (W, H), BG_COLOR)
+    img = Image.new("RGBA", (W, H), BG_COLOR + (255,))
     draw = ImageDraw.Draw(img)
 
-    title = "⚔️ فروشگاه قدرت" if lang == "fa" else "⚔️ Ability Shop"
+    title = "فروشگاه قدرت" if lang == "fa" else "Ability Shop"
+    draw.rounded_rectangle([0, 0, W, 48], radius=12, fill=(49, 50, 68))
     tb = draw.textbbox((0, 0), title, font=font_title)
-    draw.text(((W - tb[2] + tb[0]) // 2, 14), title, fill=TITLE_COLOR, font=font_title)
+    draw.text(((W - tb[2] + tb[0]) // 2, 10), title, fill=TITLE_COLOR, font=font_title)
 
-    y = 55
+    y = 58
     for ab_id, info in ABILITIES.items():
         name = info["name_fa"] if lang == "fa" else info["name_en"]
         price = info["price"]
-        color = info["color"]
 
         draw.rounded_rectangle([pad, y, W - pad, y + item_h], radius=10, fill=BOX_FILL)
-        draw.ellipse([pad + 10, y + 10, pad + 50, y + item_h - 10], fill=color)
-        draw.text((pad + 62, y + 8), name, fill=TEXT_COLOR, font=font)
-        draw.text((pad + 62, y + 32), f"{price}$", fill=PRICE_COLOR, font=font_price)
+
+        icon_img = _download_icon(info["icon"], 40)
+        if icon_img:
+            img.paste(icon_img, (pad + 10, y + 10), icon_img)
+        else:
+            draw.ellipse([pad + 10, y + 10, pad + 50, y + item_h - 10], fill=info["color"])
+
+        draw.text((pad + 60, y + 8), name, fill=TEXT_COLOR, font=font)
+        draw.text((pad + 60, y + 32), f"{price}$", fill=PRICE_COLOR, font=font_price)
 
         id_text = f"/buyability {ab_id}"
         ptb = draw.textbbox((0, 0), id_text, font=font_price)
@@ -150,48 +218,55 @@ def _render_abilities_image(lang: str) -> io.BytesIO:
 
         y += item_h + 10
 
+    out = Image.new("RGB", img.size, BG_COLOR)
+    out.paste(img, mask=img.split()[3])
     buf = io.BytesIO()
-    img.save(buf, format="PNG")
+    out.save(buf, format="PNG")
     buf.seek(0)
     return buf
 
 
-def _render_action_image(ability_id: str, user_name: str, target_name: str, lang: str) -> io.BytesIO:
+def _render_action_image(ability_id, user_name, target_name, lang):
     info = ABILITIES[ability_id]
-    color = info["color"]
 
-    W, H = 400, 180
+    W, H = 420, 180
     font = _get_font(18)
-    font_big = _get_font(36)
     font_sm = _get_font(14)
 
-    img = Image.new("RGB", (W, H), BG_COLOR)
+    img = Image.new("RGBA", (W, H), BG_COLOR + (255,))
     draw = ImageDraw.Draw(img)
 
-    # Two circles (user → target)
-    draw.ellipse([40, 40, 110, 110], fill=(70, 130, 180), outline=(255, 255, 255), width=2)
-    tb1 = draw.textbbox((0, 0), user_name[:3], font=font)
-    draw.text((75 - (tb1[2] - tb1[0]) // 2, 65), user_name[:3], fill=TEXT_COLOR, font=font)
+    # User circle
+    draw.ellipse([40, 35, 115, 110], fill=(70, 130, 180), outline=(255, 255, 255), width=2)
+    tb1 = draw.textbbox((0, 0), user_name[:4], font=font_sm)
+    draw.text((77 - (tb1[2] - tb1[0]) // 2, 62), user_name[:4], fill=TEXT_COLOR, font=font_sm)
 
-    # Emoji in middle
-    etb = draw.textbbox((0, 0), info["emoji"], font=font_big)
-    draw.text((W // 2 - (etb[2] - etb[0]) // 2, 55), info["emoji"], font=font_big)
+    # Ability icon in center
+    icon_img = _download_icon(info["icon"], 56)
+    if icon_img:
+        img.paste(icon_img, (W // 2 - 28, 44), icon_img)
+    else:
+        draw.ellipse([W // 2 - 28, 44, W // 2 + 28, 100], fill=info["color"])
 
-    draw.ellipse([290, 40, 360, 110], fill=color, outline=(255, 255, 255), width=2)
-    tb2 = draw.textbbox((0, 0), target_name[:3], font=font)
-    draw.text((325 - (tb2[2] - tb2[0]) // 2, 65), target_name[:3], fill=TEXT_COLOR, font=font)
+    # Target circle
+    draw.ellipse([305, 35, 380, 110], fill=info["color"], outline=(255, 255, 255), width=2)
+    tb2 = draw.textbbox((0, 0), target_name[:4], font=font_sm)
+    draw.text((342 - (tb2[2] - tb2[0]) // 2, 62), target_name[:4], fill=TEXT_COLOR, font=font_sm)
 
-    # Arrow
-    draw.line([(115, 75), (285, 75)], fill=(255, 255, 255), width=2)
-    draw.polygon([(280, 65), (295, 75), (280, 85)], fill=(255, 255, 255))
+    # Arrows
+    draw.line([(120, 72), (170, 72)], fill=(255, 255, 255), width=2)
+    draw.line([(250, 72), (300, 72)], fill=(255, 255, 255), width=2)
+    draw.polygon([(295, 62), (310, 72), (295, 82)], fill=(255, 255, 255))
 
     # Label
     label = info["name_fa"] if lang == "fa" else info["name_en"]
     ltb = draw.textbbox((0, 0), label, font=font)
     draw.text(((W - ltb[2] + ltb[0]) // 2, 130), label, fill=TITLE_COLOR, font=font)
 
+    out = Image.new("RGB", img.size, BG_COLOR)
+    out.paste(img, mask=img.split()[3])
     buf = io.BytesIO()
-    img.save(buf, format="PNG")
+    out.save(buf, format="PNG")
     buf.seek(0)
     return buf
 
@@ -251,7 +326,7 @@ async def buyability_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def use_ability_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Use an ability on someone: /punch, /hug, /kiss, /kill, /slap, /tickle (reply)"""
+    """Use an ability: /punch, /hug, /kiss, /kill, /slap, /tickle, /poke, /bite, /pat (reply)"""
     chat = update.effective_chat
     lang = get_lang(chat.id)
     s = STRINGS[lang]
