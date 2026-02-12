@@ -33,6 +33,7 @@ from handlers.economy import (
     wallet_cmd, daily_cmd, leaderboard_cmd, bet_cmd,
     slots_cmd, dice_cmd, rob_cmd, give_cmd, rps_cmd,
     work_cmd, spin_cmd, invest_cmd, sell_cmd, portfolio_cmd, event_cmd,
+    jail_list_cmd, profit_cmd,
 )
 from handlers.xo import xo_cmd, xo_callback
 from handlers.riddle import riddle_cmd, riddle_callback
@@ -40,6 +41,11 @@ from handlers.howallbot import (
     howmuch_cmd, eight_ball_cmd, whois_cmd,
     truth_cmd, dare_cmd, quote_cmd, advice_cmd, profile_cmd,
 )
+from handlers.shop import shop_cmd, shop_callback, buy_cmd, inventory_cmd, gift_cmd
+from handlers.petshop import petshop_cmd, buypet_cmd
+from handlers.foodshop import foodshop_cmd, buyfood_cmd
+from handlers.abilities import abilities_cmd, buyability_cmd, use_ability_cmd
+from handlers.calendar import calendar_cmd
 
 # ---- Logging ----
 logging.basicConfig(
@@ -117,6 +123,36 @@ def main():
     app.add_handler(CommandHandler("sell", sell_cmd))
     app.add_handler(CommandHandler("portfolio", portfolio_cmd))
     app.add_handler(CommandHandler("event", event_cmd))
+    app.add_handler(CommandHandler("jail", jail_list_cmd))
+    app.add_handler(CommandHandler("profit", profit_cmd))
+
+    # Shop system
+    app.add_handler(CommandHandler("shop", shop_cmd))
+    app.add_handler(CallbackQueryHandler(shop_callback, pattern=r"^shop_cat:"))
+    app.add_handler(CommandHandler("buy", buy_cmd))
+    app.add_handler(CommandHandler("inventory", inventory_cmd))
+    app.add_handler(CommandHandler("gift", gift_cmd))
+
+    # Pet Shop
+    app.add_handler(CommandHandler("petshop", petshop_cmd))
+    app.add_handler(CommandHandler("buypet", buypet_cmd))
+
+    # Food Shop
+    app.add_handler(CommandHandler("foodshop", foodshop_cmd))
+    app.add_handler(CommandHandler("buyfood", buyfood_cmd))
+
+    # Abilities
+    app.add_handler(CommandHandler("abilities", abilities_cmd))
+    app.add_handler(CommandHandler("buyability", buyability_cmd))
+    app.add_handler(CommandHandler("punch", use_ability_cmd))
+    app.add_handler(CommandHandler("hug", use_ability_cmd))
+    app.add_handler(CommandHandler("kiss", use_ability_cmd))
+    app.add_handler(CommandHandler("kill", use_ability_cmd))
+    app.add_handler(CommandHandler("slap", use_ability_cmd))
+    app.add_handler(CommandHandler("tickle", use_ability_cmd))
+
+    # Persian Calendar
+    app.add_handler(CommandHandler("calendar", calendar_cmd))
 
     # XO (Tic-Tac-Toe)
     app.add_handler(CommandHandler("xo", xo_cmd))

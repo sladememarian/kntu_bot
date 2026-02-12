@@ -8,7 +8,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, CallbackQueryHandler
 from PIL import Image, ImageDraw, ImageFont
 
-from storage import get_lang, load_data, save_data
+from storage import get_lang, load_data, save_data, has_item, remove_inventory_item
 from strings import STRINGS
 
 RELATIONS = {
@@ -121,6 +121,14 @@ async def family_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         # --- Partner requires approval ---
         if relation == "partner":
+            # Check if requester has a ring
+            has_ring = (has_item(chat.id, me.id, "ring") or
+                        has_item(chat.id, me.id, "gold_ring") or
+                        has_item(chat.id, me.id, "diamond_ring"))
+            if not has_ring:
+                await update.message.reply_text(s["family_need_ring"], parse_mode="Markdown")
+                return
+
             me_name = me.first_name or "User"
             target_name = target.first_name or "User"
             callback_accept = f"fam_accept:{chat.id}:{me.id}:{target.id}"
@@ -242,6 +250,10 @@ async def family_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if action == "fam_accept":
         _set_relation(chat_id, requester_id, target_id, "partner")
         _set_relation(chat_id, target_id, requester_id, "partner")
+        # Consume the ring from requester
+        for ring_type in ("diamond_ring", "gold_ring", "ring"):
+            if remove_inventory_item(chat_id, requester_id, ring_type):
+                break
         if lang == "fa":
             text = f"💍✅ *{target_name}* قبول کرد!\n\n*{req_name}* 💕 *{target_name}* الان زوج هستن! 🎉"
         else:

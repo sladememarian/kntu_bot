@@ -3,18 +3,22 @@
 # ==========================================
 
 import random
+import io
+import os
 from datetime import date, datetime
 from telegram import Update
 from telegram.ext import ContextTypes
+from PIL import Image, ImageDraw, ImageFont
 
 from storage import (
     get_lang, get_balance, add_balance, get_all_balances,
     get_daily_claim, set_daily_claim,
     get_last_work, set_last_work, get_last_spin, set_last_spin,
-    get_jail_time, set_jail_time, clear_jail,
+    get_jail_time, set_jail_time, clear_jail, get_all_jailed,
     get_stocks, set_stocks,
     get_daily_event, set_daily_event,
     set_user_name, get_user_name,
+    get_stock_costs, set_stock_costs,
 )
 from strings import STRINGS
 
@@ -73,26 +77,34 @@ COMPANIES = {
 }
 
 # --- Jail mock messages ---
-SAVAK_MOCKS = {
+JAIL_MOCKS = {
     "fa": [
-        "🚨 ساواک اومد دنبالت! حالا ۶ دقیقه بشین فکر کن به کارات! 😂",
-        "🔒 گرفتنت رفیق! ساواک ولت نمیکنه. ۶ دقیقه حبس! 🤡",
-        "👮 آقا دستگیر شدی! بشین تو سلول ۶ دقیقه آدم شو! 😤",
-        "🚔 ساواک: بیا اینجا ببینم! دزد گرفتیم بچه‌ها! ۶ دقیقه زندان! 🤣",
-        "⛓️ رفتی تو ساواک! ۶ دقیقه بشین به گناهات فکر کن! 😈",
-        "🏛️ ساواک خبرت رو دانست! ۶ دقیقه استراحت اجباری! 💀",
-        "🐀 موش گرفتیم! ساواک بردت! ۶ دقیقه حبس عزیزم! 🧀",
-        "🤦 دزد بدبخت! ساواک گرفتت! ۶ دقیقه فکر کن چجوری بهتر بدزدی! 😂",
+        "🚨 پلیس اومد دنبالت! حالا ۶ دقیقه بشین فکر کن به کارات! 😂",
+        "🔒 گرفتنت رفیق! ۶ دقیقه حبس! بشین آدم شو! 🤡",
+        "👮 آقا دستگیر شدی! بشین تو سلول ۶ دقیقه فکر کن! 😤",
+        "🚔 دزد گرفتیم بچه‌ها! ببرینش بازداشتگاه! ۶ دقیقه! 🤣",
+        "⛓️ رفتی تو زندان! ۶ دقیقه بشین به گناهات فکر کن! 😈",
+        "🏛️ قاضی حکم داد: ۶ دقیقه زندان برای دزد کوچولو! 💀",
+        "🐀 موش گرفتیم! ۶ دقیقه حبس عزیزم! 🧀",
+        "🤦 دزد بدبخت! گرفتنت! ۶ دقیقه فکر کن چجوری بهتر بدزدی! 😂",
+        "🔐 درب سلول بسته شد! ۶ دقیقه وقت داری آهنگ غمگین بخونی! 🎶",
+        "🧱 خوش اومدی به هتل ۵ ستاره زندان! ۶ دقیقه اقامت رایگان! ⭐",
+        "🐔 مرغ دزد بودی، حالا زندانی شدی! ۶ دقیقه! 🍗",
+        "👻 حتی ارواح زندان ازت میترسن! ۶ دقیقه بشین! 😱",
     ],
     "en": [
-        "🚨 SAVAK got you! Now sit in jail for 6 minutes and think about your choices! 😂",
-        "🔒 Busted! SAVAK doesn't forgive. 6 minutes in the slammer! 🤡",
-        "👮 Arrested! Sit in your cell for 6 mins and become a better person! 😤",
-        "🚔 SAVAK: Come here little thief! 6 minutes of jail time! 🤣",
-        "⛓️ You're in SAVAK custody! 6 minutes to reflect on your sins! 😈",
-        "🏛️ SAVAK knew about you! 6 minutes of mandatory rest! 💀",
-        "🐀 Caught a rat! SAVAK took you in! 6 minutes behind bars! 🧀",
-        "🤦 Poor thief! SAVAK got you! 6 mins to plan a better heist next time! 😂",
+        "🚨 Police got you! Now sit in jail for 6 minutes and think! 😂",
+        "🔒 Busted! 6 minutes in the slammer! Time to rethink life! 🤡",
+        "👮 Arrested! Sit in your cell for 6 mins and reflect! 😤",
+        "🚔 Caught a thief! Take them away! 6 minutes of jail time! 🤣",
+        "⛓️ You're in custody! 6 minutes to reflect on your sins! 😈",
+        "🏛️ Judge says: 6 minutes jail for the tiny thief! 💀",
+        "🐀 Caught a rat! 6 minutes behind bars! 🧀",
+        "🤦 Poor thief! 6 mins to figure out a better heist! 😂",
+        "🔐 Cell door locked! You have 6 mins to sing sad songs! 🎶",
+        "🧱 Welcome to 5-star jail hotel! 6 mins free stay! ⭐",
+        "🐔 You were a chicken thief, now you're a prisoner! 6 mins! 🍗",
+        "👻 Even the jail ghosts are scared of you! Sit for 6 mins! 😱",
     ],
 }
 
@@ -403,7 +415,7 @@ async def rob_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         mins = remaining // 60
         secs = remaining % 60
         await update.message.reply_text(
-            s["savak_still_jailed"].format(mins=mins, secs=secs),
+            s["jail_still_jailed"].format(mins=mins, secs=secs),
             parse_mode="Markdown",
         )
         return
@@ -440,12 +452,12 @@ async def rob_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode="Markdown",
         )
     else:
-        # Go to SAVAK jail!
+        # Go to jail!
         fine = random.randint(20, min(100, my_bal // 4)) if my_bal > 20 else 0
         if fine > 0:
             add_balance(chat.id, user.id, -fine)
         set_jail_time(chat.id, user.id, datetime.utcnow().isoformat())
-        mock = random.choice(SAVAK_MOCKS[lang])
+        mock = random.choice(JAIL_MOCKS[lang])
         await update.message.reply_text(
             f"{mock}\n\n💸 جریمه: *{fine}$*\n💰 موجودی: *{get_balance(chat.id, user.id)}* $"
             if lang == "fa" else
@@ -654,6 +666,95 @@ def _get_price(ticker: str) -> int:
     return max(10, int(base * (1 + swing)))
 
 
+def _get_font_econ(size: int) -> ImageFont.FreeTypeFont:
+    for p in ["C:\\Windows\\Fonts\\tahoma.ttf",
+              "C:\\Windows\\Fonts\\arial.ttf",
+              "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"]:
+        if os.path.exists(p):
+            return ImageFont.truetype(p, size)
+    return ImageFont.load_default()
+
+
+def _render_stock_chart(ticker: str) -> io.BytesIO:
+    """Render a 30-day price chart for a stock ticker."""
+    today_ord = date.today().toordinal()
+    prices = []
+    for i in range(30):
+        day_ord = today_ord - 29 + i
+        base = COMPANIES[ticker]["base"]
+        day_seed = day_ord + hash(ticker) % 9999
+        rng = random.Random(day_seed)
+        swing = rng.uniform(-0.30, 0.40)
+        prices.append(max(10, int(base * (1 + swing))))
+
+    W, H = 600, 320
+    PAD_L, PAD_R, PAD_T, PAD_B = 60, 30, 60, 40
+    BG = (30, 30, 46)
+    GRID = (50, 50, 70)
+    TEXT_CLR = (205, 214, 244)
+    TITLE_CLR = (137, 180, 250)
+
+    img = Image.new("RGB", (W, H), BG)
+    draw = ImageDraw.Draw(img)
+    font = _get_font_econ(14)
+    font_title = _get_font_econ(18)
+
+    # Title
+    title = f"{COMPANIES[ticker]['name']} ({ticker}) — 30 Day Chart"
+    tb = draw.textbbox((0, 0), title, font=font_title)
+    draw.text(((W - tb[2] + tb[0]) // 2, 12), title, fill=TITLE_CLR, font=font_title)
+
+    min_p = min(prices) - 10
+    max_p = max(prices) + 10
+    chart_w = W - PAD_L - PAD_R
+    chart_h = H - PAD_T - PAD_B
+
+    # Grid lines
+    for i in range(5):
+        y = PAD_T + int(chart_h * i / 4)
+        draw.line([(PAD_L, y), (W - PAD_R, y)], fill=GRID, width=1)
+        val = max_p - (max_p - min_p) * i / 4
+        draw.text((5, y - 7), f"${int(val)}", fill=TEXT_CLR, font=font)
+
+    # Plot points
+    points = []
+    for i, p in enumerate(prices):
+        x = PAD_L + int(chart_w * i / 29)
+        y = PAD_T + int(chart_h * (max_p - p) / (max_p - min_p))
+        points.append((x, y))
+
+    # Gradient fill under line
+    for i in range(len(points) - 1):
+        x1, y1 = points[i]
+        x2, y2 = points[i + 1]
+        bottom = PAD_T + chart_h
+        draw.polygon([(x1, y1), (x2, y2), (x2, bottom), (x1, bottom)],
+                      fill=(137, 180, 250, 30) if prices[-1] >= prices[0] else (243, 139, 168, 30))
+
+    # Line color based on trend
+    line_clr = (166, 227, 161) if prices[-1] >= prices[0] else (243, 139, 168)
+    draw.line(points, fill=line_clr, width=2)
+
+    # Dots on first and last
+    for idx in [0, -1]:
+        px, py = points[idx]
+        draw.ellipse([px - 4, py - 4, px + 4, py + 4], fill=line_clr)
+        draw.text((px - 10, py - 18), f"${prices[idx]}", fill=TEXT_CLR, font=font)
+
+    # Current price label
+    cp = prices[-1]
+    change = cp - prices[0]
+    pct = (change / prices[0] * 100) if prices[0] else 0
+    sign = "+" if change >= 0 else ""
+    label = f"Now: ${cp} ({sign}{change}, {sign}{pct:.1f}%)"
+    draw.text((PAD_L, H - 25), label, fill=line_clr, font=font)
+
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    buf.seek(0)
+    return buf
+
+
 # --------- /invest (buy stock) ---------
 async def invest_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
@@ -672,6 +773,16 @@ async def invest_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             header + "\n".join(lines), parse_mode="Markdown"
         )
+        return
+
+    # /invest <ticker> chart → show chart image
+    if len(context.args) == 2 and context.args[1].lower() in ("tree", "chart"):
+        ticker = context.args[0].upper()
+        if ticker not in COMPANIES:
+            await update.message.reply_text(s["invest_usage"], parse_mode="Markdown")
+            return
+        buf = _render_stock_chart(ticker)
+        await update.message.reply_photo(photo=buf, caption=f"📊 {COMPANIES[ticker]['name']} — 30 Day Chart")
         return
 
     # /invest <ticker> <shares>
@@ -700,6 +811,11 @@ async def invest_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     stocks = get_stocks(chat.id, user.id)
     stocks[ticker] = stocks.get(ticker, 0) + shares
     set_stocks(chat.id, user.id, stocks)
+
+    # Track cost basis
+    costs = get_stock_costs(chat.id, user.id)
+    costs[ticker] = costs.get(ticker, 0) + cost
+    set_stock_costs(chat.id, user.id, costs)
 
     await update.message.reply_text(
         s["invest_bought"].format(
@@ -746,6 +862,15 @@ async def sell_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if stocks[ticker] == 0:
         del stocks[ticker]
     set_stocks(chat.id, user.id, stocks)
+
+    # Reduce cost basis proportionally
+    costs = get_stock_costs(chat.id, user.id)
+    if ticker in costs and owned > 0:
+        cost_per_share = costs[ticker] / owned
+        costs[ticker] = max(0, int(costs[ticker] - cost_per_share * shares))
+        if stocks.get(ticker, 0) == 0:
+            costs.pop(ticker, None)
+        set_stock_costs(chat.id, user.id, costs)
 
     await update.message.reply_text(
         s["sell_done"].format(
@@ -844,3 +969,88 @@ async def event_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         set_daily_event(chat.id, {"date": today, "happened": False, "name": "", "desc": ""})
         await update.message.reply_text(s["event_none_today"], parse_mode="Markdown")
+
+
+# --------- /jail (list jailed users) ---------
+async def jail_list_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat = update.effective_chat
+    lang = get_lang(chat.id)
+    s = STRINGS[lang]
+
+    jailed = get_all_jailed(chat.id)
+    if not jailed:
+        await update.message.reply_text(s["jail_empty"], parse_mode="Markdown")
+        return
+
+    lines = []
+    now = datetime.utcnow()
+    for uid_str, ts in jailed.items():
+        try:
+            jail_dt = datetime.fromisoformat(ts)
+        except ValueError:
+            continue
+        diff = (now - jail_dt).total_seconds()
+        remaining = JAIL_DURATION - diff
+        if remaining <= 0:
+            continue
+        mins = int(remaining) // 60
+        secs = int(remaining) % 60
+        uid_int = int(uid_str)
+        name = get_user_name(chat.id, uid_int)
+        if not name:
+            try:
+                member = await context.bot.get_chat_member(chat.id, uid_int)
+                name = _display_name(member.user)
+            except Exception:
+                name = f"User {uid_str}"
+        lines.append(f"⛓️ *{name}* — {mins}m {secs}s")
+
+    if not lines:
+        await update.message.reply_text(s["jail_empty"], parse_mode="Markdown")
+        return
+
+    header = s["jail_header"]
+    await update.message.reply_text(header + "\n".join(lines), parse_mode="Markdown")
+
+
+# --------- /profit (investment profit/loss) ---------
+async def profit_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat = update.effective_chat
+    lang = get_lang(chat.id)
+    s = STRINGS[lang]
+    user = update.effective_user
+    _remember_user(chat.id, user)
+
+    stocks = get_stocks(chat.id, user.id)
+    costs = get_stock_costs(chat.id, user.id)
+
+    if not stocks:
+        await update.message.reply_text(s["portfolio_empty"], parse_mode="Markdown")
+        return
+
+    lines = []
+    total_cost = 0
+    total_value = 0
+    for ticker, shares in stocks.items():
+        if ticker not in COMPANIES:
+            continue
+        price = _get_price(ticker)
+        value = price * shares
+        cost = costs.get(ticker, 0)
+        pnl = value - cost
+        total_cost += cost
+        total_value += value
+        emoji = "📈" if pnl >= 0 else "📉"
+        sign = "+" if pnl >= 0 else ""
+        lines.append(f"{emoji} *{ticker}* — {shares} shares | Cost: {cost}$ | Value: {value}$ | P/L: *{sign}{pnl}$*")
+
+    total_pnl = total_value - total_cost
+    sign = "+" if total_pnl >= 0 else ""
+    emoji = "🟢" if total_pnl >= 0 else "🔴"
+
+    header = s["profit_header"]
+    footer = s["profit_footer"].format(cost=total_cost, value=total_value, pnl=f"{sign}{total_pnl}", emoji=emoji)
+    await update.message.reply_text(
+        header + "\n".join(lines) + "\n\n" + footer,
+        parse_mode="Markdown",
+    )
