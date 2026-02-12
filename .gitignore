@@ -1,3 +1,6 @@
 .env
 __pycache__/
 *.pyc
+data.json
+live_data.json
+live_data_raw.json
