@@ -4,6 +4,7 @@
 
 import io
 import os
+import random
 import urllib.request
 from telegram import Update
 from telegram.ext import ContextTypes
@@ -12,6 +13,7 @@ from PIL import Image, ImageDraw, ImageFont
 from storage import (
     get_lang, get_balance, add_balance,
     add_inventory_item, has_item,
+    get_inventory, remove_inventory_item,
 )
 from strings import STRINGS
 
@@ -202,3 +204,180 @@ async def buyfood_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     new_bal = get_balance(chat.id, user.id)
     caption = s["buyfood_success"].format(food=name, price=price, balance=new_bal)
     await update.message.reply_photo(photo=buf, caption=caption)
+
+
+# ════════════════════════════════════════════════════════════
+# /eat — consume a food item from inventory (free for everyone)
+# ════════════════════════════════════════════════════════════
+
+_EAT_MSGS_FA = [
+    "😋 *{user}* با ولع {food} رو خورد! نووووش جان! 🍽️",
+    "🤤 *{user}* یه گاز بزرگ از {food} زد! عجب طعمی! 😍",
+    "😆 *{user}* تا ته {food} رو بلعید! حتی بشقاب رو هم لیسید! 👅",
+    "🍴 *{user}* آروم نشست و {food} رو مزه مزه کرد... عالی بود! ✨",
+    "😤 *{user}* با خشم {food} رو خورد! گرسنگی آدمو عصبی می‌کنه! 🔥",
+    "🤩 *{user}* چشماش برق زد وقتی {food} رو دید و یه لقمه‌ای زد! 💫",
+    "🥴 *{user}* اینقدر {food} خوشمزه بود که چشماش چپ شد! 😵‍💫",
+    "😎 *{user}* مثل آدم‌های کلاس بالا {food} خورد! با کارد و چنگال! 🍽️✨",
+]
+
+_EAT_MSGS_EN = [
+    "😋 *{user}* devoured the {food}! Bon appétit! 🍽️",
+    "🤤 *{user}* took a huge bite of {food}! What a flavor! 😍",
+    "😆 *{user}* inhaled the {food}! Even licked the plate! 👅",
+    "🍴 *{user}* sat down and savored the {food}... perfection! ✨",
+    "😤 *{user}* angrily ate the {food}! Hunger makes you mad! 🔥",
+    "🤩 *{user}*'s eyes lit up seeing the {food} and took a big bite! 💫",
+    "🥴 *{user}* — the {food} was SO good their eyes crossed! 😵‍💫",
+    "😎 *{user}* ate the {food} with class! Knife and fork! 🍽️✨",
+]
+
+
+async def eat_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat = update.effective_chat
+    lang = get_lang(chat.id)
+    user = update.effective_user
+
+    if not context.args:
+        if lang == "fa":
+            await update.message.reply_text(
+                "🍽️ *خوردن*\n\nاستفاده: `/eat [غذا]`\n"
+                "مثال: `/eat burger`\n\n"
+                "غذا باید توی کوله‌پشتیت باشه! از /foodshop بخر 🛒",
+                parse_mode="Markdown")
+        else:
+            await update.message.reply_text(
+                "🍽️ *Eat*\n\nUsage: `/eat [food]`\n"
+                "Example: `/eat burger`\n\n"
+                "Food must be in your inventory! Buy from /foodshop 🛒",
+                parse_mode="Markdown")
+        return
+
+    item_key = context.args[0].lower()
+    inv = get_inventory(chat.id, user.id)
+
+    # Find a matching food item
+    found = None
+    for it in inv:
+        iid = it.get("item_id", "")
+        if iid == f"food_{item_key}" or iid == item_key:
+            found = it
+            break
+    # Also try matching by name
+    if not found:
+        for it in inv:
+            if it.get("category") == "food" and item_key in it.get("name", "").lower():
+                found = it
+                break
+
+    if not found:
+        if lang == "fa":
+            await update.message.reply_text(
+                f"❌ *{item_key}* توی کوله‌پشتیت نیست!\nاول از /foodshop بخر 🛒",
+                parse_mode="Markdown")
+        else:
+            await update.message.reply_text(
+                f"❌ *{item_key}* is not in your inventory!\nBuy from /foodshop first 🛒",
+                parse_mode="Markdown")
+        return
+
+    remove_inventory_item(chat.id, user.id, found["item_id"])
+    name = found.get("name", item_key)
+    user_name = user.first_name or "User"
+
+    if lang == "fa":
+        msg = random.choice(_EAT_MSGS_FA).format(user=user_name, food=name)
+    else:
+        msg = random.choice(_EAT_MSGS_EN).format(user=user_name, food=name)
+
+    await update.message.reply_text(msg, parse_mode="Markdown")
+
+
+# ════════════════════════════════════════════════════════════
+# /drink — consume a drink from inventory (free for everyone)
+# ════════════════════════════════════════════════════════════
+
+_DRINK_MSGS_FA = [
+    "🥤 *{user}* یه قلپ بزرگ از {drink} خورد! آااه! 😌",
+    "😋 *{user}* تا ته {drink} رو سر کشید! تشنگی رفت! 💧",
+    "🤤 *{user}* آروم {drink} رو نوشید و لبخند زد... عالی! 😊",
+    "😆 *{user}* با عجله {drink} رو خورد و ریخت رو لباسش! 😂💦",
+    "🍹 *{user}* یه نی انداخت توی {drink} و شروع کرد! فیس فیس! 🥤",
+    "😎 *{user}* مثل فیلم‌ها {drink} رو بالا گرفت و یه نفس خورد! 🎬",
+    "🥴 *{user}* اینقدر {drink} خوشمزه بود که نتونست متوقف بشه! 🔄",
+    "🤩 *{user}* چشماش گرد شد وقتی {drink} رو مزه کرد! واو! ✨",
+]
+
+_DRINK_MSGS_EN = [
+    "🥤 *{user}* took a big gulp of {drink}! Aahh! 😌",
+    "😋 *{user}* chugged the {drink}! Thirst quenched! 💧",
+    "🤤 *{user}* sipped the {drink} slowly and smiled... perfect! 😊",
+    "😆 *{user}* drank the {drink} too fast and spilled on their shirt! 😂💦",
+    "🍹 *{user}* dropped a straw in the {drink} and started sipping! 🥤",
+    "😎 *{user}* raised the {drink} like in the movies and chugged it! 🎬",
+    "🥴 *{user}* — the {drink} was so good they couldn't stop! 🔄",
+    "🤩 *{user}*'s eyes went wide tasting the {drink}! Wow! ✨",
+]
+
+
+async def drink_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat = update.effective_chat
+    lang = get_lang(chat.id)
+    user = update.effective_user
+
+    if not context.args:
+        if lang == "fa":
+            await update.message.reply_text(
+                "🥤 *نوشیدن*\n\nاستفاده: `/drink [نوشیدنی]`\n"
+                "مثال: `/drink beer` یا `/drink tea`\n\n"
+                "نوشیدنی باید توی کوله‌پشتیت باشه!\n"
+                "از /bar یا /foodshop بخر 🛒",
+                parse_mode="Markdown")
+        else:
+            await update.message.reply_text(
+                "🥤 *Drink*\n\nUsage: `/drink [beverage]`\n"
+                "Example: `/drink beer` or `/drink tea`\n\n"
+                "Drink must be in your inventory!\n"
+                "Buy from /bar or /foodshop 🛒",
+                parse_mode="Markdown")
+        return
+
+    item_key = context.args[0].lower()
+    inv = get_inventory(chat.id, user.id)
+
+    # Find a matching drink or drinkable food item
+    found = None
+    for it in inv:
+        iid = it.get("item_id", "")
+        if iid == f"drink_{item_key}" or iid == f"food_{item_key}" or iid == item_key:
+            found = it
+            break
+    # Also try matching by name
+    if not found:
+        for it in inv:
+            cat = it.get("category", "")
+            if cat in ("drink", "food") and item_key in it.get("name", "").lower():
+                found = it
+                break
+
+    if not found:
+        if lang == "fa":
+            await update.message.reply_text(
+                f"❌ *{item_key}* توی کوله‌پشتیت نیست!\nاز /bar یا /foodshop بخر 🛒",
+                parse_mode="Markdown")
+        else:
+            await update.message.reply_text(
+                f"❌ *{item_key}* is not in your inventory!\nBuy from /bar or /foodshop 🛒",
+                parse_mode="Markdown")
+        return
+
+    remove_inventory_item(chat.id, user.id, found["item_id"])
+    name = found.get("name", item_key)
+    user_name = user.first_name or "User"
+
+    if lang == "fa":
+        msg = random.choice(_DRINK_MSGS_FA).format(user=user_name, drink=name)
+    else:
+        msg = random.choice(_DRINK_MSGS_EN).format(user=user_name, drink=name)
+
+    await update.message.reply_text(msg, parse_mode="Markdown")
