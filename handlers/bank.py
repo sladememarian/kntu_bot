@@ -528,6 +528,151 @@ async def loan_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(msg, parse_mode="Markdown")
 
 
+# ════════════════════════════════════════════════════════════
+# 6. /bankrob — Collaborative bank robbery (4+ people)
+# ════════════════════════════════════════════════════════════
+BANKROB_MIN_PEOPLE = 4
+BANKROB_COOLDOWN = 1800          # 30 min between attempts per chat
+BANKROB_JAIL_DURATION = 14400    # 4 hours jail on failure
+BANKROB_BASE_LOOT = 800          # base loot per person on success
+BANKROB_BONUS_PER_EXTRA = 150   # extra loot per person beyond 4
+
+async def bankrob_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat = update.effective_chat
+    user = update.effective_user
+    lang = get_lang(chat.id)
+    _remember_user(chat.id, user)
+
+    cid = str(chat.id)
+    uid = str(user.id)
+
+    # Jail check
+    remaining = _check_jail(chat.id, user.id)
+    if remaining is not None:
+        mins = remaining // 60
+        secs = remaining % 60
+        msg = (f"⛓️ تو زندانی! ({mins}m {secs}s باقی‌مانده)"
+               if lang == "fa"
+               else f"⛓️ You're in jail! ({mins}m {secs}s remaining)")
+        await update.message.reply_text(msg, parse_mode="Markdown")
+        return
+
+    data = load_data()
+    rob_data = data.setdefault("bank_robbery", {}).setdefault(cid, {
+        "members": [], "last_attempt": ""
+    })
+
+    now = _now()
+
+    # Check cooldown
+    if rob_data.get("last_attempt"):
+        try:
+            last_dt = datetime.fromisoformat(rob_data["last_attempt"])
+            elapsed = (now - last_dt).total_seconds()
+            if elapsed < BANKROB_COOLDOWN:
+                cd_left = int(BANKROB_COOLDOWN - elapsed)
+                mins = cd_left // 60
+                secs = cd_left % 60
+                msg = (f"⏳ باید *{mins} دقیقه و {secs} ثانیه* صبر کنید!"
+                       if lang == "fa"
+                       else f"⏳ Wait *{mins}m {secs}s* before next robbery!")
+                await update.message.reply_text(msg, parse_mode="Markdown")
+                return
+        except ValueError:
+            pass
+
+    # Add user to members
+    members = rob_data.get("members", [])
+    if user.id not in members:
+        members.append(user.id)
+    rob_data["members"] = members
+    data["bank_robbery"][cid] = rob_data
+    save_data(data)
+
+    u_name = user.first_name or "User"
+    count = len(members)
+
+    if count < BANKROB_MIN_PEOPLE:
+        needed = BANKROB_MIN_PEOPLE - count
+        if lang == "fa":
+            msg = (f"🏦💣 *{u_name}* وارد تیم سرقت شد!\n\n"
+                   f"👥 اعضای تیم: *{count}/{BANKROB_MIN_PEOPLE}*\n"
+                   f"⏳ هنوز *{needed}* نفر دیگه لازمه!\n"
+                   f"بقیه هم /bankrob بزنن تا عملیات شروع شه!")
+        else:
+            msg = (f"🏦💣 *{u_name}* joined the heist crew!\n\n"
+                   f"👥 Crew: *{count}/{BANKROB_MIN_PEOPLE}*\n"
+                   f"⏳ Need *{needed}* more people!\n"
+                   f"Others use /bankrob to join!")
+        await update.message.reply_text(msg, parse_mode="Markdown")
+        return
+
+    # Enough people — execute the heist!
+    # Markov AI acts as police — smarter AI = harder robbery
+    from handlers.markov_ai import get_brain_stats
+    brain_keys, _ = get_brain_stats()
+
+    # Success chance: starts at 45%, decreases as AI gets smarter
+    # Every 500 bigram keys reduces chance by 2% (AI learns patterns)
+    ai_penalty = min(0.20, (brain_keys / 500) * 0.02)
+    extra_people = max(0, count - BANKROB_MIN_PEOPLE)
+    success_chance = min(0.70, 0.45 - ai_penalty + extra_people * 0.05)
+    success_chance = max(0.15, success_chance)
+
+    # Reset robbery data
+    rob_data["members"] = []
+    rob_data["last_attempt"] = now.isoformat()
+    data["bank_robbery"][cid] = rob_data
+    save_data(data)
+
+    police_report = _police_report(lang)
+
+    if random.random() < success_chance:
+        # SUCCESS!
+        loot_per_person = BANKROB_BASE_LOOT + extra_people * BANKROB_BONUS_PER_EXTRA
+        total_loot = loot_per_person * count
+
+        for mid in members:
+            add_balance(chat.id, mid, loot_per_person)
+
+        if lang == "fa":
+            msg = (f"🏦💰 *سرقت موفقیت‌آمیز بود!*\n\n"
+                   f"👥 {count} نفر بانک رو زدن!\n"
+                   f"💵 هر نفر *{loot_per_person}$* سهم برد!\n"
+                   f"💰 کل غنیمت: *{total_loot}$*\n"
+                   f"🤫 فعلاً کسی نفهمید...\n"
+                   f"📊 شانس موفقیت: *{int(success_chance * 100)}%*")
+        else:
+            msg = (f"🏦💰 *Bank Heist SUCCESSFUL!*\n\n"
+                   f"👥 {count} people pulled off the heist!\n"
+                   f"💵 Each got *{loot_per_person}$*!\n"
+                   f"💰 Total loot: *{total_loot}$*\n"
+                   f"🤫 Nobody noticed... yet.\n"
+                   f"📊 Success chance was: *{int(success_chance * 100)}%*")
+    else:
+        # FAILURE! Everyone goes to jail
+        for mid in members:
+            set_jail_time(chat.id, mid,
+                          f"{now.isoformat()}|{BANKROB_JAIL_DURATION}")
+
+        if lang == "fa":
+            msg = (f"🚨🏦 *سرقت ناموفق!*\n\n"
+                   f"📄 گزارش پلیس:\n_{police_report}_\n\n"
+                   f"👮 پلیس هوش مصنوعی همه رو دستگیر کرد!\n"
+                   f"⛓️ همه {count} نفر *{BANKROB_JAIL_DURATION // 3600} ساعت* زندان!\n"
+                   f"🧠 هوش پلیس: *{brain_keys}* الگو\n"
+                   f"📊 شانس موفقیت: *{int(success_chance * 100)}%* بود")
+        else:
+            msg = (f"🚨🏦 *Bank Heist FAILED!*\n\n"
+                   f"📄 Police report:\n_{police_report}_\n\n"
+                   f"👮 AI Police caught everyone!\n"
+                   f"⛓️ All {count} members jailed for *{BANKROB_JAIL_DURATION // 3600} hours*!\n"
+                   f"🧠 Police AI: *{brain_keys}* patterns learned\n"
+                   f"📊 Success chance was: *{int(success_chance * 100)}%*")
+
+    await update.message.reply_text(msg, parse_mode="Markdown")
+
+
 def _apply_loan_penalty(loan: dict):
     """Add 20% penalty if > 24 h overdue (once)."""
     if loan.get("penalised"):

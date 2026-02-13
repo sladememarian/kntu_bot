@@ -5,6 +5,8 @@
 import random
 import io
 import os
+import math
+import time
 from datetime import date, datetime
 from telegram import Update
 from telegram.ext import ContextTypes
@@ -19,8 +21,10 @@ from storage import (
     get_daily_event, set_daily_event,
     set_user_name, get_user_name,
     get_stock_costs, set_stock_costs,
+    load_data, save_data,
 )
 from strings import STRINGS
+from config import ADMIN_IDS
 
 DAILY_AMOUNT = 200
 KOLLAR = "کلار $"
@@ -66,14 +70,21 @@ SPIN_REWARDS = [
 
 # --- Stock Companies ---
 COMPANIES = {
-    "AAPL":  {"name": "Apple 🍎",          "base": 180},
-    "TSLA":  {"name": "Tesla ⚡",          "base": 250},
-    "GOOG":  {"name": "Google 🔍",         "base": 140},
-    "AMZN":  {"name": "Amazon 📦",         "base": 190},
-    "MSFT":  {"name": "Microsoft 💻",      "base": 320},
-    "META":  {"name": "Meta 👤",           "base": 120},
-    "NVDA":  {"name": "Nvidia 🎮",         "base": 400},
-    "BTC":   {"name": "Bitcoin ₿",         "base": 500},
+    "AAPL":  {"name": "Apple 🍎",          "base": 180, "sector": "tech"},
+    "TSLA":  {"name": "Tesla ⚡",          "base": 250, "sector": "auto"},
+    "GOOG":  {"name": "Google 🔍",         "base": 140, "sector": "tech"},
+    "AMZN":  {"name": "Amazon 📦",         "base": 190, "sector": "retail"},
+    "MSFT":  {"name": "Microsoft 💻",      "base": 320, "sector": "tech"},
+    "META":  {"name": "Meta 👤",           "base": 120, "sector": "social"},
+    "NVDA":  {"name": "Nvidia 🎮",         "base": 400, "sector": "tech"},
+    "BTC":   {"name": "Bitcoin ₿",         "base": 500, "sector": "crypto"},
+    "ETH":   {"name": "Ethereum ◆",        "base": 200, "sector": "crypto"},
+    "DOGE":  {"name": "Dogecoin 🐕",       "base": 30,  "sector": "crypto"},
+    "NFLX":  {"name": "Netflix 🎬",        "base": 160, "sector": "media"},
+    "SPOT":  {"name": "Spotify 🎵",        "base": 100, "sector": "media"},
+    "DIS":   {"name": "Disney 🏰",         "base": 110, "sector": "media"},
+    "SONY":  {"name": "Sony 🎮",           "base": 130, "sector": "tech"},
+    "AMD":   {"name": "AMD 📡",            "base": 220, "sector": "tech"},
 }
 
 # --- Jail mock messages ---
@@ -298,8 +309,167 @@ async def bet_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
-# --------- /slots (slot machine) ---------
-SLOT_SYMBOLS = ["🍒", "🍋", "🍊", "🍇", "💎", "7️⃣"]
+# --------- /slots (slot machine) — PIXEL ART MEGA UPGRADE ---------
+SLOT_SYMBOLS = ["🍒", "🍋", "🍊", "🍇", "💎", "7️⃣", "🔔", "⭐", "🍀"]
+
+# Symbol weights (lower = rarer), payouts (3-match multiplier, 2-match multiplier)
+SLOT_TABLE = {
+    "💎": {"weight": 2,  "x3": 25, "x2": 3},
+    "7️⃣": {"weight": 3,  "x3": 15, "x2": 2},
+    "⭐": {"weight": 5,  "x3": 10, "x2": 2},
+    "🔔": {"weight": 8,  "x3": 7,  "x2": 1.5},
+    "🍇": {"weight": 12, "x3": 5,  "x2": 1},
+    "🍊": {"weight": 15, "x3": 4,  "x2": 1},
+    "🍒": {"weight": 18, "x3": 3,  "x2": 0.5},
+    "🍋": {"weight": 20, "x3": 2,  "x2": 0.5},
+    "🍀": {"weight": 10, "x3": 8,  "x2": 1.5},
+}
+
+# Build weighted pool
+_SLOT_POOL = []
+for sym, info in SLOT_TABLE.items():
+    _SLOT_POOL.extend([sym] * info["weight"])
+
+
+def _render_slot_machine(reels: list[str], bet: int, win: int, balance: int,
+                         user_name: str, lang: str, jackpot: bool = False) -> io.BytesIO:
+    """Render a pixel-art slot machine image."""
+    W, H = 480, 360
+    BG = (24, 24, 37)
+    SURFACE = (30, 30, 46)
+    OVERLAY = (49, 50, 68)
+    GOLD = (249, 226, 175)
+    RED = (243, 139, 168)
+    GREEN = (166, 227, 161)
+    BLUE = (137, 180, 250)
+    PURPLE = (203, 166, 247)
+    WHITE = (205, 214, 244)
+    DARK = (17, 17, 27)
+    PINK = (245, 194, 231)
+
+    img = Image.new("RGB", (W, H), BG)
+    draw = ImageDraw.Draw(img)
+    font = _get_font_econ(16)
+    font_lg = _get_font_econ(22)
+    font_sm = _get_font_econ(12)
+    font_xl = _get_font_econ(36)
+
+    # Starfield background
+    rng = random.Random(42)
+    for _ in range(80):
+        sx, sy = rng.randint(0, W-1), rng.randint(0, H-1)
+        b = rng.randint(60, 160)
+        draw.point((sx, sy), fill=(b, b, b))
+
+    # Machine body
+    draw.rectangle([30, 20, W-30, H-40], fill=OVERLAY)
+    draw.rectangle([32, 22, W-32, H-42], fill=SURFACE)
+    # Top decorative bar
+    draw.rectangle([30, 20, W-30, 50], fill=PURPLE)
+    draw.rectangle([32, 22, W-32, 48], fill=(180, 140, 220))
+    # Flashing lights on top
+    colors = [RED, GOLD, GREEN, BLUE, PINK, RED, GOLD, GREEN, BLUE, PINK]
+    for i, lx in enumerate(range(42, W-42, 40)):
+        c = colors[i % len(colors)]
+        draw.rectangle([lx, 24, lx+8, 32], fill=c)
+        draw.rectangle([lx+1, 25, lx+7, 31], fill=tuple(min(255, v+60) for v in c))
+
+    # Title
+    title = "🎰 MEGA SLOTS 🎰" if lang == "en" else "🎰 مگا اسلات 🎰"
+    tb = draw.textbbox((0, 0), title, font=font_lg)
+    draw.text(((W - tb[2] + tb[0]) // 2, 54), title, fill=GOLD, font=font_lg)
+
+    # Reel display area
+    reel_y = 90
+    reel_h = 100
+    reel_w = 100
+    gap = 20
+    total_w = len(reels) * reel_w + (len(reels)-1) * gap
+    start_x = (W - total_w) // 2
+
+    # Reel background
+    draw.rectangle([start_x - 10, reel_y - 10, start_x + total_w + 10, reel_y + reel_h + 10],
+                    fill=DARK)
+    draw.rectangle([start_x - 8, reel_y - 8, start_x + total_w + 8, reel_y + reel_h + 8],
+                    fill=(40, 40, 55))
+
+    # Draw each reel
+    for i, sym in enumerate(reels):
+        rx = start_x + i * (reel_w + gap)
+        # Reel slot background
+        draw.rectangle([rx, reel_y, rx + reel_w, reel_y + reel_h], fill=(20, 20, 30))
+        draw.rectangle([rx+2, reel_y+2, rx+reel_w-2, reel_y+reel_h-2], fill=(35, 35, 50))
+        # Inner highlight
+        draw.line([rx+2, reel_y+2, rx+reel_w-2, reel_y+2], fill=(50, 50, 70))
+        # Symbol text (centered)
+        stb = draw.textbbox((0, 0), sym, font=font_xl)
+        sw, sh = stb[2]-stb[0], stb[3]-stb[1]
+        draw.text((rx + (reel_w - sw) // 2, reel_y + (reel_h - sh) // 2),
+                  sym, fill=WHITE, font=font_xl)
+        # Separator line
+        if i < len(reels) - 1:
+            draw.rectangle([rx + reel_w + gap//2 - 1, reel_y, rx + reel_w + gap//2 + 1, reel_y + reel_h],
+                           fill=OVERLAY)
+
+    # Pay line arrow
+    arrow_y = reel_y + reel_h // 2
+    draw.polygon([(start_x - 18, arrow_y - 6), (start_x - 8, arrow_y),
+                  (start_x - 18, arrow_y + 6)], fill=RED)
+    draw.polygon([(start_x + total_w + 18, arrow_y - 6), (start_x + total_w + 8, arrow_y),
+                  (start_x + total_w + 18, arrow_y + 6)], fill=RED)
+
+    # Result area
+    result_y = reel_y + reel_h + 20
+    if jackpot:
+        # Jackpot celebration
+        draw.rectangle([40, result_y, W-40, result_y + 40], fill=GOLD)
+        draw.rectangle([42, result_y+2, W-42, result_y+38], fill=(200, 170, 80))
+        jt = "💎 JACKPOT! 💎" if lang == "en" else "💎 جکپات! 💎"
+        jtb = draw.textbbox((0, 0), jt, font=font_lg)
+        draw.text(((W - jtb[2] + jtb[0]) // 2, result_y + 8), jt, fill=DARK, font=font_lg)
+        # Explosion effect around jackpot
+        for angle in range(0, 360, 20):
+            rad = math.radians(angle)
+            for r in range(50, 90, 8):
+                px = int(W//2 + r * math.cos(rad))
+                py = int(result_y + 20 + r * 0.4 * math.sin(rad))
+                c = random.choice([GOLD, RED, PINK, GREEN])
+                draw.rectangle([px, py, px+3, py+3], fill=c)
+    elif win > 0:
+        draw.rectangle([60, result_y, W-60, result_y + 35], fill=GREEN)
+        draw.rectangle([62, result_y+2, W-62, result_y+33], fill=(120, 200, 120))
+        wt = f"WIN +{win}$" if lang == "en" else f"برد +{win}$"
+        wtb = draw.textbbox((0, 0), wt, font=font_lg)
+        draw.text(((W - wtb[2] + wtb[0]) // 2, result_y + 5), wt, fill=DARK, font=font_lg)
+    else:
+        draw.rectangle([80, result_y, W-80, result_y + 30], fill=RED)
+        draw.rectangle([82, result_y+2, W-82, result_y+28], fill=(180, 100, 100))
+        lt = f"LOST -{bet}$" if lang == "en" else f"باخت -{bet}$"
+        ltb = draw.textbbox((0, 0), lt, font=font)
+        draw.text(((W - ltb[2] + ltb[0]) // 2, result_y + 5), lt, fill=WHITE, font=font)
+
+    # Info bar at bottom
+    info_y = H - 60
+    draw.rectangle([30, info_y, W-30, H-20], fill=OVERLAY)
+    draw.rectangle([32, info_y+2, W-32, H-22], fill=SURFACE)
+
+    name_short = user_name[:16] if len(user_name) > 16 else user_name
+    if lang == "fa":
+        info = f"👤 {name_short}  |  🎲 شرط: {bet}$  |  💰 موجودی: {balance}$"
+    else:
+        info = f"👤 {name_short}  |  🎲 Bet: {bet}$  |  💰 Balance: {balance}$"
+    draw.text((44, info_y + 8), info, fill=WHITE, font=font_sm)
+
+    # Machine decorative bolts
+    for bx, by in [(36, 26), (W-44, 26), (36, H-48), (W-44, H-48)]:
+        draw.ellipse([bx, by, bx+6, by+6], fill=(100, 100, 110))
+        draw.point((bx+3, by+2), fill=(160, 160, 170))
+
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    buf.seek(0)
+    return buf
+
 
 async def slots_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
@@ -316,6 +486,11 @@ async def slots_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(s["bet_usage"], parse_mode="Markdown")
         return
 
+    if amount > 5000:
+        msg = "❌ حداکثر شرط *5000$* است." if lang == "fa" else "❌ Max bet is *5000$*."
+        await update.message.reply_text(msg, parse_mode="Markdown")
+        return
+
     bal = get_balance(chat.id, user.id)
     if amount > bal:
         await update.message.reply_text(
@@ -323,34 +498,54 @@ async def slots_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    s1 = random.choice(SLOT_SYMBOLS)
-    s2 = random.choice(SLOT_SYMBOLS)
-    s3 = random.choice(SLOT_SYMBOLS)
-    display = f"[ {s1} | {s2} | {s3} ]"
+    # Spin 3 reels from weighted pool
+    s1 = random.choice(_SLOT_POOL)
+    s2 = random.choice(_SLOT_POOL)
+    s3 = random.choice(_SLOT_POOL)
+    reels = [s1, s2, s3]
 
+    is_jackpot = False
     if s1 == s2 == s3:
-        # Jackpot! 3x
-        multiplier = 5 if s1 == "💎" else (3 if s1 == "7️⃣" else 2)
-        winnings = amount * multiplier
+        # JACKPOT — all 3 match!
+        mult = SLOT_TABLE[s1]["x3"]
+        winnings = amount * mult
+        is_jackpot = (s1 in ("💎", "7️⃣", "⭐"))
         new_bal = add_balance(chat.id, user.id, winnings)
-        await update.message.reply_text(
-            s["slots_jackpot"].format(display=display, winnings=winnings, balance=new_bal),
-            parse_mode="Markdown",
-        )
+        u_name = (user.first_name or "User")
+
+        buf = _render_slot_machine(reels, amount, winnings, new_bal, u_name, lang, jackpot=is_jackpot)
+        if lang == "fa":
+            caption = f"🎰 *{'💎 جکپات!' if is_jackpot else 'سه‌تایی!'}* +{winnings}$ ({mult}x)\n💰 موجودی: *{new_bal}$*"
+        else:
+            caption = f"🎰 *{'💎 JACKPOT!' if is_jackpot else 'Triple Match!'}* +{winnings}$ ({mult}x)\n💰 Balance: *{new_bal}$*"
+        await update.message.reply_photo(photo=buf, caption=caption, parse_mode="Markdown")
+
     elif s1 == s2 or s2 == s3 or s1 == s3:
-        # Two match: win back half
-        winnings = amount // 2
+        # Two match
+        matched = s1 if s1 == s2 else (s2 if s2 == s3 else s1)
+        mult = SLOT_TABLE[matched]["x2"]
+        winnings = int(amount * mult)
         new_bal = add_balance(chat.id, user.id, winnings)
-        await update.message.reply_text(
-            s["slots_partial"].format(display=display, winnings=winnings, balance=new_bal),
-            parse_mode="Markdown",
-        )
+        u_name = (user.first_name or "User")
+
+        buf = _render_slot_machine(reels, amount, winnings, new_bal, u_name, lang)
+        if lang == "fa":
+            caption = f"🎰 دوتایی! +{winnings}$ ({mult}x)\n💰 موجودی: *{new_bal}$*"
+        else:
+            caption = f"🎰 Two match! +{winnings}$ ({mult}x)\n💰 Balance: *{new_bal}$*"
+        await update.message.reply_photo(photo=buf, caption=caption, parse_mode="Markdown")
+
     else:
+        # Loss
         new_bal = add_balance(chat.id, user.id, -amount)
-        await update.message.reply_text(
-            s["slots_lose"].format(display=display, amount=amount, balance=new_bal),
-            parse_mode="Markdown",
-        )
+        u_name = (user.first_name or "User")
+
+        buf = _render_slot_machine(reels, amount, 0, new_bal, u_name, lang)
+        if lang == "fa":
+            caption = f"🎰 باختی! -{amount}$\n💰 موجودی: *{new_bal}$*"
+        else:
+            caption = f"🎰 You lost! -{amount}$\n💰 Balance: *{new_bal}$*"
+        await update.message.reply_photo(photo=buf, caption=caption, parse_mode="Markdown")
 
 
 # --------- /dice (roll 1-6, bet odd/even or number) ---------
@@ -750,7 +945,7 @@ def _get_font_econ(size: int) -> ImageFont.FreeTypeFont:
 
 
 def _render_stock_chart(ticker: str) -> io.BytesIO:
-    """Render a 30-day price chart for a stock ticker."""
+    """Render an enhanced 30-day price chart for a stock ticker with pixel art style."""
     today_ord = date.today().toordinal()
     prices = []
     for i in range(30):
@@ -761,22 +956,57 @@ def _render_stock_chart(ticker: str) -> io.BytesIO:
         swing = rng.uniform(-0.30, 0.40)
         prices.append(max(10, int(base * (1 + swing))))
 
-    W, H = 600, 320
-    PAD_L, PAD_R, PAD_T, PAD_B = 60, 30, 60, 40
-    BG = (30, 30, 46)
-    GRID = (50, 50, 70)
+    W, H = 640, 380
+    PAD_L, PAD_R, PAD_T, PAD_B = 60, 30, 70, 55
+    BG = (24, 24, 37)
+    SURFACE = (30, 30, 46)
+    GRID = (45, 45, 62)
     TEXT_CLR = (205, 214, 244)
     TITLE_CLR = (137, 180, 250)
+    GOLD = (249, 226, 175)
+    GREEN = (166, 227, 161)
+    RED = (243, 139, 168)
 
     img = Image.new("RGB", (W, H), BG)
     draw = ImageDraw.Draw(img)
-    font = _get_font_econ(14)
+    font = _get_font_econ(13)
     font_title = _get_font_econ(18)
+    font_sm = _get_font_econ(11)
+    font_lg = _get_font_econ(16)
 
-    # Title
-    title = f"{COMPANIES[ticker]['name']} ({ticker}) — 30 Day Chart"
+    # Background panel
+    draw.rectangle([5, 5, W-5, H-5], fill=SURFACE)
+
+    # Starfield
+    rng_stars = random.Random(hash(ticker))
+    for _ in range(50):
+        sx, sy = rng_stars.randint(0, W), rng_stars.randint(0, 50)
+        draw.point((sx, sy), fill=(80, 80, 100))
+
+    # Title bar
+    draw.rectangle([5, 5, W-5, 55], fill=(49, 50, 68))
+    sector = COMPANIES[ticker].get("sector", "")
+    title = f"{COMPANIES[ticker]['name']} ({ticker})"
     tb = draw.textbbox((0, 0), title, font=font_title)
-    draw.text(((W - tb[2] + tb[0]) // 2, 12), title, fill=TITLE_CLR, font=font_title)
+    draw.text((15, 12), title, fill=TITLE_CLR, font=font_title)
+
+    # Sector badge
+    if sector:
+        badge_colors = {"tech": (137, 180, 250), "crypto": (249, 226, 175),
+                        "auto": (166, 227, 161), "retail": (203, 166, 247),
+                        "social": (245, 194, 231), "media": (148, 226, 213)}
+        bc = badge_colors.get(sector, TEXT_CLR)
+        draw.rounded_rectangle([W - 100, 15, W - 15, 35], radius=6, fill=bc)
+        draw.text((W - 95, 17), sector.upper(), fill=(17, 17, 27), font=font_sm)
+
+    # Price + change in title
+    cp = prices[-1]
+    change = cp - prices[0]
+    pct = (change / prices[0] * 100) if prices[0] else 0
+    sign = "+" if change >= 0 else ""
+    trend_clr = GREEN if change >= 0 else RED
+    price_text = f"${cp} ({sign}{change}, {sign}{pct:.1f}%)"
+    draw.text((15, 36), price_text, fill=trend_clr, font=font_lg)
 
     min_p = min(prices) - 10
     max_p = max(prices) + 10
@@ -788,7 +1018,7 @@ def _render_stock_chart(ticker: str) -> io.BytesIO:
         y = PAD_T + int(chart_h * i / 4)
         draw.line([(PAD_L, y), (W - PAD_R, y)], fill=GRID, width=1)
         val = max_p - (max_p - min_p) * i / 4
-        draw.text((5, y - 7), f"${int(val)}", fill=TEXT_CLR, font=font)
+        draw.text((5, y - 7), f"${int(val)}", fill=TEXT_CLR, font=font_sm)
 
     # Plot points
     points = []
@@ -798,30 +1028,47 @@ def _render_stock_chart(ticker: str) -> io.BytesIO:
         points.append((x, y))
 
     # Gradient fill under line
+    bottom = PAD_T + chart_h
+    fill_clr = (40, 70, 50) if change >= 0 else (70, 40, 45)
     for i in range(len(points) - 1):
         x1, y1 = points[i]
         x2, y2 = points[i + 1]
-        bottom = PAD_T + chart_h
-        draw.polygon([(x1, y1), (x2, y2), (x2, bottom), (x1, bottom)],
-                      fill=(137, 180, 250, 30) if prices[-1] >= prices[0] else (243, 139, 168, 30))
+        draw.polygon([(x1, y1), (x2, y2), (x2, bottom), (x1, bottom)], fill=fill_clr)
 
-    # Line color based on trend
-    line_clr = (166, 227, 161) if prices[-1] >= prices[0] else (243, 139, 168)
-    draw.line(points, fill=line_clr, width=2)
+    # Line
+    draw.line(points, fill=trend_clr, width=2)
 
-    # Dots on first and last
-    for idx in [0, -1]:
+    # Day bars along bottom (mini candlestick feel)
+    bar_w = max(2, chart_w // 35)
+    for i in range(1, len(prices)):
+        x = PAD_L + int(chart_w * i / 29)
+        prev_p = prices[i - 1]
+        cur_p = prices[i]
+        bar_clr = GREEN if cur_p >= prev_p else RED
+        bar_h = min(abs(cur_p - prev_p) * chart_h // max(max_p - min_p, 1), 20)
+        draw.rectangle([x - bar_w//2, bottom + 3, x + bar_w//2, bottom + 3 + max(bar_h, 2)],
+                       fill=bar_clr)
+
+    # Highlight dots  
+    for idx in [0, len(points) - 1]:
         px, py = points[idx]
-        draw.ellipse([px - 4, py - 4, px + 4, py + 4], fill=line_clr)
-        draw.text((px - 10, py - 18), f"${prices[idx]}", fill=TEXT_CLR, font=font)
+        draw.ellipse([px - 4, py - 4, px + 4, py + 4], fill=trend_clr)
+        draw.ellipse([px - 2, py - 2, px + 2, py + 2], fill=(255, 255, 255))
 
-    # Current price label
-    cp = prices[-1]
-    change = cp - prices[0]
-    pct = (change / prices[0] * 100) if prices[0] else 0
-    sign = "+" if change >= 0 else ""
-    label = f"Now: ${cp} ({sign}{change}, {sign}{pct:.1f}%)"
-    draw.text((PAD_L, H - 25), label, fill=line_clr, font=font)
+    # High/Low markers
+    max_idx = prices.index(max(prices))
+    min_idx = prices.index(min(prices))
+    if max_idx < len(points):
+        hx, hy = points[max_idx]
+        draw.text((hx - 8, hy - 16), f"H${max(prices)}", fill=GREEN, font=font_sm)
+    if min_idx < len(points):
+        lx, ly = points[min_idx]
+        draw.text((lx - 8, ly + 6), f"L${min(prices)}", fill=RED, font=font_sm)
+
+    # Bottom info bar
+    draw.rectangle([5, H - 30, W - 5, H - 5], fill=(49, 50, 68))
+    info = f"30D Range: ${min(prices)}-${max(prices)} | Avg: ${sum(prices)//len(prices)} | Vol: {sector}"
+    draw.text((12, H - 25), info, fill=TEXT_CLR, font=font_sm)
 
     buf = io.BytesIO()
     img.save(buf, format="PNG")
@@ -837,15 +1084,27 @@ async def invest_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     _remember_user(chat.id, user)
 
-    # /invest  → show all companies & prices
+    # /invest  → show all companies & prices grouped by sector
     if not context.args:
-        lines = []
+        sectors = {}
         for ticker, info in COMPANIES.items():
-            price = _get_price(ticker)
-            lines.append(f"📊 *{ticker}* — {info['name']} — *{price}$*/share")
+            sec = info.get("sector", "other")
+            sectors.setdefault(sec, []).append((ticker, info))
+
+        sector_emojis = {"tech": "💻", "crypto": "₿", "auto": "🚗", "retail": "📦",
+                         "social": "👥", "media": "🎬"}
+        lines = []
+        for sec, items in sectors.items():
+            emoji = sector_emojis.get(sec, "📊")
+            lines.append(f"\n{emoji} *{sec.upper()}:*")
+            for ticker, info in items:
+                price = _get_price(ticker)
+                lines.append(f"  📊 *{ticker}* — {info['name']} — *{price}$*/share")
+
         header = s["invest_list"]
+        footer = "\n\n💡 `/invest TSLA chart` — نمودار" if lang == "fa" else "\n\n💡 `/invest TSLA chart` — Show chart"
         await update.message.reply_text(
-            header + "\n".join(lines), parse_mode="Markdown"
+            header + "\n".join(lines) + footer, parse_mode="Markdown"
         )
         return
 
@@ -1137,3 +1396,611 @@ async def profit_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         header + "\n".join(lines) + "\n\n" + footer,
         parse_mode="Markdown",
     )
+
+
+# ═══════════════════════════════════════════════════
+# /fish — Fishing mini-game (cooldown: 30 min)
+# ═══════════════════════════════════════════════════
+FISH_COOLDOWN = 1800  # 30 minutes
+
+FISH_CATCHES = {
+    "fa": [
+        ("🐟 ماهی کوچک", 20, 35),
+        ("🐠 ماهی استوایی", 40, 20),
+        ("🐡 بادکنک‌ماهی", 60, 15),
+        ("🦐 میگو", 30, 25),
+        ("🦀 خرچنگ", 80, 10),
+        ("🐙 اختاپوس", 120, 5),
+        ("🦈 کوسه!", 250, 3),
+        ("👢 کفش کهنه", 0, 15),
+        ("🗑️ زباله", -10, 10),
+        ("💎 گنج دریایی!", 500, 2),
+        ("🐋 نهنگ!", 400, 3),
+        ("🪸 مرجان زیبا", 50, 12),
+    ],
+    "en": [
+        ("🐟 Small Fish", 20, 35),
+        ("🐠 Tropical Fish", 40, 20),
+        ("🐡 Pufferfish", 60, 15),
+        ("🦐 Shrimp", 30, 25),
+        ("🦀 Crab", 80, 10),
+        ("🐙 Octopus", 120, 5),
+        ("🦈 Shark!", 250, 3),
+        ("👢 Old Boot", 0, 15),
+        ("🗑️ Trash", -10, 10),
+        ("💎 Sea Treasure!", 500, 2),
+        ("🐋 Whale!", 400, 3),
+        ("🪸 Coral", 50, 12),
+    ],
+}
+
+
+def _render_fish_scene(catch_name: str, reward: int, user_name: str, balance: int, lang: str) -> io.BytesIO:
+    W, H = 400, 280
+    img = Image.new("RGB", (W, H), (15, 23, 42))
+    draw = ImageDraw.Draw(img)
+    font = _get_font_econ(14)
+    font_lg = _get_font_econ(20)
+    font_sm = _get_font_econ(11)
+
+    # Sky gradient
+    for y in range(80):
+        r = int(15 + y * 0.4)
+        g = int(23 + y * 0.8)
+        b = int(42 + y * 1.2)
+        draw.line([(0, y), (W, y)], fill=(r, g, b))
+
+    # Stars
+    rng = random.Random(42)
+    for _ in range(30):
+        sx, sy = rng.randint(0, W), rng.randint(0, 60)
+        draw.point((sx, sy), fill=(200, 200, 220))
+
+    # Water
+    for y in range(80, H):
+        r = int(20 + (y - 80) * 0.15)
+        g = int(50 + (y - 80) * 0.4)
+        b = int(120 + min((y - 80) * 0.3, 60))
+        draw.line([(0, y), (W, y)], fill=(r, g, b))
+
+    # Waves
+    for x in range(0, W, 20):
+        draw.arc([x, 75, x + 20, 88], start=0, end=180, fill=(100, 180, 240), width=2)
+
+    # Fishing rod
+    draw.line([(50, 10), (50, 75)], fill=(139, 90, 43), width=3)
+    draw.line([(50, 10), (180, 10)], fill=(139, 90, 43), width=2)
+    draw.line([(180, 10), (180, 140)], fill=(180, 180, 180), width=1)
+    draw.ellipse([176, 138, 184, 146], fill=(200, 200, 200))
+
+    # Catch display
+    ctb = draw.textbbox((0, 0), catch_name, font=font_lg)
+    draw.text(((W - ctb[2] + ctb[0]) // 2, 160), catch_name, fill=(249, 226, 175), font=font_lg)
+
+    # Reward
+    if reward > 0:
+        rt = f"+{reward}$" if lang == "en" else f"+{reward}$"
+        draw.text(((W - draw.textbbox((0,0), rt, font=font_lg)[2]) // 2, 190),
+                  rt, fill=(166, 227, 161), font=font_lg)
+    elif reward < 0:
+        rt = f"{reward}$"
+        draw.text(((W - draw.textbbox((0,0), rt, font=font_lg)[2]) // 2, 190),
+                  rt, fill=(243, 139, 168), font=font_lg)
+
+    # Info bar
+    draw.rectangle([0, H - 35, W, H], fill=(30, 30, 46))
+    info = f"🎣 {user_name[:16]}  |  💰 {balance}$"
+    draw.text((10, H - 28), info, fill=(205, 214, 244), font=font_sm)
+
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    buf.seek(0)
+    return buf
+
+
+async def fish_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat = update.effective_chat
+    lang = get_lang(chat.id)
+    s = STRINGS[lang]
+    user = update.effective_user
+    _remember_user(chat.id, user)
+
+    # Cooldown
+    data = load_data()
+    last_fish = data.get("last_fish", {}).get(str(chat.id), {}).get(str(user.id), 0)
+    now = time.time()
+    if now - last_fish < FISH_COOLDOWN:
+        remaining = int(FISH_COOLDOWN - (now - last_fish))
+        mins = remaining // 60
+        if lang == "fa":
+            await update.message.reply_text(f"🎣 باید *{mins}* دقیقه صبر کنی تا دوباره ماهیگیری کنی!", parse_mode="Markdown")
+        else:
+            await update.message.reply_text(f"🎣 Wait *{mins}* minutes before fishing again!", parse_mode="Markdown")
+        return
+
+    # Set cooldown
+    data.setdefault("last_fish", {}).setdefault(str(chat.id), {})[str(user.id)] = now
+    save_data(data)
+
+    # Catch a fish based on weighted random
+    catches = FISH_CATCHES.get(lang, FISH_CATCHES["en"])
+    names = [c[0] for c in catches]
+    rewards = [c[1] for c in catches]
+    weights = [c[2] for c in catches]
+
+    idx = random.choices(range(len(catches)), weights=weights, k=1)[0]
+    catch_name = names[idx]
+    reward = rewards[idx]
+
+    new_bal = add_balance(chat.id, user.id, reward) if reward != 0 else get_balance(chat.id, user.id)
+    u_name = user.first_name or "User"
+
+    buf = _render_fish_scene(catch_name, reward, u_name, new_bal, lang)
+    if lang == "fa":
+        caption = f"🎣 *{u_name}* ماهیگیری کرد!\n\nگرفت: {catch_name}"
+        if reward > 0:
+            caption += f"\n💰 +{reward}$ — موجودی: *{new_bal}$*"
+        elif reward < 0:
+            caption += f"\n💸 {reward}$ — موجودی: *{new_bal}$*"
+        else:
+            caption += f"\n😅 چیز بدرد بخوری نبود!"
+    else:
+        caption = f"🎣 *{u_name}* went fishing!\n\nCaught: {catch_name}"
+        if reward > 0:
+            caption += f"\n💰 +{reward}$ — Balance: *{new_bal}$*"
+        elif reward < 0:
+            caption += f"\n💸 {reward}$ — Balance: *{new_bal}$*"
+        else:
+            caption += f"\n😅 Nothing useful!"
+    await update.message.reply_photo(photo=buf, caption=caption, parse_mode="Markdown")
+
+
+# ═══════════════════════════════════════════════════
+# /mine — Mining mini-game (cooldown: 45 min)
+# ═══════════════════════════════════════════════════
+MINE_COOLDOWN = 2700  # 45 minutes
+
+MINE_FINDS = {
+    "fa": [
+        ("🪨 سنگ معمولی", 10, 30),
+        ("🥉 برنز", 30, 22),
+        ("🥈 نقره", 60, 15),
+        ("🥇 طلا", 120, 8),
+        ("💎 الماس!", 300, 4),
+        ("🔥 یاقوت!", 200, 6),
+        ("🪨 ریزش معدن!", -50, 8),
+        ("💀 گاز سمی!", -80, 3),
+        ("🏺 گنجینه باستانی!", 600, 2),
+        ("⚒️ معدن خالی", 5, 15),
+        ("🌋 سنگ آتشفشانی", 50, 12),
+    ],
+    "en": [
+        ("🪨 Common Rock", 10, 30),
+        ("🥉 Bronze Ore", 30, 22),
+        ("🥈 Silver Ore", 60, 15),
+        ("🥇 Gold Nugget", 120, 8),
+        ("💎 Diamond!", 300, 4),
+        ("🔥 Ruby!", 200, 6),
+        ("🪨 Cave-in!", -50, 8),
+        ("💀 Toxic Gas!", -80, 3),
+        ("🏺 Ancient Treasure!", 600, 2),
+        ("⚒️ Empty Mine", 5, 15),
+        ("🌋 Volcanic Rock", 50, 12),
+    ],
+}
+
+
+def _render_mine_scene(find_name: str, reward: int, user_name: str, balance: int, lang: str) -> io.BytesIO:
+    W, H = 400, 280
+    img = Image.new("RGB", (W, H), (30, 20, 15))
+    draw = ImageDraw.Draw(img)
+    font = _get_font_econ(14)
+    font_lg = _get_font_econ(20)
+    font_sm = _get_font_econ(11)
+
+    # Cave walls
+    for y in range(H - 35):
+        r = int(30 + (y % 40) * 0.5)
+        g = int(20 + (y % 30) * 0.3)
+        b = int(15 + (y % 20) * 0.2)
+        draw.line([(0, y), (W, y)], fill=(r, g, b))
+
+    # Rock texture
+    rng = random.Random(99)
+    for _ in range(200):
+        rx, ry = rng.randint(0, W), rng.randint(0, H-40)
+        shade = rng.randint(25, 55)
+        draw.point((rx, ry), fill=(shade, shade - 5, shade - 10))
+
+    # Cave pillars
+    for px in [40, W - 40]:
+        for py in range(0, H - 40, 4):
+            draw.rectangle([px - 8, py, px + 8, py + 3], fill=(50, 35, 25))
+
+    # Torch on left
+    draw.rectangle([80, 60, 86, 100], fill=(100, 70, 30))
+    for i in range(10):
+        draw.ellipse([76 - i, 50 - i, 90 + i, 64], fill=(255 - i*10, 150 - i*5, 50))
+    draw.ellipse([80, 48, 86, 56], fill=(255, 220, 100))
+
+    # Crystal sparkles
+    for _ in range(8):
+        cx, cy = rng.randint(100, W-100), rng.randint(30, 150)
+        c = rng.choice([(100, 200, 255), (200, 100, 255), (255, 255, 100), (100, 255, 200)])
+        draw.rectangle([cx, cy, cx + 3, cy + 3], fill=c)
+
+    # Find display
+    ftb = draw.textbbox((0, 0), find_name, font=font_lg)
+    draw.text(((W - ftb[2] + ftb[0]) // 2, 170), find_name, fill=(249, 226, 175), font=font_lg)
+
+    if reward > 0:
+        rt = f"+{reward}$"
+        draw.text(((W - draw.textbbox((0,0), rt, font=font_lg)[2]) // 2, 200),
+                  rt, fill=(166, 227, 161), font=font_lg)
+    elif reward < 0:
+        rt = f"{reward}$"
+        draw.text(((W - draw.textbbox((0,0), rt, font=font_lg)[2]) // 2, 200),
+                  rt, fill=(243, 139, 168), font=font_lg)
+
+    # Info bar
+    draw.rectangle([0, H - 35, W, H], fill=(30, 30, 46))
+    info = f"⛏️ {user_name[:16]}  |  💰 {balance}$"
+    draw.text((10, H - 28), info, fill=(205, 214, 244), font=font_sm)
+
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    buf.seek(0)
+    return buf
+
+
+async def mine_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat = update.effective_chat
+    lang = get_lang(chat.id)
+    s = STRINGS[lang]
+    user = update.effective_user
+    _remember_user(chat.id, user)
+
+    # Cooldown
+    data = load_data()
+    last_mine = data.get("last_mine", {}).get(str(chat.id), {}).get(str(user.id), 0)
+    now = time.time()
+    if now - last_mine < MINE_COOLDOWN:
+        remaining = int(MINE_COOLDOWN - (now - last_mine))
+        mins = remaining // 60
+        if lang == "fa":
+            await update.message.reply_text(f"⛏️ باید *{mins}* دقیقه صبر کنی تا دوباره معدن بزنی!", parse_mode="Markdown")
+        else:
+            await update.message.reply_text(f"⛏️ Wait *{mins}* minutes before mining again!", parse_mode="Markdown")
+        return
+
+    data.setdefault("last_mine", {}).setdefault(str(chat.id), {})[str(user.id)] = now
+    save_data(data)
+
+    finds = MINE_FINDS.get(lang, MINE_FINDS["en"])
+    names = [f[0] for f in finds]
+    rewards = [f[1] for f in finds]
+    weights = [f[2] for f in finds]
+
+    idx = random.choices(range(len(finds)), weights=weights, k=1)[0]
+    find_name = names[idx]
+    reward = rewards[idx]
+
+    new_bal = add_balance(chat.id, user.id, reward) if reward != 0 else get_balance(chat.id, user.id)
+    u_name = user.first_name or "User"
+
+    buf = _render_mine_scene(find_name, reward, u_name, new_bal, lang)
+    if lang == "fa":
+        caption = f"⛏️ *{u_name}* رفت معدن!\n\nپیدا کرد: {find_name}"
+        if reward > 0:
+            caption += f"\n💰 +{reward}$ — موجودی: *{new_bal}$*"
+        elif reward < 0:
+            caption += f"\n💸 {reward}$ — موجودی: *{new_bal}$*"
+        else:
+            caption += f"\n😐 چیز خاصی نبود."
+    else:
+        caption = f"⛏️ *{u_name}* went mining!\n\nFound: {find_name}"
+        if reward > 0:
+            caption += f"\n💰 +{reward}$ — Balance: *{new_bal}$*"
+        elif reward < 0:
+            caption += f"\n💸 {reward}$ — Balance: *{new_bal}$*"
+        else:
+            caption += f"\n😐 Nothing special."
+    await update.message.reply_photo(photo=buf, caption=caption, parse_mode="Markdown")
+
+
+# ═══════════════════════════════════════════════════
+# /quest — Daily quest for bonus rewards
+# ═══════════════════════════════════════════════════
+QUESTS = {
+    "fa": [
+        {"name": "🗡️ شکست اژدها", "desc": "اژدها رو شکست دادی!", "reward": 300, "chance": 50},
+        {"name": "🏰 نجات شاهزاده", "desc": "شاهزاده رو نجات دادی!", "reward": 250, "chance": 45},
+        {"name": "🗺️ کشف گنج", "desc": "گنجینه پیدا کردی!", "reward": 400, "chance": 35},
+        {"name": "🧙 شکست جادوگر تاریک", "desc": "جادوگر تاریک رو نابود کردی!", "reward": 350, "chance": 40},
+        {"name": "🐉 شکار هیولا", "desc": "هیولا رو شکار کردی!", "reward": 200, "chance": 55},
+        {"name": "🏴‍☠️ جنگ با دزدان دریایی", "desc": "دزدان دریایی رو شکست دادی!", "reward": 280, "chance": 45},
+        {"name": "🌋 عبور از آتشفشان", "desc": "از آتشفشان رد شدی!", "reward": 320, "chance": 40},
+        {"name": "👻 پاکسازی خانه متروکه", "desc": "ارواح رو دور کردی!", "reward": 180, "chance": 60},
+    ],
+    "en": [
+        {"name": "🗡️ Slay the Dragon", "desc": "You defeated the dragon!", "reward": 300, "chance": 50},
+        {"name": "🏰 Rescue the Princess", "desc": "You rescued the princess!", "reward": 250, "chance": 45},
+        {"name": "🗺️ Find the Treasure", "desc": "You found the treasure!", "reward": 400, "chance": 35},
+        {"name": "🧙 Defeat the Dark Wizard", "desc": "You destroyed the dark wizard!", "reward": 350, "chance": 40},
+        {"name": "🐉 Monster Hunt", "desc": "You hunted the monster!", "reward": 200, "chance": 55},
+        {"name": "🏴‍☠️ Pirate Battle", "desc": "You defeated the pirates!", "reward": 280, "chance": 45},
+        {"name": "🌋 Volcano Crossing", "desc": "You crossed the volcano!", "reward": 320, "chance": 40},
+        {"name": "👻 Haunted House", "desc": "You banished the ghosts!", "reward": 180, "chance": 60},
+    ],
+}
+
+
+async def quest_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat = update.effective_chat
+    lang = get_lang(chat.id)
+    s = STRINGS[lang]
+    user = update.effective_user
+    _remember_user(chat.id, user)
+
+    # One quest per day
+    data = load_data()
+    today = date.today().isoformat()
+    last_quest = data.get("last_quest", {}).get(str(chat.id), {}).get(str(user.id), "")
+    if last_quest == today:
+        if lang == "fa":
+            await update.message.reply_text("⚔️ تو امروز یه کوئست انجام دادی! فردا دوباره بیا.", parse_mode="Markdown")
+        else:
+            await update.message.reply_text("⚔️ You've already done a quest today! Come back tomorrow.", parse_mode="Markdown")
+        return
+
+    data.setdefault("last_quest", {}).setdefault(str(chat.id), {})[str(user.id)] = today
+    save_data(data)
+
+    quests = QUESTS.get(lang, QUESTS["en"])
+    quest = random.choice(quests)
+    u_name = user.first_name or "User"
+
+    success = random.randint(1, 100) <= quest["chance"]
+    if success:
+        reward = quest["reward"]
+        new_bal = add_balance(chat.id, user.id, reward)
+        if lang == "fa":
+            text = (
+                f"⚔️ *کوئست: {quest['name']}*\n\n"
+                f"✅ {quest['desc']}\n\n"
+                f"💰 جایزه: *+{reward}$*\n"
+                f"💳 موجودی: *{new_bal}$*"
+            )
+        else:
+            text = (
+                f"⚔️ *Quest: {quest['name']}*\n\n"
+                f"✅ {quest['desc']}\n\n"
+                f"💰 Reward: *+{reward}$*\n"
+                f"💳 Balance: *{new_bal}$*"
+            )
+    else:
+        # Fail — small consolation
+        consolation = 20
+        new_bal = add_balance(chat.id, user.id, consolation)
+        if lang == "fa":
+            text = (
+                f"⚔️ *کوئست: {quest['name']}*\n\n"
+                f"❌ شکست خوردی! ولی *{consolation}$* تلاش‌بها گرفتی.\n"
+                f"💳 موجودی: *{new_bal}$*"
+            )
+        else:
+            text = (
+                f"⚔️ *Quest: {quest['name']}*\n\n"
+                f"❌ Quest failed! But you got *{consolation}$* for trying.\n"
+                f"💳 Balance: *{new_bal}$*"
+            )
+    await update.message.reply_text(text, parse_mode="Markdown")
+
+
+# ════════════════════════════════════════════════════════════
+# /bail (وثیقه) — Admin pays to free someone from jail
+# ════════════════════════════════════════════════════════════
+BAIL_COST_PER_MINUTE = 10  # 10$ per remaining minute
+
+async def bail_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat = update.effective_chat
+    user = update.effective_user
+    lang = get_lang(chat.id)
+    _remember_user(chat.id, user)
+
+    # Must reply to a jailed user
+    reply = update.message.reply_to_message
+    if not reply or not reply.from_user:
+        msg = ("❌ روی پیام یک زندانی ریپلای کن و /bail بزن!" if lang == "fa"
+               else "❌ Reply to a jailed user's message and use /bail!")
+        await update.message.reply_text(msg, parse_mode="Markdown")
+        return
+
+    target = reply.from_user
+    _remember_user(chat.id, target)
+
+    if target.id == user.id:
+        msg = ("❌ نمی‌تونی خودتو آزاد کنی!" if lang == "fa"
+               else "❌ You can't bail yourself out!")
+        await update.message.reply_text(msg, parse_mode="Markdown")
+        return
+
+    remaining = _check_jail(chat.id, target.id)
+    if remaining is None:
+        msg = (f"✅ *{target.first_name}* زندانی نیست!" if lang == "fa"
+               else f"✅ *{target.first_name}* is not in jail!")
+        await update.message.reply_text(msg, parse_mode="Markdown")
+        return
+
+    cost = max(50, (remaining // 60 + 1) * BAIL_COST_PER_MINUTE)
+    bal = get_balance(chat.id, user.id)
+
+    if cost > bal:
+        msg = (f"❌ هزینه وثیقه *{cost}$* — موجودی تو: *{bal}$*" if lang == "fa"
+               else f"❌ Bail costs *{cost}$* — Your balance: *{bal}$*")
+        await update.message.reply_text(msg, parse_mode="Markdown")
+        return
+
+    add_balance(chat.id, user.id, -cost)
+    clear_jail(chat.id, target.id)
+
+    u_name = (user.first_name or "User")
+    t_name = (target.first_name or "User")
+
+    if lang == "fa":
+        msg = (f"⚖️ *وثیقه پرداخت شد!*\n\n"
+               f"👤 *{u_name}* مبلغ *{cost}$* وثیقه پرداخت کرد.\n"
+               f"🔓 *{t_name}* از زندان آزاد شد!\n"
+               f"💰 موجودی {u_name}: *{get_balance(chat.id, user.id)}$*")
+    else:
+        msg = (f"⚖️ *Bail Paid!*\n\n"
+               f"👤 *{u_name}* paid *{cost}$* bail.\n"
+               f"🔓 *{t_name}* has been freed from jail!\n"
+               f"💰 {u_name}'s balance: *{get_balance(chat.id, user.id)}$*")
+
+    await update.message.reply_text(msg, parse_mode="Markdown")
+
+
+# ════════════════════════════════════════════════════════════
+# /jailbreak — Collaborative jail escape (3+ people)
+# ════════════════════════════════════════════════════════════
+JAILBREAK_COOLDOWN = 600  # 10 min cooldown per attempt
+JAILBREAK_FAIL_PENALTY = 180  # +3 min added on failure
+
+async def jailbreak_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat = update.effective_chat
+    user = update.effective_user
+    lang = get_lang(chat.id)
+    _remember_user(chat.id, user)
+
+    # Must reply to jailed user
+    reply = update.message.reply_to_message
+    if not reply or not reply.from_user:
+        msg = ("❌ روی پیام یک زندانی ریپلای کن!\nبرای فرار حداقل ۳ نفر باید /jailbreak بزنن." if lang == "fa"
+               else "❌ Reply to a jailed user's message!\nAt least 3 people need to use /jailbreak to escape.")
+        await update.message.reply_text(msg, parse_mode="Markdown")
+        return
+
+    target = reply.from_user
+    _remember_user(chat.id, target)
+
+    remaining = _check_jail(chat.id, target.id)
+    if remaining is None:
+        msg = (f"✅ *{target.first_name}* زندانی نیست!" if lang == "fa"
+               else f"✅ *{target.first_name}* is not in jail!")
+        await update.message.reply_text(msg, parse_mode="Markdown")
+        return
+
+    # Can't break yourself out
+    if target.id == user.id:
+        msg = ("❌ نمی‌تونی خودتو نجات بدی! بقیه باید کمکت کنن!" if lang == "fa"
+               else "❌ You can't break yourself out! Others must help!")
+        await update.message.reply_text(msg, parse_mode="Markdown")
+        return
+
+    # Track jailbreak attempts in data
+    data = load_data()
+    cid = str(chat.id)
+    tid = str(target.id)
+    uid = str(user.id)
+
+    attempts = data.setdefault("jailbreak_attempts", {}).setdefault(cid, {})
+    attempt = attempts.get(tid, {"helpers": [], "last_attempt": ""})
+
+    # Check cooldown
+    now = datetime.utcnow()
+    if attempt.get("last_attempt"):
+        try:
+            last_dt = datetime.fromisoformat(attempt["last_attempt"])
+            if (now - last_dt).total_seconds() < JAILBREAK_COOLDOWN:
+                cd_left = int(JAILBREAK_COOLDOWN - (now - last_dt).total_seconds())
+                mins = cd_left // 60
+                secs = cd_left % 60
+                msg = (f"⏳ باید *{mins} دقیقه و {secs} ثانیه* صبر کنید تا دوباره تلاش کنید!" if lang == "fa"
+                       else f"⏳ Wait *{mins}m {secs}s* before trying again!")
+                await update.message.reply_text(msg, parse_mode="Markdown")
+                return
+        except ValueError:
+            pass
+
+    # Add helper if not already in list
+    if user.id not in attempt.get("helpers", []):
+        attempt.setdefault("helpers", []).append(user.id)
+
+    helpers = attempt["helpers"]
+    helper_count = len(helpers)
+    attempts[tid] = attempt
+    data["jailbreak_attempts"][cid] = attempts
+    save_data(data)
+
+    t_name = target.first_name or "User"
+    u_name = user.first_name or "User"
+
+    if helper_count < 3:
+        needed = 3 - helper_count
+        if lang == "fa":
+            msg = (f"🔓 *{u_name}* میخواد به *{t_name}* کمک کنه فرار کنه!\n\n"
+                   f"👥 کمک‌کننده‌ها: *{helper_count}/3*\n"
+                   f"⏳ هنوز *{needed}* نفر دیگه لازمه!\n"
+                   f"بقیه هم روی همین پیام /jailbreak بزنن!")
+        else:
+            msg = (f"🔓 *{u_name}* wants to help *{t_name}* escape!\n\n"
+                   f"👥 Helpers: *{helper_count}/3*\n"
+                   f"⏳ Need *{needed}* more people!\n"
+                   f"Others reply to the same message with /jailbreak!")
+        await update.message.reply_text(msg, parse_mode="Markdown")
+        return
+
+    # Enough helpers — attempt the break!
+    # Success chance: 30% base + 10% per extra helper (max 80%)
+    success_chance = min(0.80, 0.30 + (helper_count - 3) * 0.10)
+
+    # Reset attempt data
+    attempt["helpers"] = []
+    attempt["last_attempt"] = now.isoformat()
+    attempts[tid] = attempt
+    data["jailbreak_attempts"][cid] = attempts
+    save_data(data)
+
+    if random.random() < success_chance:
+        # Success!
+        clear_jail(chat.id, target.id)
+        if lang == "fa":
+            msg = (f"🔓💥 *فرار از زندان موفقیت‌آمیز بود!*\n\n"
+                   f"👥 {helper_count} نفر کمک کردن و *{t_name}* از زندان فرار کرد!\n"
+                   f"🏃 *{t_name}* آزاده! 🎉\n"
+                   f"📊 شانس موفقیت: *{int(success_chance*100)}%*")
+        else:
+            msg = (f"🔓💥 *Jailbreak SUCCESSFUL!*\n\n"
+                   f"👥 {helper_count} people helped and *{t_name}* escaped!\n"
+                   f"🏃 *{t_name}* is FREE! 🎉\n"
+                   f"📊 Success chance was: *{int(success_chance*100)}%*")
+    else:
+        # Failure — add penalty time to prisoner
+        jt = get_jail_time(chat.id, target.id)
+        if jt and "|" in jt:
+            ts, dur_str = jt.rsplit("|", 1)
+            try:
+                old_dur = int(dur_str)
+                new_dur = old_dur + JAILBREAK_FAIL_PENALTY
+                set_jail_time(chat.id, target.id, f"{ts}|{new_dur}")
+            except ValueError:
+                pass
+        else:
+            # Standard jail — add penalty
+            if jt:
+                new_dur = JAIL_DURATION + JAILBREAK_FAIL_PENALTY
+                set_jail_time(chat.id, target.id, f"{jt}|{new_dur}")
+
+        if lang == "fa":
+            msg = (f"🚨 *فرار ناموفق!*\n\n"
+                   f"👮 نگهبان‌ها همه رو گرفتن!\n"
+                   f"⏳ *{JAILBREAK_FAIL_PENALTY // 60} دقیقه* به مدت زندان *{t_name}* اضافه شد!\n"
+                   f"📊 شانس موفقیت: *{int(success_chance*100)}%* بود")
+        else:
+            msg = (f"🚨 *Jailbreak FAILED!*\n\n"
+                   f"👮 Guards caught everyone!\n"
+                   f"⏳ *{JAILBREAK_FAIL_PENALTY // 60} minutes* added to *{t_name}*'s sentence!\n"
+                   f"📊 Success chance was: *{int(success_chance*100)}%*")
+
+    await update.message.reply_text(msg, parse_mode="Markdown")

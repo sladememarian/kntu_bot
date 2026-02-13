@@ -34,7 +34,8 @@ from handlers.economy import (
     wallet_cmd, daily_cmd, leaderboard_cmd, bet_cmd,
     slots_cmd, dice_cmd, rob_cmd, give_cmd, rps_cmd,
     work_cmd, spin_cmd, invest_cmd, sell_cmd, portfolio_cmd, event_cmd,
-    jail_list_cmd, profit_cmd,
+    jail_list_cmd, profit_cmd, bail_cmd, jailbreak_cmd,
+    fish_cmd, mine_cmd, quest_cmd,
 )
 from handlers.xo import xo_cmd, xo_callback
 from handlers.riddle import riddle_cmd, riddle_callback
@@ -47,6 +48,9 @@ from handlers.petshop import petshop_cmd, buypet_cmd
 from handlers.foodshop import foodshop_cmd, buyfood_cmd
 from handlers.abilities import abilities_cmd, buyability_cmd, use_ability_cmd
 from handlers.calendar import calendar_cmd
+from handlers.bank import bank_cmd, loan_cmd, bankmanager_cmd, embezzle_cmd, investigate_cmd, bankrob_cmd
+from handlers.casino import casino_cmd, megaslots_cmd, blackjack_cmd, bj_callback, bar_cmd, coinflip_cmd
+from handlers.places import places_cmd, date_cmd, giftpet_cmd, giftfood_cmd
 
 # ---- Logging ----
 logging.basicConfig(
@@ -132,6 +136,11 @@ def main():
     app.add_handler(CommandHandler("event", event_cmd))
     app.add_handler(CommandHandler("jail", jail_list_cmd))
     app.add_handler(CommandHandler("profit", profit_cmd))
+    app.add_handler(CommandHandler("bail", bail_cmd))
+    app.add_handler(CommandHandler("jailbreak", jailbreak_cmd))
+    app.add_handler(CommandHandler("fish", fish_cmd))
+    app.add_handler(CommandHandler("mine", mine_cmd))
+    app.add_handler(CommandHandler("quest", quest_cmd))
 
     # Shop system
     app.add_handler(CommandHandler("shop", shop_cmd))
@@ -160,6 +169,30 @@ def main():
     app.add_handler(CommandHandler("poke", use_ability_cmd))
     app.add_handler(CommandHandler("bite", use_ability_cmd))
     app.add_handler(CommandHandler("pat", use_ability_cmd))
+    app.add_handler(CommandHandler("highfive", use_ability_cmd))
+    app.add_handler(CommandHandler("revive", use_ability_cmd))
+
+    # Bank System
+    app.add_handler(CommandHandler("bank", bank_cmd))
+    app.add_handler(CommandHandler("loan", loan_cmd))
+    app.add_handler(CommandHandler("bankmanager", bankmanager_cmd))
+    app.add_handler(CommandHandler("embezzle", embezzle_cmd))
+    app.add_handler(CommandHandler("investigate", investigate_cmd))
+    app.add_handler(CommandHandler("bankrob", bankrob_cmd))
+
+    # Casino & Bar
+    app.add_handler(CommandHandler("casino", casino_cmd))
+    app.add_handler(CommandHandler("megaslots", megaslots_cmd))
+    app.add_handler(CommandHandler("blackjack", blackjack_cmd))
+    app.add_handler(CallbackQueryHandler(bj_callback, pattern=r"^bj:"))
+    app.add_handler(CommandHandler("bar", bar_cmd))
+    app.add_handler(CommandHandler("coinflip", coinflip_cmd))
+
+    # Places & Dates
+    app.add_handler(CommandHandler("places", places_cmd))
+    app.add_handler(CommandHandler("date", date_cmd))
+    app.add_handler(CommandHandler("giftpet", giftpet_cmd))
+    app.add_handler(CommandHandler("giftfood", giftfood_cmd))
 
     # Persian Calendar
     app.add_handler(CommandHandler("calendar", calendar_cmd))
