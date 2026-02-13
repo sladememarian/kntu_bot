@@ -17,6 +17,7 @@ from storage import (
     get_user_name, set_user_name,
     get_stocks, set_stocks,
     get_jail_time, set_jail_time,
+    track_member,
 )
 from config import ADMIN_IDS
 
@@ -47,6 +48,7 @@ PRICE_COLOR = (166, 227, 161)
 def _remember_user(chat_id, user):
     set_user_name(chat_id, user.id,
                   (user.full_name or user.first_name or "User").strip())
+    track_member(chat_id, user.id)
 
 
 def _get_font(size: int) -> ImageFont.FreeTypeFont:
@@ -610,7 +612,7 @@ async def bankrob_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Enough people — execute the heist!
     # Markov AI acts as police — smarter AI = harder robbery
     from handlers.markov_ai import get_brain_stats
-    brain_keys, _ = get_brain_stats()
+    brain_keys, _, _ = get_brain_stats()
 
     # Success chance: starts at 45%, decreases as AI gets smarter
     # Every 500 bigram keys reduces chance by 2% (AI learns patterns)

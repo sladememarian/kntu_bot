@@ -14,6 +14,7 @@ from PIL import Image, ImageDraw, ImageFont
 from storage import (
     get_lang, get_balance, add_balance,
     load_data, save_data, get_user_name, set_user_name,
+    add_inventory_item, track_member,
 )
 
 # ── Constants ──────────────────────────────────────────────
@@ -154,6 +155,7 @@ BAR_DRINKS = {
 def _remember_user(chat_id, user):
     set_user_name(chat_id, user.id,
                   (user.full_name or user.first_name or "User").strip())
+    track_member(chat_id, user.id)
 
 
 def _get_font(size: int) -> ImageFont.FreeTypeFont:
@@ -868,6 +870,13 @@ async def bar_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         new_bal = add_balance(chat.id, user.id, -price)
         name = drink["name_fa"] if lang == "fa" else drink["name_en"]
+
+        # Add drink to inventory so it can be gifted or consumed via /drink
+        add_inventory_item(chat.id, user.id, {
+            "item_id": f"drink_{drink_id}",
+            "category": "drink",
+            "name": name,
+        })
 
         if lang == "fa":
             effect = random.choice(drink["messages_fa"])
