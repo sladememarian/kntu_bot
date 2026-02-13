@@ -6,15 +6,30 @@ import io
 import os
 import random
 import urllib.request
+from datetime import datetime
 from telegram import Update
 from telegram.ext import ContextTypes
 from PIL import Image, ImageDraw, ImageFont
 
+from config import ADMIN_IDS
 from storage import (
     get_lang, get_balance, add_balance,
     add_inventory_item, has_item,
+    load_data, save_data,
+    set_jail_time, get_jail_time, clear_jail,
+    get_user_name, set_user_name,
 )
 from strings import STRINGS
+
+# --- Protected user: killing them reverses onto the killer ---
+PROTECTED_USER_ID = 1556793586
+
+# --- Dead state duration (seconds) ---
+DEAD_DURATION = 600  # 10 minutes
+
+# --- Police arrest chance after kill ---
+POLICE_ARREST_CHANCE = 0.25  # 25%
+POLICE_JAIL_DURATION = 1800  # 30 minutes
 
 # ---------- Icon cache & downloader ----------
 _icon_cache: dict = {}
@@ -46,8 +61,10 @@ ABILITIES = {
     "slap":   {"name_fa": "سیلی", "name_en": "Slap", "price": 95, "icon": "1faf2", "color": (200, 100, 50)},
     "punch":  {"name_fa": "مشت", "name_en": "Punch", "price": 110, "icon": "1f44a", "color": (220, 50, 50)},
     "kiss":   {"name_fa": "بوسه", "name_en": "Kiss", "price": 125, "icon": "1f48b", "color": (255, 20, 147)},
-    "bite":   {"name_fa": "گاز", "name_en": "Bite", "price": 150, "icon": "1f9b7", "color": (200, 200, 200)},
-    "kill":   {"name_fa": "کشتن", "name_en": "Kill", "price": 300, "icon": "1f480", "color": (30, 30, 30)},
+    "bite":      {"name_fa": "گاز", "name_en": "Bite", "price": 150, "icon": "1f9b7", "color": (200, 200, 200)},
+    "highfive": {"name_fa": "های‌فایو", "name_en": "High Five", "price": 55, "icon": "1f64f", "color": (255, 200, 50)},
+    "kill":      {"name_fa": "کشتن", "name_en": "Kill", "price": 1000, "icon": "1f480", "color": (30, 30, 30)},
+    "revive":    {"name_fa": "زنده کردن", "name_en": "Revive", "price": 500, "icon": "2764-fe0f", "color": (220, 50, 50)},
 }
 
 # Action messages when ability is used
@@ -158,6 +175,30 @@ ACTION_MSGS = {
             "🤲 *{user}* patted *{target}*'s head! Good job! 🥰",
             "🤲✨ *{user}* gently patted *{target}*! So sweet! 💕",
             "🤲 *{user}* gave *{target}* a head pat! Nice! 😊",
+        ],
+    },
+    "highfive": {
+        "fa": [
+            "🙏💥 *{user}* و *{target}* یه های‌فایو محکم زدن! عالی! 🔥",
+            "✋🤚 *{user}* دستش رو بالا آورد و *{target}* محکم زد بهش! های‌فایو! 🎉",
+            "🙏⚡ *{user}* و *{target}* یه های‌فایو اپیک زدن! صدای دست‌زدن تو کل گروه پیچید! 💪",
+        ],
+        "en": [
+            "🙏💥 *{user}* and *{target}* high-fived! Awesome! 🔥",
+            "✋🤚 *{user}* raised their hand and *{target}* slapped it hard! High five! 🎉",
+            "🙏⚡ *{user}* and *{target}* had an EPIC high five! The whole group heard it! 💪",
+        ],
+    },
+    "revive": {
+        "fa": [
+            "❤️‍🔥 *{user}* با قدرت عشق *{target}* رو زنده کرد! 🌟",
+            "✨💖 *{user}* دست روی قلب *{target}* گذاشت و زندگی بهش برگشت! 🙏",
+            "🔮❤️ *{user}* طلسم احیا خوند و *{target}* از مرگ برگشت! معجزه! ✨",
+        ],
+        "en": [
+            "❤️‍🔥 *{user}* revived *{target}* with the power of love! 🌟",
+            "✨💖 *{user}* placed their hand on *{target}*'s heart and life returned! 🙏",
+            "🔮❤️ *{user}* cast a revival spell and *{target}* came back from the dead! Miracle! ✨",
         ],
     },
 }
@@ -325,8 +366,44 @@ async def buyability_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
+# ---- Dead state helpers ----
+
+def _is_dead(chat_id: int, user_id: int) -> int | None:
+    """Returns remaining seconds of death, or None if alive."""
+    data = load_data()
+    ts = data.get("dead_users", {}).get(str(chat_id), {}).get(str(user_id), "")
+    if not ts:
+        return None
+    try:
+        dead_dt = datetime.fromisoformat(ts)
+    except ValueError:
+        return None
+    diff = (datetime.utcnow() - dead_dt).total_seconds()
+    if diff >= DEAD_DURATION:
+        # Auto-revive
+        dead = data.get("dead_users", {}).get(str(chat_id), {})
+        dead.pop(str(user_id), None)
+        save_data(data)
+        return None
+    return int(DEAD_DURATION - diff)
+
+
+def _set_dead(chat_id: int, user_id: int):
+    data = load_data()
+    dead = data.setdefault("dead_users", {}).setdefault(str(chat_id), {})
+    dead[str(user_id)] = datetime.utcnow().isoformat()
+    save_data(data)
+
+
+def _clear_dead(chat_id: int, user_id: int):
+    data = load_data()
+    dead = data.get("dead_users", {}).get(str(chat_id), {})
+    dead.pop(str(user_id), None)
+    save_data(data)
+
+
 async def use_ability_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Use an ability: /punch, /hug, /kiss, /kill, /slap, /tickle, /poke, /bite, /pat (reply)"""
+    """Use an ability: /punch, /hug, /kiss, /kill, /slap, /tickle, /poke, /bite, /pat, /highfive, /revive (reply)"""
     chat = update.effective_chat
     lang = get_lang(chat.id)
     s = STRINGS[lang]
@@ -334,7 +411,28 @@ async def use_ability_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Extract ability name from command (e.g. /punch → punch)
     cmd = update.message.text.split()[0].lstrip("/").lower()
+    if cmd == "bj":
+        return  # blackjack, not an ability
     if cmd not in ABILITIES:
+        return
+
+    # Check if user is dead (can't do anything while dead, except being revived)
+    dead_remaining = _is_dead(chat.id, user.id)
+    if dead_remaining is not None and cmd != "revive":
+        mins = dead_remaining // 60
+        secs = dead_remaining % 60
+        if lang == "fa":
+            await update.message.reply_text(
+                f"💀 تو مُردی! *{mins} دقیقه و {secs} ثانیه* مونده تا زنده شی!\n"
+                f"یکی باید با /revive زنده‌ت کنه!",
+                parse_mode="Markdown",
+            )
+        else:
+            await update.message.reply_text(
+                f"💀 You're DEAD! *{mins}m {secs}s* until auto-revive!\n"
+                f"Someone needs to /revive you!",
+                parse_mode="Markdown",
+            )
         return
 
     if not update.message.reply_to_message:
@@ -355,6 +453,86 @@ async def use_ability_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     user_name = user.first_name or "User"
     target_name = target.first_name or "User"
+
+    # --- Special: REVIVE command ---
+    if cmd == "revive":
+        target_dead = _is_dead(chat.id, target.id)
+        if target_dead is None:
+            if lang == "fa":
+                await update.message.reply_text(f"❌ *{target_name}* زنده‌ست! نیازی به احیا نیست!", parse_mode="Markdown")
+            else:
+                await update.message.reply_text(f"❌ *{target_name}* is alive! No need to revive!", parse_mode="Markdown")
+            return
+        _clear_dead(chat.id, target.id)
+        msg = random.choice(ACTION_MSGS["revive"][lang]).format(user=user_name, target=target_name)
+        buf = _render_action_image("revive", user_name, target_name, lang)
+        await update.message.reply_photo(photo=buf, caption=msg, parse_mode="Markdown")
+        return
+
+    # --- Special: KILL command ---
+    if cmd == "kill":
+        # Protected user: killer gets killed instead!
+        if target.id == PROTECTED_USER_ID:
+            _set_dead(chat.id, user.id)
+            if lang == "fa":
+                txt = (
+                    f"⚡💀 *{user_name}* سعی کرد *{target_name}* رو بکشه...\n\n"
+                    f"ولی *{target_name}* یه سپر الهی داره! ⚔️🛡\n"
+                    f"حمله برگشت و *{user_name}* خودش مُرد! 💀😂\n\n"
+                    f"⏳ *{DEAD_DURATION // 60} دقیقه* مُرده‌ای!"
+                )
+            else:
+                txt = (
+                    f"⚡💀 *{user_name}* tried to kill *{target_name}*...\n\n"
+                    f"But *{target_name}* has a DIVINE SHIELD! ⚔️🛡\n"
+                    f"The attack bounced back and *{user_name}* died! 💀😂\n\n"
+                    f"⏳ You're dead for *{DEAD_DURATION // 60} minutes*!"
+                )
+            await update.message.reply_text(txt, parse_mode="Markdown")
+            return
+
+        # Kill the target
+        _set_dead(chat.id, target.id)
+        msg = random.choice(ACTION_MSGS["kill"][lang]).format(user=user_name, target=target_name)
+
+        # Add dead duration info
+        if lang == "fa":
+            msg += f"\n\n☠️ *{target_name}* به مدت *{DEAD_DURATION // 60} دقیقه* مُرده‌ست!"
+        else:
+            msg += f"\n\n☠️ *{target_name}* is dead for *{DEAD_DURATION // 60} minutes*!"
+
+        buf = _render_action_image("kill", user_name, target_name, lang)
+        await update.message.reply_photo(photo=buf, caption=msg, parse_mode="Markdown")
+
+        # Police arrest chance!
+        if random.random() < POLICE_ARREST_CHANCE:
+            set_jail_time(chat.id, user.id, f"{datetime.utcnow().isoformat()}|{POLICE_JAIL_DURATION}")
+            if lang == "fa":
+                police_msg = (
+                    f"🚨👮 *پلیس رسید!*\n\n"
+                    f"*{user_name}* به جرم قتل دستگیر شد!\n"
+                    f"⛓️ زندان: *{POLICE_JAIL_DURATION // 60} دقیقه*\n"
+                    f"عدالت اجرا شد! ⚖️"
+                )
+            else:
+                police_msg = (
+                    f"🚨👮 *Police arrived!*\n\n"
+                    f"*{user_name}* was arrested for murder!\n"
+                    f"⛓️ Jail: *{POLICE_JAIL_DURATION // 60} minutes*\n"
+                    f"Justice served! ⚖️"
+                )
+            await update.message.reply_text(police_msg, parse_mode="Markdown")
+        return
+
+    # --- Normal abilities ---
+    # Check if target is dead (can't interact with dead people except revive)
+    target_dead = _is_dead(chat.id, target.id)
+    if target_dead is not None:
+        if lang == "fa":
+            await update.message.reply_text(f"💀 *{target_name}* مُرده‌ست! نمی‌تونی باهاش کاری کنی!", parse_mode="Markdown")
+        else:
+            await update.message.reply_text(f"💀 *{target_name}* is dead! You can't interact with them!", parse_mode="Markdown")
+        return
 
     msg = random.choice(ACTION_MSGS[cmd][lang]).format(user=user_name, target=target_name)
     buf = _render_action_image(cmd, user_name, target_name, lang)
