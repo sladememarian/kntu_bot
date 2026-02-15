@@ -13,9 +13,11 @@ from telegram.ext import (
     ChatMemberHandler,
     MessageHandler,
     CallbackQueryHandler,
+    InlineQueryHandler,
     filters,
 )
 from aiohttp import web
+from telegram import InlineQueryResultGame
 
 from config import BOT_TOKEN, DEBUG, BOT_NAME
 
@@ -118,18 +120,44 @@ async def casinogame_cmd(update: Update, context):
         )
 
 
+def _get_game_url():
+    domain = (
+        os.environ.get("RAILWAY_PUBLIC_DOMAIN")
+        or os.environ.get("RAILWAY_STATIC_URL", "").replace("https://", "").replace("http://", "")
+        or os.environ.get("WEB_URL", "").replace("https://", "").replace("http://", "")
+        or "kntubot-production.up.railway.app"
+    )
+    return f"https://{domain}/casino"
+
+
 async def game_callback(update: Update, context):
     """Handle the 'Play' button click on a Telegram Game message."""
     query = update.callback_query
-    if not query or not query.game_short_name:
+    if not query:
         return
-    domain = os.environ.get("RAILWAY_PUBLIC_DOMAIN", os.environ.get("WEB_URL", ""))
-    if domain:
-        url = f"https://{domain}/casino"
-    else:
-        port = os.environ.get("PORT", "8080")
-        url = f"http://localhost:{port}/casino"
-    await query.answer(url=url)
+    # Only handle game callbacks (not regular button callbacks)
+    if not query.game_short_name:
+        return
+    url = _get_game_url()
+    logger.info("Game callback from %s: sending URL %s", query.from_user.id, url)
+    try:
+        await query.answer(url=url)
+    except Exception as e:
+        logger.error("Game callback error: %s", e)
+
+
+async def game_inline(update: Update, context):
+    """Handle inline queries — lets users send casino game via @bot casino."""
+    query = update.inline_query
+    if not query:
+        return
+    results = [
+        InlineQueryResultGame(id="casino", game_short_name=GAME_SHORT_NAME)
+    ]
+    try:
+        await query.answer(results)
+    except Exception as e:
+        logger.error("Inline game error: %s", e)
 
 
 def main():
@@ -324,8 +352,11 @@ def main():
     # ---- OPHELIA AI: learn from all text messages ----
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, ophelia_listen), group=3)
 
-    # ---- Game callback handler ----
-    app.add_handler(CallbackQueryHandler(game_callback), group=5)
+    # ---- Game callback handler (separate group so it doesn't block other callbacks) ----
+    app.add_handler(CallbackQueryHandler(game_callback), group=4)
+
+    # ---- Inline query handler for games ----
+    app.add_handler(InlineQueryHandler(game_inline))
 
     # ---- Error handler ----
     async def error_handler(update, context):
