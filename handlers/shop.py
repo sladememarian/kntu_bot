@@ -12,8 +12,24 @@ from PIL import Image, ImageDraw, ImageFont
 from storage import (
     get_lang, get_balance, add_balance,
     get_inventory, add_inventory_item, remove_inventory_item, has_item,
+    get_purchase_counts, record_purchase,
 )
 from strings import STRINGS
+
+
+# ── Inflation / Supply-Demand ──
+_INFLATION_STEP = 15      # each purchase adds this many % points (spread over buys)
+_INFLATION_DIVISOR = 5    # purchases needed to add one full step
+_MAX_MULTIPLIER = 3.0     # price can at most triple
+
+
+def _dynamic_price(base: int, item_id: str, chat_id: int) -> int:
+    """Return inflation-adjusted price based on demand."""
+    counts = get_purchase_counts(chat_id)
+    bought = counts.get(item_id, 0)
+    multiplier = 1.0 + (bought / _INFLATION_DIVISOR) * (_INFLATION_STEP / 100)
+    multiplier = min(multiplier, _MAX_MULTIPLIER)
+    return max(base, int(base * multiplier))
 
 # ---------- Icon cache & downloader ----------
 _icon_cache: dict = {}
@@ -149,7 +165,7 @@ def _render_shop_image(category: str, lang: str) -> io.BytesIO:
         draw.text((pad + 60, y + 8), name, fill=TEXT_COLOR, font=font)
 
         # Price
-        draw.text((pad + 60, y + 32), f"{price}$", fill=PRICE_COLOR, font=font_price)
+        draw.text((pad + 60, y + 32), f"{price}K", fill=PRICE_COLOR, font=font_price)
 
         # Buy command hint
         id_text = f"/buy {item_id}"
@@ -282,7 +298,7 @@ async def buy_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     cat, iid, info = result
-    price = info["price"]
+    price = _dynamic_price(info["price"], iid, chat.id)
     bal = get_balance(chat.id, user.id)
 
     if price > bal:
@@ -297,6 +313,7 @@ async def buy_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     add_balance(chat.id, user.id, -price)
+    record_purchase(chat.id, iid)
     name = info["name_fa"] if lang == "fa" else info["name_en"]
     add_inventory_item(chat.id, user.id, {
         "item_id": iid,

@@ -241,35 +241,54 @@ def _find_response(brain: dict, text: str, mood: str) -> str | None:
             if msg in text_lower or text_lower in msg:
                 return resp
 
-    # 4. Keyword match (progressive — only if learned enough)
+    # 4. Word-overlap scoring (fuzzy match across all moods)
+    words_set = set(re.sub(r'[^\w\s]', '', text_lower).split())
+    meaningful = {w for w in words_set if w not in _NEUTRAL_WORDS and len(w) >= 2}
+
+    if meaningful:
+        best_resp = None
+        best_score = 0
+
+        for m in EMOTIONS:
+            for msg, resp in pairs.get(m, {}).items():
+                msg_words = set(msg.split())
+                overlap = meaningful & msg_words
+                if overlap:
+                    score = len(overlap) / max(len(meaningful), len(msg_words))
+                    # Boost score if same mood
+                    if m == mood:
+                        score *= 1.3
+                    if score > best_score:
+                        best_score = score
+                        best_resp = resp
+
+        # Accept if overlap is decent
+        if best_resp and best_score >= 0.2:
+            return best_resp
+
+    # 5. Keyword match (progressive — only if learned enough)
     total_words = len(brain.get("emotion_dict", {}))
     total_pairs = sum(len(v) for v in pairs.values())
 
-    # Progressive thresholds (inspired by OPHELIA's evolution system)
     keyword_chance = 0.0
-    if total_words >= 200 and total_pairs >= 30:
-        keyword_chance = 0.25
-    if total_words >= 500 and total_pairs >= 80:
-        keyword_chance = 0.50
-    if total_words >= 1000 and total_pairs >= 150:
-        keyword_chance = 0.75
+    if total_words >= 100 and total_pairs >= 15:
+        keyword_chance = 0.35
+    if total_words >= 300 and total_pairs >= 50:
+        keyword_chance = 0.60
+    if total_words >= 700 and total_pairs >= 100:
+        keyword_chance = 0.85
 
     if keyword_chance > 0 and random.random() < keyword_chance:
-        words = re.sub(r'[^\w\s]', '', text_lower).split()
-        meaningful = [w for w in words if w not in _NEUTRAL_WORDS and len(w) >= 3]
-        random.shuffle(meaningful)
+        kw_list = list(meaningful)
+        random.shuffle(kw_list)
 
-        for word in meaningful:
+        for word in kw_list:
             emo = brain["emotion_dict"].get(word)
-            if emo and emo != "neutral":
-                search_mood = emo
-            else:
-                search_mood = mood
+            search_mood = emo if (emo and emo != "neutral") else mood
 
             for msg, resp in pairs.get(search_mood, {}).items():
                 if word in msg:
                     return resp
-            # Check all moods for this keyword
             for m in EMOTIONS:
                 if m == search_mood:
                     continue
@@ -455,11 +474,13 @@ _MOOD_WRAPPERS = {
 # ═══════════════════════════════════════════════════
 
 _last_messages: dict[int, str] = {}  # chat_id → last bot-seen user message
+_chat_history: dict[int, list] = {}  # chat_id → last N messages for context
+_HISTORY_SIZE = 8  # remember last 8 messages per chat
 _auto_reply_cd: dict[int, float] = {}  # chat_id → last auto-reply timestamp
 
-AUTO_REPLY_CHANCE = 0.04  # 4%
-AUTO_REPLY_MENTIONED = 0.15  # 15% when mentioned
-AUTO_REPLY_COOLDOWN = 40  # seconds
+AUTO_REPLY_CHANCE = 0.08  # 8%
+AUTO_REPLY_MENTIONED = 0.30  # 30% when mentioned
+AUTO_REPLY_COOLDOWN = 25  # seconds
 
 _MENTION_PATTERNS = re.compile(
     r"(ophelia|آفلیا|ai3|هوش3|ربات|bot)", re.IGNORECASE
@@ -504,8 +525,12 @@ async def ophelia_listen(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if prev and prev != text.lower():
             _learn_pair(brain, prev, text, mood)
 
-        # Remember this message as the last one
+        # Remember this message and update chat history
         _last_messages[chat.id] = text.lower()
+        hist = _chat_history.setdefault(chat.id, [])
+        hist.append(text.lower())
+        if len(hist) > _HISTORY_SIZE:
+            hist.pop(0)
 
         _save_ophelia(brain)
 
@@ -516,7 +541,16 @@ async def ophelia_listen(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     mentioned = bool(_MENTION_PATTERNS.search(text))
-    chance = AUTO_REPLY_MENTIONED if mentioned else AUTO_REPLY_CHANCE
+    # Boost chance if user replied to bot's message
+    is_reply_to_bot = (
+        update.message.reply_to_message
+        and update.message.reply_to_message.from_user
+        and update.message.reply_to_message.from_user.is_bot
+    )
+    if is_reply_to_bot:
+        chance = 0.85
+    else:
+        chance = AUTO_REPLY_MENTIONED if mentioned else AUTO_REPLY_CHANCE
 
     if random.random() < chance:
         _auto_reply_cd[chat.id] = now
@@ -677,12 +711,12 @@ async def ai3stats_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Evolution features
     kw_match = "❌"
-    if total_words >= 200 and total_pairs >= 30:
-        kw_match = "25%"
-    if total_words >= 500 and total_pairs >= 80:
-        kw_match = "50%"
-    if total_words >= 1000 and total_pairs >= 150:
-        kw_match = "75%"
+    if total_words >= 100 and total_pairs >= 15:
+        kw_match = "35%"
+    if total_words >= 300 and total_pairs >= 50:
+        kw_match = "60%"
+    if total_words >= 700 and total_pairs >= 100:
+        kw_match = "85%"
 
     # Evolution level
     if total_pairs < 30:

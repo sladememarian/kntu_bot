@@ -86,6 +86,7 @@ COMPANIES = {
     "DIS":   {"name": "Disney 🏰",         "base": 110, "sector": "media"},
     "SONY":  {"name": "Sony 🎮",           "base": 130, "sector": "tech"},
     "AMD":   {"name": "AMD 📡",            "base": 220, "sector": "tech"},
+    "ARMIN": {"name": "Armin 👑",           "base": 175, "sector": "imaginary"},
 }
 
 # --- Jail mock messages ---
