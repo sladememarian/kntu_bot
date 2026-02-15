@@ -7,7 +7,7 @@ import io
 import os
 import math
 import time
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from telegram import Update
 from handlers.casino import _process_casino_loss
 from telegram.ext import ContextTypes
@@ -23,6 +23,10 @@ from storage import (
     set_user_name, get_user_name,
     get_stock_costs, set_stock_costs,
     load_data, save_data,
+    add_donation, get_donations,
+    get_properties, add_property, remove_property, get_all_properties,
+    get_daily_streak, set_daily_streak,
+    get_work_xp, add_work_xp,
 )
 from strings import STRINGS
 from config import ADMIN_IDS
@@ -33,6 +37,21 @@ KOLLAR = "کلار $"
 WORK_COOLDOWN = 3600  # 1 hour
 SPIN_COOLDOWN = 8 * 3600  # 8 hours
 JAIL_DURATION = 360  # 6 minutes in seconds
+
+# ── Economy realism constants ──────────────────────────────
+TRANSFER_TAX_RATE = 0.02      # 2% fee on transfers > 500$
+TRANSFER_TAX_THRESHOLD = 500  # Below this = no tax
+DAILY_STREAK_BONUS = 25       # +25$ per consecutive day (max 10 streak)
+MAX_STREAK = 10
+WEALTH_TAX_BRACKETS = [       # (threshold, rate)
+    (50000, 0.01),             # 1% on wealth > 50k
+    (100000, 0.02),            # 2% on wealth > 100k
+    (250000, 0.03),            # 3% on wealth > 250k
+    (500000, 0.05),            # 5% on wealth > 500k
+]
+WORK_XP_PER_JOB = 1           # +1 XP per work
+WORK_BONUS_PER_LEVEL = 0.10   # +10% pay per level
+WORK_XP_PER_LEVEL = 10        # 10 jobs = 1 level
 
 JOBS = {
     "fa": [
@@ -232,12 +251,50 @@ async def daily_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(s["daily_already"], parse_mode="Markdown")
         return
 
-    new_bal = add_balance(chat.id, user.id, DAILY_AMOUNT)
+    # ── Streak system ──
+    streak_data = get_daily_streak(chat.id, user.id)
+    yesterday = (date.today() - timedelta(days=1)).isoformat()
+    if streak_data.get("last") == yesterday:
+        streak = min(streak_data.get("count", 0) + 1, MAX_STREAK)
+    else:
+        streak = 1
+    set_daily_streak(chat.id, user.id, {"count": streak, "last": today})
+    streak_bonus = DAILY_STREAK_BONUS * (streak - 1)
+
+    # ── Wealth tax (applied on daily claim) ──
+    total_wealth = get_balance(chat.id, user.id)
+    tax = 0
+    for threshold, rate in reversed(WEALTH_TAX_BRACKETS):
+        if total_wealth >= threshold:
+            tax = int(total_wealth * rate)
+            break
+
+    total_reward = DAILY_AMOUNT + streak_bonus - tax
+    new_bal = add_balance(chat.id, user.id, total_reward)
     set_daily_claim(chat.id, user.id, today)
-    await update.message.reply_text(
-        s["daily_claimed"].format(amount=DAILY_AMOUNT, balance=new_bal),
-        parse_mode="Markdown",
-    )
+
+    if lang == "fa":
+        msg = (f"✅ *پاداش روزانه دریافت شد!*\n"
+               f"💰 پایه: *{DAILY_AMOUNT}$*\n")
+        if streak > 1:
+            msg += f"🔥 استریک {streak} روزه: *+{streak_bonus}$*\n"
+        if tax > 0:
+            msg += f"🏛️ مالیات ثروت: *-{tax}$*\n"
+        msg += f"💳 موجودی: *{new_bal}$*"
+        if streak >= 3:
+            msg += f"\n🔥 ادامه بده! {streak}/{MAX_STREAK}"
+    else:
+        msg = (f"✅ *Daily reward claimed!*\n"
+               f"💰 Base: *{DAILY_AMOUNT}$*\n")
+        if streak > 1:
+            msg += f"🔥 {streak}-day streak: *+{streak_bonus}$*\n"
+        if tax > 0:
+            msg += f"🏛️ Wealth tax: *-{tax}$*\n"
+        msg += f"💳 Balance: *{new_bal}$*"
+        if streak >= 3:
+            msg += f"\n🔥 Keep going! {streak}/{MAX_STREAK}"
+
+    await update.message.reply_text(msg, parse_mode="Markdown")
 
 
 # --------- /leaderboard ---------
@@ -761,23 +818,43 @@ async def give_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if amount <= 0:
         return
 
+    # Calculate transfer tax
+    tax = 0
+    if amount > TRANSFER_TAX_THRESHOLD:
+        tax = int(amount * TRANSFER_TAX_RATE)
+    total_cost = amount + tax
+
     bal = get_balance(chat.id, user.id)
-    if amount > bal:
-        await update.message.reply_text(
-            s["bet_no_money"].format(balance=bal), parse_mode="Markdown"
-        )
+    if total_cost > bal:
+        if lang == "fa":
+            msg = f"❌ موجودی کافی نیست! نیاز: *{total_cost}$* (مبلغ + {tax}$ مالیات)\nموجودی: *{bal}$*"
+        else:
+            msg = f"❌ Not enough balance! Need: *{total_cost}$* (amount + {tax}$ tax)\nBalance: *{bal}$*"
+        await update.message.reply_text(msg, parse_mode="Markdown")
         return
 
-    add_balance(chat.id, user.id, -amount)
+    add_balance(chat.id, user.id, -total_cost)
     add_balance(chat.id, target.id, amount)
-    await update.message.reply_text(
-        s["give_done"].format(
-            amount=amount,
-            user=target.first_name or "User",
-            balance=get_balance(chat.id, user.id),
-        ),
-        parse_mode="Markdown",
-    )
+
+    if tax > 0:
+        if lang == "fa":
+            msg = (f"✅ *{amount}$* به *{target.first_name or 'User'}* ارسال شد.\n"
+                   f"🏛️ مالیات انتقال: *{tax}$*\n"
+                   f"💳 موجودی: *{get_balance(chat.id, user.id)}$*")
+        else:
+            msg = (f"✅ Sent *{amount}$* to *{target.first_name or 'User'}*.\n"
+                   f"🏛️ Transfer tax: *{tax}$*\n"
+                   f"💳 Balance: *{get_balance(chat.id, user.id)}$*")
+        await update.message.reply_text(msg, parse_mode="Markdown")
+    else:
+        await update.message.reply_text(
+            s["give_done"].format(
+                amount=amount,
+                user=target.first_name or "User",
+                balance=get_balance(chat.id, user.id),
+            ),
+            parse_mode="Markdown",
+        )
 
 
 # --------- /rps (rock paper scissors) ---------
@@ -871,15 +948,39 @@ async def work_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             return
 
+    # Work XP & level
+    xp = get_work_xp(chat.id, user.id)
+    level = xp // WORK_XP_PER_LEVEL
+    bonus_mult = 1.0 + (level * WORK_BONUS_PER_LEVEL)
+
     job_name, min_pay, max_pay = random.choice(JOBS[lang])
-    earned = random.randint(min_pay, max_pay)
+    base_earned = random.randint(min_pay, max_pay)
+    earned = int(base_earned * bonus_mult)
     new_bal = add_balance(chat.id, user.id, earned)
     set_last_work(chat.id, user.id, now.isoformat())
+    new_xp = add_work_xp(chat.id, user.id, WORK_XP_PER_JOB)
+    new_level = new_xp // WORK_XP_PER_LEVEL
 
-    await update.message.reply_text(
-        s["work_done"].format(job=job_name, earned=earned, balance=new_bal),
-        parse_mode="Markdown",
-    )
+    if lang == "fa":
+        msg = (f"💼 *{job_name}*\n"
+               f"💰 درآمد: *{earned}$*")
+        if level > 0:
+            msg += f" (x{bonus_mult:.1f} سطح {level})"
+        msg += f"\n💳 موجودی: *{new_bal}$*"
+        msg += f"\n⭐ XP: *{new_xp}* (سطح {new_level})"
+        if new_level > level:
+            msg += f"\n🎉 *ارتقا به سطح {new_level}!* درآمد +{int(WORK_BONUS_PER_LEVEL*100)}%"
+    else:
+        msg = (f"💼 *{job_name}*\n"
+               f"💰 Earned: *{earned}$*")
+        if level > 0:
+            msg += f" (x{bonus_mult:.1f} Lv.{level})"
+        msg += f"\n💳 Balance: *{new_bal}$*"
+        msg += f"\n⭐ XP: *{new_xp}* (Level {new_level})"
+        if new_level > level:
+            msg += f"\n🎉 *Level up to {new_level}!* Pay +{int(WORK_BONUS_PER_LEVEL*100)}%"
+
+    await update.message.reply_text(msg, parse_mode="Markdown")
 
 
 # --------- /spin (wheel, 8-hour cooldown) ---------
@@ -2010,4 +2111,460 @@ async def jailbreak_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
                    f"⏳ *{JAILBREAK_FAIL_PENALTY // 60} minutes* added to *{t_name}*'s sentence!\n"
                    f"📊 Success chance was: *{int(success_chance*100)}%*")
 
+    await update.message.reply_text(msg, parse_mode="Markdown")
+
+
+# ════════════════════════════════════════════════════════════
+# /donate — Donate money to charity
+# ════════════════════════════════════════════════════════════
+async def donate_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat = update.effective_chat
+    user = update.effective_user
+    lang = get_lang(chat.id)
+    _remember_user(chat.id, user)
+
+    args = context.args or []
+    if not args or not args[0].isdigit():
+        if lang == "fa":
+            await update.message.reply_text(
+                "💝 *خیریه*\n\nاستفاده: `/donate [مبلغ]`\n"
+                "پولت رو به خیریه اهدا کن و توی تابلو خیریه بدرخش! ✨\n\n"
+                "📊 `/charity` — تابلوی خیرین",
+                parse_mode="Markdown")
+        else:
+            await update.message.reply_text(
+                "💝 *Charity*\n\nUsage: `/donate [amount]`\n"
+                "Donate your Kollars to charity and shine on the leaderboard! ✨\n\n"
+                "📊 `/charity` — Donor leaderboard",
+                parse_mode="Markdown")
+        return
+
+    amount = int(args[0])
+    if amount <= 0:
+        return
+
+    bal = get_balance(chat.id, user.id)
+    if amount > bal:
+        msg = (f"❌ موجودی کافی نیست! ({bal}$)" if lang == "fa"
+               else f"❌ Not enough balance! ({bal}$)")
+        await update.message.reply_text(msg, parse_mode="Markdown")
+        return
+
+    add_balance(chat.id, user.id, -amount)
+    add_donation(chat.id, user.id, amount)
+    new_bal = get_balance(chat.id, user.id)
+
+    u_name = user.first_name or "User"
+    if lang == "fa":
+        text = (
+            f"💝 *{u_name}* مبلغ *{amount}$* به خیریه اهدا کرد! 🌟\n\n"
+            f"ممنون از سخاوتت! 🙏\n"
+            f"💰 موجودی: *{new_bal}$*\n\n"
+            f"📊 `/charity` — تابلوی خیرین"
+        )
+    else:
+        text = (
+            f"💝 *{u_name}* donated *{amount}$* to charity! 🌟\n\n"
+            f"Thank you for your generosity! 🙏\n"
+            f"💰 Balance: *{new_bal}$*\n\n"
+            f"📊 `/charity` — Donor leaderboard"
+        )
+    await update.message.reply_text(text, parse_mode="Markdown")
+
+
+# ════════════════════════════════════════════════════════════
+# /charity — Charity donation leaderboard
+# ════════════════════════════════════════════════════════════
+async def charity_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat = update.effective_chat
+    lang = get_lang(chat.id)
+
+    donations = get_donations(chat.id)
+    if not donations:
+        if lang == "fa":
+            await update.message.reply_text("💝 هنوز کسی کمکی نکرده! `/donate [مبلغ]` بزن.", parse_mode="Markdown")
+        else:
+            await update.message.reply_text("💝 No donations yet! Use `/donate [amount]`.", parse_mode="Markdown")
+        return
+
+    sorted_donors = sorted(donations.items(), key=lambda x: x[1], reverse=True)[:15]
+    medals = ["🥇", "🥈", "🥉"]
+    titles_fa = ["👑 پادشاه خیرین", "💎 خیر برتر", "⭐ خیر سخاوتمند"]
+    titles_en = ["👑 King of Charity", "💎 Top Donor", "⭐ Generous Donor"]
+    lines = []
+    total = 0
+    for i, (uid_str, donated) in enumerate(sorted_donors):
+        name = get_user_name(chat.id, int(uid_str))
+        if not name:
+            try:
+                member = await context.bot.get_chat_member(chat.id, int(uid_str))
+                name = (member.user.full_name or member.user.first_name or f"User {uid_str}").strip()
+                set_user_name(chat.id, int(uid_str), name)
+            except Exception:
+                name = f"User {uid_str}"
+        medal = medals[i] if i < 3 else f"*{i+1}.*"
+        title = (titles_fa[i] if lang == "fa" else titles_en[i]) if i < 3 else ""
+        line = f"{medal} {name} — *{donated}$*"
+        if title:
+            line += f" {title}"
+        lines.append(line)
+        total += donated
+
+    if lang == "fa":
+        header = "💝 *تابلوی خیرین* 💝\n\n"
+        footer = f"\n\n💰 مجموع کمک‌ها: *{total}$*\n💝 `/donate [مبلغ]` — اهدا کن!"
+    else:
+        header = "💝 *Charity Leaderboard* 💝\n\n"
+        footer = f"\n\n💰 Total donated: *{total}$*\n💝 `/donate [amount]` — Make a donation!"
+
+    await update.message.reply_text(header + "\n".join(lines) + footer, parse_mode="Markdown")
+
+
+# ════════════════════════════════════════════════════════════
+# Real Estate Investment System
+# ════════════════════════════════════════════════════════════
+REAL_ESTATE = {
+    "shack": {
+        "name_en": "🏚️ Old Shack", "name_fa": "🏚️ کلبه قدیمی",
+        "base_price": 500, "daily_rent": 15, "tier": 1,
+    },
+    "apartment": {
+        "name_en": "🏢 Apartment", "name_fa": "🏢 آپارتمان",
+        "base_price": 2000, "daily_rent": 60, "tier": 2,
+    },
+    "house": {
+        "name_en": "🏠 House", "name_fa": "🏠 خانه",
+        "base_price": 5000, "daily_rent": 150, "tier": 3,
+    },
+    "villa": {
+        "name_en": "🏡 Villa", "name_fa": "🏡 ویلا",
+        "base_price": 15000, "daily_rent": 450, "tier": 4,
+    },
+    "penthouse": {
+        "name_en": "🏙️ Penthouse", "name_fa": "🏙️ پنت‌هاوس",
+        "base_price": 40000, "daily_rent": 1200, "tier": 5,
+    },
+    "mansion": {
+        "name_en": "🏰 Mansion", "name_fa": "🏰 عمارت",
+        "base_price": 100000, "daily_rent": 3000, "tier": 6,
+    },
+}
+
+
+def _property_price(prop_id: str, chat_id: int) -> int:
+    """Dynamic property price based on total purchases."""
+    base = REAL_ESTATE[prop_id]["base_price"]
+    data = load_data()
+    owned_count = 0
+    all_props = data.get("properties", {}).get(str(chat_id), {})
+    for uid, props in all_props.items():
+        for p in props:
+            if p.get("type") == prop_id:
+                owned_count += 1
+    return int(base * (1 + owned_count * 0.05))
+
+
+async def realestate_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Show available properties or user's portfolio."""
+    chat = update.effective_chat
+    user = update.effective_user
+    lang = get_lang(chat.id)
+    _remember_user(chat.id, user)
+
+    args = context.args or []
+
+    # /realestate collect
+    if args and args[0].lower() in ("collect", "rent", "جمع"):
+        props = get_properties(chat.id, user.id)
+        if not props:
+            msg = ("❌ تو ملکی نداری!" if lang == "fa" else "❌ You don't own any properties!")
+            await update.message.reply_text(msg, parse_mode="Markdown")
+            return
+
+        today = date.today().isoformat()
+        total_rent = 0
+        data = load_data()
+        cid = str(chat.id)
+        uid = str(user.id)
+        user_props = data.get("properties", {}).get(cid, {}).get(uid, [])
+
+        for p in user_props:
+            last_rent = p.get("last_rent", "")
+            if last_rent == today:
+                continue
+            prop_info = REAL_ESTATE.get(p.get("type", ""))
+            if not prop_info:
+                continue
+            rent = prop_info["daily_rent"]
+            total_rent += rent
+            p["last_rent"] = today
+
+        if total_rent == 0:
+            msg = ("✅ اجاره امروز رو قبلاً جمع کردی!" if lang == "fa"
+                   else "✅ You already collected today's rent!")
+            await update.message.reply_text(msg, parse_mode="Markdown")
+            return
+
+        save_data(data)
+        new_bal = add_balance(chat.id, user.id, total_rent)
+        if lang == "fa":
+            text = (f"🏠 *اجاره جمع شد!*\n\n"
+                    f"💰 درآمد اجاره: *+{total_rent}$*\n"
+                    f"💳 موجودی: *{new_bal}$*")
+        else:
+            text = (f"🏠 *Rent Collected!*\n\n"
+                    f"💰 Rental income: *+{total_rent}$*\n"
+                    f"💳 Balance: *{new_bal}$*")
+        await update.message.reply_text(text, parse_mode="Markdown")
+        return
+
+    # /realestate my
+    if args and args[0].lower() in ("my", "من", "list"):
+        props = get_properties(chat.id, user.id)
+        if not props:
+            msg = ("❌ تو ملکی نداری! `/realestate` بزن برای خرید." if lang == "fa"
+                   else "❌ You don't own any properties! Use `/realestate` to buy.")
+            await update.message.reply_text(msg, parse_mode="Markdown")
+            return
+
+        lines = []
+        total_rent = 0
+        total_value = 0
+        for p in props:
+            info = REAL_ESTATE.get(p.get("type", ""))
+            if not info:
+                continue
+            name = info["name_fa"] if lang == "fa" else info["name_en"]
+            rent = info["daily_rent"]
+            price = _property_price(p["type"], chat.id)
+            sell_price = int(price * 0.8)
+            total_rent += rent
+            total_value += sell_price
+            lines.append(f"  {name} — {rent}$/day  (sell: {sell_price}$)")
+
+        if lang == "fa":
+            header = "🏠 *ملک‌های تو*\n\n"
+            footer = (f"\n\n💰 درآمد روزانه: *{total_rent}$*\n"
+                      f"💎 ارزش کل: *~{total_value}$*\n"
+                      f"📥 `/realestate collect` — جمع اجاره\n"
+                      f"📤 `/sellproperty [نوع]` — فروش")
+        else:
+            header = "🏠 *Your Properties*\n\n"
+            footer = (f"\n\n💰 Daily income: *{total_rent}$*\n"
+                      f"💎 Total value: *~{total_value}$*\n"
+                      f"📥 `/realestate collect` — Collect rent\n"
+                      f"📤 `/sellproperty [type]` — Sell property")
+        await update.message.reply_text(header + "\n".join(lines) + footer, parse_mode="Markdown")
+        return
+
+    # Default: show market
+    lines = []
+    for pid, info in REAL_ESTATE.items():
+        name = info["name_fa"] if lang == "fa" else info["name_en"]
+        price = _property_price(pid, chat.id)
+        rent = info["daily_rent"]
+        roi_days = price // rent if rent else 999
+        lines.append(f"{name}\n   💰 {price}$ | 📥 {rent}$/day | 📊 ROI: {roi_days} days\n   `/buyproperty {pid}`")
+
+    if lang == "fa":
+        header = "🏠 *بازار املاک*\n\n"
+        footer = ("\n\n🏠 `/realestate my` — ملک‌های تو\n"
+                  "📥 `/realestate collect` — جمع اجاره")
+    else:
+        header = "🏠 *Real Estate Market*\n\n"
+        footer = ("\n\n🏠 `/realestate my` — Your properties\n"
+                  "📥 `/realestate collect` — Collect rent")
+    await update.message.reply_text(header + "\n".join(lines) + footer, parse_mode="Markdown")
+
+
+async def buyproperty_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Buy a property."""
+    chat = update.effective_chat
+    user = update.effective_user
+    lang = get_lang(chat.id)
+    _remember_user(chat.id, user)
+
+    args = context.args or []
+    if not args:
+        available = ", ".join(REAL_ESTATE.keys())
+        msg = (f"❌ استفاده: `/buyproperty [نوع]`\nموجود: {available}" if lang == "fa"
+               else f"❌ Usage: `/buyproperty [type]`\nAvailable: {available}")
+        await update.message.reply_text(msg, parse_mode="Markdown")
+        return
+
+    prop_id = args[0].lower()
+    if prop_id not in REAL_ESTATE:
+        available = ", ".join(REAL_ESTATE.keys())
+        msg = (f"❌ ملک نامعتبر! موجود: {available}" if lang == "fa"
+               else f"❌ Invalid property! Available: {available}")
+        await update.message.reply_text(msg, parse_mode="Markdown")
+        return
+
+    info = REAL_ESTATE[prop_id]
+    price = _property_price(prop_id, chat.id)
+    bal = get_balance(chat.id, user.id)
+
+    if price > bal:
+        msg = (f"❌ موجودی کافی نیست! نیاز: *{price}$* | موجودی: *{bal}$*" if lang == "fa"
+               else f"❌ Not enough money! Need: *{price}$* | Balance: *{bal}$*")
+        await update.message.reply_text(msg, parse_mode="Markdown")
+        return
+
+    existing = get_properties(chat.id, user.id)
+    if len(existing) >= 10:
+        msg = ("❌ حداکثر ۱۰ ملک می‌تونی داشته باشی!" if lang == "fa"
+               else "❌ Maximum 10 properties allowed!")
+        await update.message.reply_text(msg, parse_mode="Markdown")
+        return
+
+    add_balance(chat.id, user.id, -price)
+    prop = {
+        "id": f"{prop_id}_{int(time.time())}",
+        "type": prop_id,
+        "bought_at": date.today().isoformat(),
+        "bought_price": price,
+        "last_rent": "",
+    }
+    add_property(chat.id, user.id, prop)
+
+    name = info["name_fa"] if lang == "fa" else info["name_en"]
+    new_bal = get_balance(chat.id, user.id)
+    if lang == "fa":
+        text = (f"🏠 *ملک خریداری شد!*\n\n"
+                f"🏷️ {name}\n"
+                f"💰 قیمت: *{price}$*\n"
+                f"📥 اجاره روزانه: *{info['daily_rent']}$*\n"
+                f"💳 موجودی: *{new_bal}$*\n\n"
+                f"📥 `/realestate collect` — جمع اجاره")
+    else:
+        text = (f"🏠 *Property Purchased!*\n\n"
+                f"🏷️ {name}\n"
+                f"💰 Price: *{price}$*\n"
+                f"📥 Daily rent: *{info['daily_rent']}$*\n"
+                f"💳 Balance: *{new_bal}$*\n\n"
+                f"📥 `/realestate collect` — Collect rent")
+    await update.message.reply_text(text, parse_mode="Markdown")
+
+
+async def sellproperty_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Sell a property (80% of current market price)."""
+    chat = update.effective_chat
+    user = update.effective_user
+    lang = get_lang(chat.id)
+    _remember_user(chat.id, user)
+
+    args = context.args or []
+    if not args:
+        msg = ("❌ استفاده: `/sellproperty [نوع]`" if lang == "fa"
+               else "❌ Usage: `/sellproperty [type]`")
+        await update.message.reply_text(msg, parse_mode="Markdown")
+        return
+
+    prop_type = args[0].lower()
+    props = get_properties(chat.id, user.id)
+
+    target = None
+    for p in props:
+        if p.get("type") == prop_type:
+            target = p
+            break
+
+    if not target:
+        msg = (f"❌ تو ملکی از نوع *{prop_type}* نداری!" if lang == "fa"
+               else f"❌ You don't own a *{prop_type}* property!")
+        await update.message.reply_text(msg, parse_mode="Markdown")
+        return
+
+    price = _property_price(prop_type, chat.id)
+    sell_price = int(price * 0.8)
+    remove_property(chat.id, user.id, target["id"])
+    new_bal = add_balance(chat.id, user.id, sell_price)
+
+    info = REAL_ESTATE.get(prop_type, {})
+    name = info.get("name_fa", prop_type) if lang == "fa" else info.get("name_en", prop_type)
+
+    if lang == "fa":
+        text = (f"🏠 *ملک فروخته شد!*\n\n"
+                f"🏷️ {name}\n"
+                f"💰 قیمت فروش: *{sell_price}$* (80%)\n"
+                f"💳 موجودی: *{new_bal}$*")
+    else:
+        text = (f"🏠 *Property Sold!*\n\n"
+                f"🏷️ {name}\n"
+                f"💰 Sale price: *{sell_price}$* (80%)\n"
+                f"💳 Balance: *{new_bal}$*")
+    await update.message.reply_text(text, parse_mode="Markdown")
+
+
+# --------- /economy (economic stats & tax info) ---------
+async def economy_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat = update.effective_chat
+    user = update.effective_user
+    lang = get_lang(chat.id)
+    _remember_user(chat.id, user)
+
+    bal = get_balance(chat.id, user.id)
+    xp = get_work_xp(chat.id, user.id)
+    level = xp // WORK_XP_PER_LEVEL
+    streak = get_daily_streak(chat.id, user.id).get("count", 0)
+
+    # Wealth tax bracket
+    tax_rate = 0
+    for threshold, rate in reversed(WEALTH_TAX_BRACKETS):
+        if bal >= threshold:
+            tax_rate = rate
+            break
+    tax_amount = int(bal * tax_rate) if tax_rate else 0
+
+    # Total money supply in chat
+    all_bals = get_all_balances(chat.id)
+    total_supply = sum(all_bals.values()) if all_bals else 0
+
+    # Properties
+    props = get_properties(chat.id, user.id)
+    daily_rent = sum(REAL_ESTATE.get(p.get("type", ""), {}).get("daily_rent", 0) for p in props)
+    prop_value = sum(
+        _property_price(p.get("type", ""), chat.id) for p in props
+    )
+
+    if lang == "fa":
+        msg = (
+            f"📊 *وضعیت اقتصادی {user.first_name}*\n\n"
+            f"💰 موجودی: *{bal}$*\n"
+            f"🏠 ارزش املاک: *{prop_value}$*\n"
+            f"📥 اجاره روزانه: *{daily_rent}$*\n"
+            f"💎 ثروت کل: *{bal + prop_value}$*\n\n"
+            f"⭐ سطح کار: *{level}* ({xp} XP)\n"
+            f"💼 بونوس درآمد: *+{int(level * WORK_BONUS_PER_LEVEL * 100)}%*\n"
+            f"🔥 استریک روزانه: *{streak}/{MAX_STREAK}*\n\n"
+            f"🏛️ *براکت مالیات:*\n"
+        )
+        if tax_rate > 0:
+            msg += f"   📌 نرخ: *{int(tax_rate*100)}%* = *{tax_amount}$*/روز\n"
+        else:
+            msg += f"   ✅ معاف (زیر {WEALTH_TAX_BRACKETS[0][0]}$)\n"
+        msg += (
+            f"💸 مالیات انتقال: *{int(TRANSFER_TAX_RATE*100)}%* (بالای {TRANSFER_TAX_THRESHOLD}$)\n\n"
+            f"🏦 عرضه پول گروه: *{total_supply}$*"
+        )
+    else:
+        msg = (
+            f"📊 *{user.first_name}'s Economy Status*\n\n"
+            f"💰 Balance: *{bal}$*\n"
+            f"🏠 Property value: *{prop_value}$*\n"
+            f"📥 Daily rent income: *{daily_rent}$*\n"
+            f"💎 Net worth: *{bal + prop_value}$*\n\n"
+            f"⭐ Work level: *{level}* ({xp} XP)\n"
+            f"💼 Pay bonus: *+{int(level * WORK_BONUS_PER_LEVEL * 100)}%*\n"
+            f"🔥 Daily streak: *{streak}/{MAX_STREAK}*\n\n"
+            f"🏛️ *Tax Bracket:*\n"
+        )
+        if tax_rate > 0:
+            msg += f"   📌 Rate: *{int(tax_rate*100)}%* = *{tax_amount}$*/day\n"
+        else:
+            msg += f"   ✅ Exempt (below {WEALTH_TAX_BRACKETS[0][0]}$)\n"
+        msg += (
+            f"💸 Transfer tax: *{int(TRANSFER_TAX_RATE*100)}%* (above {TRANSFER_TAX_THRESHOLD}$)\n\n"
+            f"🏦 Group money supply: *{total_supply}$*"
+        )
     await update.message.reply_text(msg, parse_mode="Markdown")

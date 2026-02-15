@@ -2,60 +2,337 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Casino — Kollars</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>Casino Royale — Kollars</title>
 <style>
+/* ══════ RESET & BASE ══════ */
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#1a1a2e;color:#e0e0e0;font-family:'Segoe UI',Tahoma,sans-serif;min-height:100vh;overflow-x:hidden}
-.header{background:linear-gradient(135deg,#16213e,#0f3460);padding:15px;text-align:center;position:sticky;top:0;z-index:100}
-.header h1{font-size:1.4em;color:#e94560}
-.balance-bar{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;font-size:1.2em;font-weight:bold;color:#f5c518}
-.kollar-coin{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#f5c518,#d4a017);color:#1a1a2e;font-weight:900;font-size:14px;box-shadow:0 0 8px rgba(245,197,24,0.5)}
-.sync-dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-left:6px}
-.sync-dot.online{background:#0f0;box-shadow:0 0 6px #0f0}
-.sync-dot.offline{background:#f00;box-shadow:0 0 6px #f00}
-.nav{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;padding:10px;background:#16213e}
-.nav button{background:#0f3460;border:none;color:#e0e0e0;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:.85em;transition:.2s}
-.nav button:hover,.nav button.active{background:#e94560;color:#fff}
-.game-area{max-width:500px;margin:15px auto;padding:15px;background:#16213e;border-radius:12px;min-height:300px}
-.game-area h2{text-align:center;color:#e94560;margin-bottom:12px}
-.result{background:#0f3460;padding:12px;border-radius:8px;text-align:center;margin:10px 0;font-size:1.1em;min-height:40px}
-.slot-display{display:flex;justify-content:center;gap:10px;font-size:2.5em;padding:15px;background:#0a0a1a;border-radius:10px;margin:10px 0}
-.btn{background:#e94560;border:none;color:#fff;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:1em;margin:5px;transition:.2s}
-.btn:hover{background:#c73652}
-.btn:disabled{background:#555;cursor:not-allowed}
-.input-row{display:flex;gap:8px;align-items:center;justify-content:center;margin:10px 0;flex-wrap:wrap}
-.input-row input,.input-row select{background:#0f3460;border:1px solid #e94560;color:#e0e0e0;padding:8px;border-radius:6px;width:100px;text-align:center}
-.cards{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:10px 0}
-.card{background:#fff;color:#111;width:55px;height:78px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1em;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,.4)}
-.card.red{color:#c00}
-.poker-section{margin:10px 0;padding:10px;background:#0a0a1a;border-radius:8px}
-.poker-section h3{color:#f5c518;margin-bottom:8px;text-align:center}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes glow{0%,100%{box-shadow:0 0 8px rgba(245,197,24,.3)}50%{box-shadow:0 0 20px rgba(245,197,24,.7)}}
+@keyframes coinSpin{0%{transform:rotateY(0)}100%{transform:rotateY(360deg)}}
+@keyframes cardDeal{from{opacity:0;transform:translateY(-40px) rotateZ(-8deg)}to{opacity:1;transform:translateY(0) rotateZ(0)}}
+@keyframes slotSpin{0%{transform:translateY(-100%)}100%{transform:translateY(0)}}
+@keyframes winFlash{0%,100%{color:#f5c518}50%{color:#fff}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+@keyframes confetti{0%{opacity:1;transform:translateY(0) rotate(0)}100%{opacity:0;transform:translateY(300px) rotate(720deg)}}
+
+:root{
+  --bg:#0b0e1a;--surface:#131729;--card:#1a1f38;--accent:#e94560;
+  --gold:#f5c518;--green:#2ecc71;--red:#e74c3c;--blue:#3498db;
+  --text:#e8e8f0;--muted:#7a7a9a;--border:#2a2f50;
+  --grad1:linear-gradient(135deg,#0b0e1a 0%,#1a1f38 100%);
+  --grad-gold:linear-gradient(135deg,#f5c518,#d4a017,#f5c518);
+  --grad-accent:linear-gradient(135deg,#e94560,#c73652);
+  --grad-green:linear-gradient(135deg,#2ecc71,#27ae60);
+}
+
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+  min-height:100vh;overflow-x:hidden;
+  background-image:radial-gradient(ellipse at 20% 50%,rgba(233,69,96,.04) 0%,transparent 60%),
+                    radial-gradient(ellipse at 80% 20%,rgba(245,197,24,.03) 0%,transparent 60%);
+}
+
+/* ══════ HEADER ══════ */
+.header{
+  background:linear-gradient(180deg,#131729 0%,rgba(19,23,41,.95) 100%);
+  backdrop-filter:blur(12px);
+  padding:16px 20px 12px;text-align:center;
+  position:sticky;top:0;z-index:100;
+  border-bottom:1px solid var(--border);
+}
+.header h1{
+  font-size:1.5em;letter-spacing:1px;
+  background:linear-gradient(90deg,var(--accent),var(--gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.balance-bar{
+  display:flex;align-items:center;justify-content:center;
+  gap:10px;margin-top:10px;font-size:1.3em;font-weight:700;
+  color:var(--gold);
+}
+.kollar-coin{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:32px;height:32px;border-radius:50%;
+  background:var(--grad-gold);
+  color:#0b0e1a;font-weight:900;font-size:15px;
+  box-shadow:0 0 12px rgba(245,197,24,.5);
+  animation:glow 3s infinite;
+}
+.sync-dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-left:4px;transition:.3s}
+.sync-dot.online{background:var(--green);box-shadow:0 0 8px var(--green)}
+.sync-dot.offline{background:var(--red);box-shadow:0 0 8px var(--red)}
+
+/* ══════ NAVIGATION ══════ */
+.nav{
+  display:flex;gap:6px;justify-content:center;
+  padding:10px 12px;background:var(--surface);
+  border-bottom:1px solid var(--border);
+  overflow-x:auto;-webkit-overflow-scrolling:touch;
+}
+.nav button{
+  background:var(--card);border:1px solid var(--border);
+  color:var(--muted);padding:10px 16px;border-radius:12px;
+  cursor:pointer;font-size:.85em;font-weight:600;
+  transition:all .25s;white-space:nowrap;
+  letter-spacing:.3px;
+}
+.nav button:hover{border-color:var(--accent);color:var(--text)}
+.nav button.active{
+  background:var(--grad-accent);border-color:var(--accent);
+  color:#fff;box-shadow:0 4px 15px rgba(233,69,96,.3);
+}
+
+/* ══════ GAME AREA ══════ */
+.game-area{
+  max-width:520px;margin:16px auto;padding:20px;
+  background:var(--surface);border-radius:16px;
+  border:1px solid var(--border);min-height:360px;
+  animation:fadeIn .4s ease-out;
+  box-shadow:0 8px 32px rgba(0,0,0,.3);
+}
+.game-area h2{
+  text-align:center;margin-bottom:16px;font-size:1.3em;
+  letter-spacing:.5px;
+  background:linear-gradient(90deg,var(--accent),var(--gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+
+/* ══════ RESULT BOX ══════ */
+.result{
+  background:var(--card);padding:14px;border-radius:12px;
+  text-align:center;margin:12px 0;font-size:1.1em;
+  min-height:44px;border:1px solid var(--border);
+  transition:all .3s;
+}
+.result.win{border-color:var(--green);color:var(--green);animation:pulse .5s}
+.result.lose{border-color:var(--red);color:var(--red);animation:shake .4s}
+
+/* ══════ SLOT REELS ══════ */
+.slot-machine{
+  background:linear-gradient(135deg,#1e2340,#0f1225);
+  border-radius:16px;padding:16px;margin:12px 0;
+  border:2px solid var(--border);position:relative;
+  box-shadow:inset 0 2px 10px rgba(0,0,0,.5);
+}
+.slot-display{
+  display:flex;justify-content:center;gap:8px;
+  padding:12px 0;
+}
+.slot-reel{
+  width:64px;height:72px;
+  background:#0a0d1a;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:2em;
+  border:1px solid var(--border);
+  box-shadow:inset 0 2px 8px rgba(0,0,0,.6);
+  transition:all .3s;overflow:hidden;
+}
+.slot-reel.spinning{animation:pulse .15s infinite}
+.slot-lights{
+  display:flex;justify-content:center;gap:6px;margin-bottom:8px;
+}
+.slot-light{
+  width:8px;height:8px;border-radius:50%;
+  animation:glow 1.5s infinite;
+}
+.slot-light:nth-child(odd){background:var(--accent)}
+.slot-light:nth-child(even){background:var(--gold)}
+
+/* ══════ BUTTONS ══════ */
+.btn{
+  background:var(--grad-accent);border:none;color:#fff;
+  padding:12px 28px;border-radius:12px;cursor:pointer;
+  font-size:1em;font-weight:700;margin:5px;
+  transition:all .2s;letter-spacing:.3px;
+  box-shadow:0 4px 15px rgba(233,69,96,.25);
+}
+.btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(233,69,96,.4)}
+.btn:active{transform:translateY(0)}
+.btn:disabled{background:#333;cursor:not-allowed;box-shadow:none}
+.btn.gold{
+  background:var(--grad-gold);color:#0b0e1a;
+  box-shadow:0 4px 15px rgba(245,197,24,.25);
+}
+.btn.gold:hover{box-shadow:0 6px 20px rgba(245,197,24,.4)}
+.btn.green{
+  background:var(--grad-green);
+  box-shadow:0 4px 15px rgba(46,204,113,.25);
+}
+
+/* ══════ INPUTS ══════ */
+.input-row{
+  display:flex;gap:10px;align-items:center;
+  justify-content:center;margin:14px 0;flex-wrap:wrap;
+}
+.input-row label{color:var(--muted);font-size:.9em;font-weight:600}
+.input-row input,.input-row select{
+  background:var(--card);border:1px solid var(--border);
+  color:var(--text);padding:10px 14px;border-radius:10px;
+  width:110px;text-align:center;font-size:.95em;
+  transition:border-color .2s;outline:none;
+}
+.input-row input:focus,.input-row select:focus{border-color:var(--accent)}
+
+/* ══════ QUICK BET BUTTONS ══════ */
+.quick-bets{display:flex;gap:6px;justify-content:center;margin:8px 0;flex-wrap:wrap}
+.quick-bet{
+  background:var(--card);border:1px solid var(--border);
+  color:var(--gold);padding:6px 14px;border-radius:8px;
+  cursor:pointer;font-size:.8em;font-weight:600;transition:.2s;
+}
+.quick-bet:hover{border-color:var(--gold);background:#1e2340}
+
+/* ══════ CARDS (Blackjack) ══════ */
+.cards{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:12px 0;perspective:600px}
+.card{
+  background:linear-gradient(135deg,#fff,#f0f0f0);
+  color:#1a1a2e;width:60px;height:84px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.05em;font-weight:bold;
+  box-shadow:0 4px 12px rgba(0,0,0,.3);
+  position:relative;overflow:hidden;
+  animation:cardDeal .4s ease-out;
+  border:2px solid #ddd;
+}
+.card::before{
+  content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);
+  transition:left .5s;
+}
+.card:hover::before{left:140%}
+.card.red{color:#c0392b}
+.card.hidden-card{
+  background:linear-gradient(135deg,#e94560,#c73652);
+  color:transparent;border-color:var(--accent);
+}
+.card.hidden-card::after{
+  content:'?';position:absolute;color:rgba(255,255,255,.4);
+  font-size:2em;
+}
+.card-label{font-size:.65em;position:absolute;top:4px;left:5px;opacity:.6}
+
+/* ══════ ROULETTE ══════ */
+.roulette-wheel{
+  width:160px;height:160px;border-radius:50%;margin:16px auto;
+  background:conic-gradient(
+    #c0392b 0deg, #2c3e50 10deg, #c0392b 20deg, #2c3e50 30deg,
+    #c0392b 40deg, #27ae60 50deg, #2c3e50 60deg, #c0392b 70deg,
+    #2c3e50 80deg, #c0392b 90deg, #2c3e50 100deg, #c0392b 110deg,
+    #2c3e50 120deg, #c0392b 130deg, #2c3e50 140deg, #c0392b 150deg,
+    #2c3e50 160deg, #c0392b 170deg, #2c3e50 180deg, #c0392b 190deg,
+    #2c3e50 200deg, #c0392b 210deg, #2c3e50 220deg, #c0392b 230deg,
+    #2c3e50 240deg, #c0392b 250deg, #2c3e50 260deg, #c0392b 270deg,
+    #2c3e50 280deg, #c0392b 290deg, #2c3e50 300deg, #c0392b 310deg,
+    #2c3e50 320deg, #c0392b 330deg, #2c3e50 340deg, #c0392b 350deg, #2c3e50 360deg
+  );
+  border:6px solid var(--gold);
+  box-shadow:0 0 30px rgba(245,197,24,.2),inset 0 0 20px rgba(0,0,0,.5);
+  transition:transform 3s cubic-bezier(0.17,0.67,0.12,0.99);
+  position:relative;
+}
+.roulette-wheel::after{
+  content:'';position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:40px;height:40px;border-radius:50%;
+  background:var(--grad-gold);
+  box-shadow:0 0 12px rgba(245,197,24,.6);
+}
+.roulette-pointer{
+  width:0;height:0;margin:0 auto;
+  border-left:12px solid transparent;border-right:12px solid transparent;
+  border-top:20px solid var(--gold);
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,.5));
+}
+.roulette-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:6px;margin:14px 0;
+}
+.roulette-chip{
+  padding:8px;border-radius:8px;text-align:center;
+  cursor:pointer;font-size:.85em;font-weight:600;
+  transition:.2s;border:2px solid transparent;
+}
+.roulette-chip:hover{transform:scale(1.05)}
+.roulette-chip.active{border-color:var(--gold);box-shadow:0 0 10px rgba(245,197,24,.3)}
+.chip-red{background:#c0392b;color:#fff}
+.chip-black{background:#2c3e50;color:#fff}
+.chip-green{background:#27ae60;color:#fff}
+.chip-odd{background:var(--card);color:var(--text);border:1px solid var(--border)}
+.chip-even{background:var(--card);color:var(--text);border:1px solid var(--border)}
+.chip-num{background:var(--card);color:var(--gold);border:1px solid var(--border)}
+
+/* ══════ POKER ══════ */
+.poker-section{
+  margin:12px 0;padding:14px;background:var(--card);
+  border-radius:12px;border:1px solid var(--border);
+}
+.poker-section h3{
+  color:var(--gold);margin-bottom:10px;
+  text-align:center;font-size:1.05em;
+}
 .player-list{list-style:none;padding:0}
-.player-list li{padding:4px 8px;border-bottom:1px solid #1a1a2e}
-.player-list li.you{color:#f5c518;font-weight:bold}
-.poker-actions{display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap}
-.community-cards{display:flex;gap:6px;justify-content:center;margin:10px 0}
+.player-list li{
+  padding:8px 12px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:8px;
+  font-size:.9em;
+}
+.player-list li:last-child{border-bottom:none}
+.player-list li.you{color:var(--gold);font-weight:bold}
+.player-list li::before{content:'👤';font-size:.8em}
+.player-list li.you::before{content:'⭐'}
+.poker-actions{
+  display:flex;gap:8px;justify-content:center;
+  margin-top:12px;flex-wrap:wrap;
+}
+.community-cards{display:flex;gap:8px;justify-content:center;margin:12px 0}
+.status-msg{text-align:center;color:var(--muted);font-style:italic;margin:8px 0}
 .hidden{display:none}
-.status-msg{text-align:center;color:#aaa;font-style:italic;margin:8px 0}
+
+/* ══════ CONFETTI ══════ */
+.confetti-piece{
+  position:fixed;width:8px;height:8px;
+  animation:confetti 1.5s forwards;
+  pointer-events:none;z-index:999;
+}
+
+/* ══════ RESPONSIVE ══════ */
+@media(max-width:400px){
+  .game-area{margin:10px 8px;padding:14px}
+  .slot-reel{width:52px;height:60px;font-size:1.6em}
+  .card{width:50px;height:70px;font-size:.9em}
+  .btn{padding:10px 20px;font-size:.9em}
+  .roulette-wheel{width:130px;height:130px}
+}
 </style>
 </head>
 <body>
+
+<!-- ══════ HEADER ══════ -->
 <div class="header">
-  <h1>🎰 Casino Royale</h1>
+  <h1>🎰 CASINO ROYALE</h1>
   <div class="balance-bar">
-    <div class="kollar-coin">K</div>
+    <div class="kollar-coin" id="coinEl">K</div>
     <span id="balanceDisplay">0</span> Kollars
-    <span id="syncDot" class="sync-dot offline"></span>
+    <span id="syncDot" class="sync-dot offline" title="Sync status"></span>
   </div>
 </div>
+
+<!-- ══════ NAV ══════ -->
 <div class="nav" id="navBar">
-  <button onclick="showGame('slots')" class="active">🎰 Slots</button>
-  <button onclick="showGame('blackjack')">🃏 Blackjack</button>
-  <button onclick="showGame('roulette')">🎡 Roulette</button>
-  <button onclick="showGame('megaslots')">💎 Mega</button>
-  <button onclick="showGame('poker')">♠️ Poker</button>
+  <button onclick="showGame('slots')" class="active" data-game="slots">🎰 Slots</button>
+  <button onclick="showGame('blackjack')" data-game="blackjack">🃏 Blackjack</button>
+  <button onclick="showGame('roulette')" data-game="roulette">🎡 Roulette</button>
+  <button onclick="showGame('megaslots')" data-game="megaslots">💎 Mega</button>
+  <button onclick="showGame('poker')" data-game="poker">♠️ Poker</button>
 </div>
+
+<!-- ══════ GAME AREA ══════ -->
 <div class="game-area" id="gameArea"></div>
 
 <script>
@@ -66,29 +343,30 @@ const USER_ID = params.get('user_id') || '0';
 const USER_NAME = decodeURIComponent(params.get('name') || 'Player');
 let balance = 0;
 let synced = false;
-
 const API = window.location.origin;
 
-// ── Balance sync ──
+// ── Balance sync (more frequent — every 10s) ──
 async function fetchBalance() {
   try {
     const r = await fetch(`${API}/api/balance?chat_id=${CHAT_ID}&user_id=${USER_ID}`);
     const d = await r.json();
     if (d.balance !== undefined) { balance = d.balance; synced = true; }
-  } catch(e) { synced = false; balance = balance || 1000; }
+  } catch(e) { synced = false; }
   updateUI();
 }
 
 async function syncDelta(delta) {
-  if (!synced) { balance += delta; updateUI(); return; }
+  balance += delta;
+  updateUI();
+  if (!synced) return;
   try {
     const r = await fetch(`${API}/api/balance`, {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({chat_id: parseInt(CHAT_ID), user_id: parseInt(USER_ID), delta})
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({chat_id:parseInt(CHAT_ID), user_id:parseInt(USER_ID), delta})
     });
     const d = await r.json();
     if (d.balance !== undefined) balance = d.balance;
-  } catch(e) { balance += delta; }
+  } catch(e) {}
   updateUI();
 }
 
@@ -98,18 +376,55 @@ function updateUI() {
   dot.className = 'sync-dot ' + (synced ? 'online' : 'offline');
 }
 
+// ── Helpers ──
+function sound(type) {
+  // Placeholder for future audio
+}
+
+function confetti() {
+  const colors = ['#e94560','#f5c518','#2ecc71','#3498db','#9b59b6','#e67e22'];
+  for (let i = 0; i < 30; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.left = Math.random()*100 + 'vw';
+    el.style.top = '-10px';
+    el.style.background = colors[Math.floor(Math.random()*colors.length)];
+    el.style.borderRadius = Math.random()>.5?'50%':'2px';
+    el.style.animationDuration = (1 + Math.random()) + 's';
+    el.style.animationDelay = Math.random()*0.5 + 's';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 2500);
+  }
+}
+
+function setResult(id, text, type) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = text;
+  el.className = 'result ' + (type||'');
+}
+
+function setBetValue(inputId, val) {
+  const el = document.getElementById(inputId);
+  if (el) el.value = val;
+}
+
 // ── Navigation ──
 let currentGame = 'slots';
 function showGame(name) {
   currentGame = name;
-  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
+  document.querySelectorAll('.nav button').forEach(b => {
+    b.classList.toggle('active', b.dataset.game === name);
+  });
   if (pokerPoll) { clearInterval(pokerPoll); pokerPoll = null; }
   renderGame();
 }
 
 function renderGame() {
   const area = document.getElementById('gameArea');
+  area.style.animation = 'none';
+  area.offsetHeight; // reflow
+  area.style.animation = 'fadeIn .4s ease-out';
   switch(currentGame) {
     case 'slots': renderSlots(area); break;
     case 'blackjack': renderBlackjack(area); break;
@@ -123,38 +438,85 @@ function renderGame() {
 const SLOT_SYMBOLS = ['🍒','🍋','🔔','⭐','💎','7️⃣','🍇','🍊'];
 function renderSlots(el) {
   el.innerHTML = `<h2>🎰 Slot Machine</h2>
-    <div class="slot-display" id="slotReels">❓ ❓ ❓</div>
-    <div class="input-row"><label>Bet:</label><input type="number" id="slotBet" value="10" min="1"></div>
-    <div style="text-align:center"><button class="btn" onclick="spinSlots()">🎰 SPIN</button></div>
+    <div class="slot-machine">
+      <div class="slot-lights">${'<div class="slot-light"></div>'.repeat(12)}</div>
+      <div class="slot-display">
+        <div class="slot-reel" id="r1">❓</div>
+        <div class="slot-reel" id="r2">❓</div>
+        <div class="slot-reel" id="r3">❓</div>
+      </div>
+    </div>
+    <div class="input-row">
+      <label>Bet:</label>
+      <input type="number" id="slotBet" value="10" min="1">
+    </div>
+    <div class="quick-bets">
+      <span class="quick-bet" onclick="setBetValue('slotBet',10)">10</span>
+      <span class="quick-bet" onclick="setBetValue('slotBet',50)">50</span>
+      <span class="quick-bet" onclick="setBetValue('slotBet',100)">100</span>
+      <span class="quick-bet" onclick="setBetValue('slotBet',500)">500</span>
+      <span class="quick-bet" onclick="setBetValue('slotBet',1000)">1K</span>
+    </div>
+    <div style="text-align:center"><button class="btn gold" onclick="spinSlots()" id="slotBtn">🎰 SPIN</button></div>
     <div class="result" id="slotResult"></div>`;
 }
-function spinSlots() {
+
+async function spinSlots() {
   const bet = Math.max(1, parseInt(document.getElementById('slotBet').value) || 10);
-  if (bet > balance) { document.getElementById('slotResult').textContent = '❌ Not enough Kollars!'; return; }
-  const r1 = SLOT_SYMBOLS[Math.floor(Math.random()*SLOT_SYMBOLS.length)];
-  const r2 = SLOT_SYMBOLS[Math.floor(Math.random()*SLOT_SYMBOLS.length)];
-  const r3 = SLOT_SYMBOLS[Math.floor(Math.random()*SLOT_SYMBOLS.length)];
-  document.getElementById('slotReels').textContent = `${r1} ${r2} ${r3}`;
+  if (bet > balance) { setResult('slotResult','❌ Not enough Kollars!','lose'); return; }
+  const btn = document.getElementById('slotBtn');
+  btn.disabled = true;
+  // Spinning animation
+  const reels = ['r1','r2','r3'];
+  reels.forEach(id => {
+    document.getElementById(id).classList.add('spinning');
+  });
+  // Stop one by one
+  const results = SLOT_SYMBOLS.map(() => SLOT_SYMBOLS[Math.floor(Math.random()*SLOT_SYMBOLS.length)]);
+  const r = [results[0], results[1], results[2]].map(() => SLOT_SYMBOLS[Math.floor(Math.random()*SLOT_SYMBOLS.length)]);
+  for (let i = 0; i < 3; i++) {
+    await new Promise(res => setTimeout(res, 300 + i*250));
+    const reel = document.getElementById(reels[i]);
+    reel.classList.remove('spinning');
+    reel.textContent = r[i];
+    reel.style.animation = 'none';
+    reel.offsetHeight;
+    reel.style.animation = 'slotSpin .2s ease-out';
+  }
   let win = 0;
-  if (r1===r2 && r2===r3) { win = r1==='7️⃣' ? bet*20 : bet*8; }
-  else if (r1===r2 || r2===r3 || r1===r3) { win = bet*2; }
+  if (r[0]===r[1] && r[1]===r[2]) { win = r[0]==='7️⃣'?bet*20 : r[0]==='💎'?bet*15 : bet*8; }
+  else if (r[0]===r[1] || r[1]===r[2] || r[0]===r[2]) { win = bet*2; }
   const delta = win > 0 ? win : -bet;
-  syncDelta(delta);
-  document.getElementById('slotResult').innerHTML = win > 0
-    ? `🎉 WIN! +${win}K` : `😢 Lost ${bet}K`;
+  await syncDelta(delta);
+  if (win > 0) {
+    setResult('slotResult', `🎉 WIN! +${win.toLocaleString()}K`, 'win');
+    if (win >= bet*8) confetti();
+  } else {
+    setResult('slotResult', `😢 Lost ${bet.toLocaleString()}K`, 'lose');
+  }
+  btn.disabled = false;
 }
 
 // ═══ BLACKJACK ═══
 let bjDeck, bjPlayer, bjDealer, bjBet, bjDone;
 function renderBlackjack(el) {
   el.innerHTML = `<h2>🃏 Blackjack</h2>
-    <div class="input-row"><label>Bet:</label><input type="number" id="bjBetIn" value="20" min="1"></div>
-    <div style="text-align:center"><button class="btn" onclick="bjStart()">Deal</button></div>
+    <div class="input-row">
+      <label>Bet:</label>
+      <input type="number" id="bjBetIn" value="20" min="1">
+    </div>
+    <div class="quick-bets">
+      <span class="quick-bet" onclick="setBetValue('bjBetIn',20)">20</span>
+      <span class="quick-bet" onclick="setBetValue('bjBetIn',50)">50</span>
+      <span class="quick-bet" onclick="setBetValue('bjBetIn',100)">100</span>
+      <span class="quick-bet" onclick="setBetValue('bjBetIn',500)">500</span>
+    </div>
+    <div style="text-align:center"><button class="btn gold" onclick="bjStart()">🃏 Deal</button></div>
     <div id="bjArea"></div>`;
 }
 function bjNewDeck() {
   const s=['♠','♥','♦','♣'], r=['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
-  let d=[]; s.forEach(su=>r.forEach(ra=>d.push({r:ra,s:su}))); 
+  let d=[]; s.forEach(su=>r.forEach(ra=>d.push({r:ra,s:su})));
   for(let i=d.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]];}
   return d;
 }
@@ -163,80 +525,189 @@ function bjVal(hand) {
   hand.forEach(c=>{if(c.r==='A'){a++;v+=11}else if(['K','Q','J'].includes(c.r))v+=10;else v+=parseInt(c.r)});
   while(v>21&&a>0){v-=10;a--}return v;
 }
-function bjCardHtml(c){const red=c.s==='♥'||c.s==='♦';return `<div class="card${red?' red':''}">${c.r}${c.s}</div>`}
+function bjCardHtml(c,delay) {
+  const red = c.s==='♥'||c.s==='♦';
+  const d = delay ? `animation-delay:${delay}ms` : '';
+  return `<div class="card${red?' red':''}" style="${d}"><span class="card-label">${c.s}</span>${c.r}${c.s}</div>`;
+}
+function bjHiddenCard() {
+  return `<div class="card hidden-card"></div>`;
+}
 function bjStart() {
   bjBet=Math.max(1,parseInt(document.getElementById('bjBetIn').value)||20);
-  if(bjBet>balance){document.getElementById('bjArea').innerHTML='<div class="result">❌ Not enough Kollars!</div>';return}
+  if(bjBet>balance){document.getElementById('bjArea').innerHTML='<div class="result lose">❌ Not enough Kollars!</div>';return}
   bjDeck=bjNewDeck();bjPlayer=[bjDeck.pop(),bjDeck.pop()];bjDealer=[bjDeck.pop(),bjDeck.pop()];bjDone=false;
   bjRender();
   if(bjVal(bjPlayer)===21){bjStand();}
 }
 function bjRender() {
   const a=document.getElementById('bjArea');
-  let dCards=bjDone?bjDealer.map(bjCardHtml):[bjCardHtml(bjDealer[0]),'<div class="card">?</div>'];
-  a.innerHTML=`<p style="text-align:center;margin:8px">Dealer: ${bjDone?bjVal(bjDealer):'?'}</p>
-    <div class="cards">${dCards.join('')}</div>
-    <p style="text-align:center;margin:8px">You: ${bjVal(bjPlayer)}</p>
-    <div class="cards">${bjPlayer.map(bjCardHtml).join('')}</div>
-    ${bjDone?'':'<div style="text-align:center"><button class="btn" onclick="bjHit()">Hit</button><button class="btn" onclick="bjStand()">Stand</button></div>'}
+  let dCards = bjDone
+    ? bjDealer.map((c,i) => bjCardHtml(c, i*100)).join('')
+    : bjCardHtml(bjDealer[0],0) + bjHiddenCard();
+  const pCards = bjPlayer.map((c,i) => bjCardHtml(c, i*100)).join('');
+  a.innerHTML=`
+    <div style="text-align:center;margin:12px 0">
+      <span style="color:var(--muted);font-size:.85em">DEALER ${bjDone?'('+bjVal(bjDealer)+')':'(?)'}</span>
+    </div>
+    <div class="cards">${dCards}</div>
+    <div style="text-align:center;margin:12px 0">
+      <span style="color:var(--gold);font-weight:bold">YOU (${bjVal(bjPlayer)})</span>
+      <span style="color:var(--muted);font-size:.8em;margin-left:8px">Bet: ${bjBet}K</span>
+    </div>
+    <div class="cards">${pCards}</div>
+    ${bjDone?'':'<div style="text-align:center;margin-top:14px"><button class="btn" onclick="bjHit()">🃏 Hit</button><button class="btn green" onclick="bjStand()">🛑 Stand</button></div>'}
     <div class="result" id="bjResult"></div>`;
 }
-function bjHit(){if(bjDone)return;bjPlayer.push(bjDeck.pop());if(bjVal(bjPlayer)>21){bjDone=true;bjRender();syncDelta(-bjBet);document.getElementById('bjResult').innerHTML=`💥 Bust! Lost ${bjBet}K`}else bjRender()}
-function bjStand(){if(bjDone)return;bjDone=true;while(bjVal(bjDealer)<17)bjDealer.push(bjDeck.pop());bjRender();
-  const pv=bjVal(bjPlayer),dv=bjVal(bjDealer);let msg;
-  if(dv>21||pv>dv){msg=`🎉 You win! +${bjBet}K`;syncDelta(bjBet)}
-  else if(pv===dv){msg='🤝 Push!'}
-  else{msg=`😢 Dealer wins. Lost ${bjBet}K`;syncDelta(-bjBet)}
-  document.getElementById('bjResult').innerHTML=msg;
+function bjHit(){
+  if(bjDone)return;
+  bjPlayer.push(bjDeck.pop());
+  if(bjVal(bjPlayer)>21){bjDone=true;bjRender();syncDelta(-bjBet);setResult('bjResult',`💥 Bust! Lost ${bjBet}K`,'lose')}
+  else bjRender()
+}
+function bjStand(){
+  if(bjDone)return;bjDone=true;
+  while(bjVal(bjDealer)<17)bjDealer.push(bjDeck.pop());
+  bjRender();
+  const pv=bjVal(bjPlayer),dv=bjVal(bjDealer);
+  if(dv>21||pv>dv){
+    syncDelta(bjBet);setResult('bjResult',`🎉 You win! +${bjBet}K`,'win');
+    if(pv===21)confetti();
+  } else if(pv===dv){
+    setResult('bjResult','🤝 Push!','');
+  } else {
+    syncDelta(-bjBet);setResult('bjResult',`😢 Dealer wins. Lost ${bjBet}K`,'lose');
+  }
 }
 
 // ═══ ROULETTE ═══
+let rouletteChoice = 'red';
 function renderRoulette(el) {
   el.innerHTML = `<h2>🎡 Roulette</h2>
+    <div class="roulette-pointer"></div>
+    <div class="roulette-wheel" id="rouletteWheel"></div>
     <div class="input-row">
-      <label>Bet:</label><input type="number" id="rBet" value="15" min="1">
-      <select id="rChoice"><option value="red">🔴 Red</option><option value="black">⚫ Black</option>
-        <option value="green">🟢 Green</option><option value="odd">Odd</option><option value="even">Even</option></select>
+      <label>Bet:</label>
+      <input type="number" id="rBet" value="15" min="1">
     </div>
-    <div style="text-align:center"><button class="btn" onclick="spinRoulette()">🎡 SPIN</button></div>
+    <div class="quick-bets">
+      <span class="quick-bet" onclick="setBetValue('rBet',10)">10</span>
+      <span class="quick-bet" onclick="setBetValue('rBet',50)">50</span>
+      <span class="quick-bet" onclick="setBetValue('rBet',100)">100</span>
+      <span class="quick-bet" onclick="setBetValue('rBet',500)">500</span>
+    </div>
+    <div class="roulette-grid">
+      <div class="roulette-chip chip-red active" onclick="pickRouletteChoice('red',this)" data-choice="red">🔴 Red</div>
+      <div class="roulette-chip chip-black" onclick="pickRouletteChoice('black',this)" data-choice="black">⚫ Black</div>
+      <div class="roulette-chip chip-green" onclick="pickRouletteChoice('green',this)" data-choice="green">🟢 Green</div>
+      <div class="roulette-chip chip-odd" onclick="pickRouletteChoice('odd',this)" data-choice="odd">Odd</div>
+      <div class="roulette-chip chip-even" onclick="pickRouletteChoice('even',this)" data-choice="even">Even</div>
+      <div class="roulette-chip chip-num" onclick="pickRouletteNum()" data-choice="num">🔢 Number</div>
+    </div>
+    <div style="text-align:center"><button class="btn" onclick="spinRoulette()" id="rouletteBtn">🎡 SPIN</button></div>
     <div class="result" id="rResult"></div>`;
 }
-function spinRoulette() {
+function pickRouletteChoice(c, el) {
+  rouletteChoice = c;
+  document.querySelectorAll('.roulette-chip').forEach(e => e.classList.remove('active'));
+  if (el) el.classList.add('active');
+}
+function pickRouletteNum() {
+  const n = prompt('Pick a number (0-36):','17');
+  if (n !== null && parseInt(n) >= 0 && parseInt(n) <= 36) {
+    rouletteChoice = parseInt(n).toString();
+    document.querySelectorAll('.roulette-chip').forEach(e => e.classList.remove('active'));
+    document.querySelector('[data-choice="num"]').classList.add('active');
+    document.querySelector('[data-choice="num"]').textContent = '🔢 #' + n;
+  }
+}
+async function spinRoulette() {
   const bet=Math.max(1,parseInt(document.getElementById('rBet').value)||15);
-  if(bet>balance){document.getElementById('rResult').textContent='❌ Not enough Kollars!';return}
-  const choice=document.getElementById('rChoice').value;
+  if(bet>balance){setResult('rResult','❌ Not enough Kollars!','lose');return}
+  const btn = document.getElementById('rouletteBtn');
+  btn.disabled = true;
+  const wheel = document.getElementById('rouletteWheel');
+  const spins = 1440 + Math.random()*720;
+  wheel.style.transform = `rotate(${spins}deg)`;
+  await new Promise(res=>setTimeout(res,3200));
   const num=Math.floor(Math.random()*37);
   const reds=[1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36];
   const color=num===0?'green':reds.includes(num)?'red':'black';
   const parity=num===0?'green':num%2===0?'even':'odd';
   let win=0;
+  const choice = rouletteChoice;
   if(choice==='green'&&color==='green')win=bet*35;
   else if(choice===color)win=bet*2;
   else if(choice===parity)win=bet*2;
-  const delta=win>0?win:-bet;syncDelta(delta);
-  document.getElementById('rResult').innerHTML=`Number: <b>${num}</b> (${color}) — `+(win>0?`🎉 +${win}K`:`😢 -${bet}K`);
+  else if(!isNaN(parseInt(choice))&&parseInt(choice)===num)win=bet*36;
+  const delta=win>0?win:-bet;
+  await syncDelta(delta);
+  const colorEmoji = color==='red'?'🔴':color==='green'?'🟢':'⚫';
+  if(win>0){
+    setResult('rResult',`${colorEmoji} ${num} — 🎉 +${win.toLocaleString()}K`,'win');
+    if(win>=bet*10) confetti();
+  } else {
+    setResult('rResult',`${colorEmoji} ${num} — 😢 -${bet.toLocaleString()}K`,'lose');
+  }
+  btn.disabled = false;
 }
 
 // ═══ MEGA SLOTS ═══
 const MEGA_SYM=['💎','👑','🌟','🔥','💰','🎪','🦄','🏆'];
 function renderMegaSlots(el) {
   el.innerHTML=`<h2>💎 Mega Slots</h2>
-    <div class="slot-display" id="megaReels">❓ ❓ ❓ ❓ ❓</div>
-    <div class="input-row"><label>Bet:</label><input type="number" id="megaBet" value="50" min="10"></div>
-    <div style="text-align:center"><button class="btn" onclick="spinMega()">💎 MEGA SPIN</button></div>
+    <div class="slot-machine">
+      <div class="slot-lights">${'<div class="slot-light"></div>'.repeat(14)}</div>
+      <div class="slot-display">
+        <div class="slot-reel" id="m1">❓</div>
+        <div class="slot-reel" id="m2">❓</div>
+        <div class="slot-reel" id="m3">❓</div>
+        <div class="slot-reel" id="m4">❓</div>
+        <div class="slot-reel" id="m5">❓</div>
+      </div>
+    </div>
+    <div class="input-row">
+      <label>Bet:</label>
+      <input type="number" id="megaBet" value="50" min="10">
+    </div>
+    <div class="quick-bets">
+      <span class="quick-bet" onclick="setBetValue('megaBet',50)">50</span>
+      <span class="quick-bet" onclick="setBetValue('megaBet',100)">100</span>
+      <span class="quick-bet" onclick="setBetValue('megaBet',500)">500</span>
+      <span class="quick-bet" onclick="setBetValue('megaBet',1000)">1K</span>
+    </div>
+    <div style="text-align:center"><button class="btn gold" onclick="spinMega()" id="megaBtn">💎 MEGA SPIN</button></div>
     <div class="result" id="megaResult"></div>`;
 }
-function spinMega(){
+async function spinMega(){
   const bet=Math.max(10,parseInt(document.getElementById('megaBet').value)||50);
-  if(bet>balance){document.getElementById('megaResult').textContent='❌ Not enough Kollars!';return}
+  if(bet>balance){setResult('megaResult','❌ Not enough Kollars!','lose');return}
+  const btn=document.getElementById('megaBtn');
+  btn.disabled=true;
+  const reelIds=['m1','m2','m3','m4','m5'];
+  reelIds.forEach(id=>document.getElementById(id).classList.add('spinning'));
   const r=Array.from({length:5},()=>MEGA_SYM[Math.floor(Math.random()*MEGA_SYM.length)]);
-  document.getElementById('megaReels').textContent=r.join(' ');
+  for(let i=0;i<5;i++){
+    await new Promise(res=>setTimeout(res,250+i*200));
+    const reel=document.getElementById(reelIds[i]);
+    reel.classList.remove('spinning');
+    reel.textContent=r[i];
+    reel.style.animation='none';reel.offsetHeight;
+    reel.style.animation='slotSpin .2s ease-out';
+  }
   const counts={};r.forEach(s=>counts[s]=(counts[s]||0)+1);
   const mx=Math.max(...Object.values(counts));
   let win=0;
   if(mx===5)win=bet*50;else if(mx===4)win=bet*15;else if(mx===3)win=bet*4;
-  const delta=win>0?win:-bet;syncDelta(delta);
-  document.getElementById('megaResult').innerHTML=win>0?`🎉 ${mx} match! +${win}K`:`😢 Lost ${bet}K`;
+  const delta=win>0?win:-bet;
+  await syncDelta(delta);
+  if(win>0){
+    setResult('megaResult',`🎉 ${mx}-match! +${win.toLocaleString()}K`,'win');
+    if(mx>=4)confetti();
+  } else {
+    setResult('megaResult',`😢 Lost ${bet.toLocaleString()}K`,'lose');
+  }
+  btn.disabled=false;
 }
 
 // ═══ MULTIPLAYER POKER ═══
@@ -246,8 +717,8 @@ let pokerState = null;
 function renderPoker(el) {
   el.innerHTML = `<h2>♠️ Texas Hold'em Poker</h2>
     <div class="poker-section">
-      <div class="input-row"><label>Bet:</label><input type="number" id="pokerBet" value="50" min="10"></div>
-      <div style="text-align:center"><button class="btn" onclick="joinPoker()">🚪 Join Lobby</button></div>
+      <div class="input-row"><label>Buy-in:</label><input type="number" id="pokerBet" value="50" min="10"></div>
+      <div style="text-align:center"><button class="btn gold" onclick="joinPoker()">🚪 Join Lobby</button></div>
       <div id="pokerLobby"></div>
     </div>
     <div id="pokerGame" class="hidden"></div>`;
@@ -280,6 +751,7 @@ function renderPokerState() {
   if (!pokerState) return;
   const lobby = document.getElementById('pokerLobby');
   const gameDiv = document.getElementById('pokerGame');
+  if (!lobby || !gameDiv) return;
   const s = pokerState;
 
   if (s.state === 'waiting' || s.state === 'no_lobby') {
@@ -288,14 +760,13 @@ function renderPokerState() {
       `<li class="${p.user_id===USER_ID?'you':''}">${p.name}${p.user_id===USER_ID?' (you)':''}</li>`
     ).join('');
     const canStart = (s.count || 0) >= 4;
-    lobby.innerHTML = `<h3>Lobby — ${s.count||0}/4+ players</h3>
-      <ul class="player-list">${players||'<li>No players yet</li>'}</ul>
-      ${canStart ? '<div style="text-align:center"><button class="btn" onclick="startPoker()">🚀 Start Game</button></div>' : '<p class="status-msg">Waiting for 4+ players...</p>'}`;
+    lobby.innerHTML = `<h3 style="margin-top:12px;color:var(--gold)">Lobby — ${s.count||0}/4+ players</h3>
+      <ul class="player-list">${players||'<li style="color:var(--muted)">No players yet</li>'}</ul>
+      ${canStart ? '<div style="text-align:center;margin-top:10px"><button class="btn green" onclick="startPoker()">🚀 Start Game</button></div>' : '<p class="status-msg">Waiting for 4+ players...</p>'}`;
     if (!pokerPoll && s.count > 0) pokerPoll = setInterval(pollPokerStatus, 2000);
     return;
   }
 
-  // Game in progress or finished
   lobby.innerHTML = '';
   gameDiv.classList.remove('hidden');
 
@@ -308,39 +779,39 @@ function renderPokerState() {
   if (s.state === 'finished') {
     if (pokerPoll) { clearInterval(pokerPoll); pokerPoll = null; }
     const w = s.winner;
-    // Refresh balance after game ends
     fetchBalance();
     let handsHtml = '';
     if (s.all_hands) {
-      handsHtml = '<h3>All Hands</h3>';
+      handsHtml = '<h3 style="margin-top:10px;color:var(--muted)">All Hands</h3>';
       for (const [uid, cards] of Object.entries(s.all_hands)) {
         const pname = s.players.find(p=>p.user_id===uid)?.name || uid;
-        handsHtml += `<p>${pname}: ${cards.map(c=>pokerCardHtml(c)).join(' ')}</p>`;
+        handsHtml += `<p style="margin:4px 0">${pname}: ${cards.map(c=>pokerCardHtml(c)).join(' ')}</p>`;
       }
     }
     gameDiv.innerHTML = `<div class="poker-section">
       <h3>🏆 Game Over!</h3>
-      <p style="text-align:center;font-size:1.2em;color:#f5c518">${w?.name||'?'} wins ${s.pot||0}K!</p>
+      <p style="text-align:center;font-size:1.2em;color:var(--gold);margin:10px 0">${w?.name||'?'} wins ${(s.pot||0).toLocaleString()}K!</p>
       ${community?'<div class="community-cards">'+community+'</div>':''}
       ${handsHtml}
-      <div style="text-align:center;margin-top:10px"><button class="btn" onclick="renderPoker(document.getElementById('gameArea'))">🔄 New Game</button></div>
+      <div style="text-align:center;margin-top:14px"><button class="btn" onclick="renderPoker(document.getElementById('gameArea'))">🔄 New Game</button></div>
     </div>`;
+    confetti();
     return;
   }
 
   const turnName = active[(s.turn||0) % active.length]?.name || '?';
   gameDiv.innerHTML = `<div class="poker-section">
-    <h3>Pot: ${s.pot||0}K — ${s.state}</h3>
-    <p class="status-msg">${isMyTurn?'🟢 YOUR TURN':'⏳ '+turnName+"'s turn"}</p>
-    ${community?'<p style="text-align:center">Community:</p><div class="community-cards">'+community+'</div>':''}
-    ${hand?'<p style="text-align:center;color:#f5c518">Your Hand:</p><div class="cards">'+hand+'</div>':''}
+    <h3>Pot: ${(s.pot||0).toLocaleString()}K — ${s.state.toUpperCase()}</h3>
+    <p class="status-msg" style="${isMyTurn?'color:var(--green);font-weight:bold':''}">${isMyTurn?'🟢 YOUR TURN':'⏳ '+turnName+"'s turn"}</p>
+    ${community?'<p style="text-align:center;color:var(--muted);font-size:.85em;margin-top:8px">Community</p><div class="community-cards">'+community+'</div>':''}
+    ${hand?'<p style="text-align:center;color:var(--gold);font-size:.85em;margin-top:8px">Your Hand</p><div class="cards">'+hand+'</div>':''}
     ${isFolded?'<p class="status-msg">You folded</p>':
       (isMyTurn?`<div class="poker-actions">
-        <button class="btn" onclick="pokerAction('fold')">🏳️ Fold</button>
-        <button class="btn" onclick="pokerAction('check')">✅ Check</button>
-        <button class="btn" onclick="pokerRaise()">💰 Raise</button>
+        <button class="btn" style="background:#c0392b" onclick="pokerAction('fold')">🏳️ Fold</button>
+        <button class="btn green" onclick="pokerAction('check')">✅ Check</button>
+        <button class="btn gold" onclick="pokerRaise()">💰 Raise</button>
       </div>`:'')}
-    <h3 style="margin-top:10px">Players</h3>
+    <h3 style="margin-top:14px;font-size:.9em;color:var(--muted)">Players</h3>
     <ul class="player-list">${s.players.map(p=>{
       const f=(s.folded||[]).includes(p.user_id);
       return `<li class="${p.user_id===USER_ID?'you':''}">${p.name}${f?' (folded)':''}${p.user_id===USER_ID?' ← you':''}</li>`;
@@ -351,7 +822,7 @@ function renderPokerState() {
 function pokerCardHtml(c) {
   if (!c) return '';
   const red = c.suit==='♥'||c.suit==='♦';
-  return `<div class="card${red?' red':''}">${c.rank}${c.suit}</div>`;
+  return `<div class="card${red?' red':''}" style="width:52px;height:72px;font-size:.9em"><span class="card-label">${c.suit}</span>${c.rank}${c.suit}</div>`;
 }
 
 async function startPoker() {
@@ -389,7 +860,7 @@ function pokerRaise() {
 // ── Init ──
 fetchBalance();
 renderGame();
-setInterval(fetchBalance, 60000);
+setInterval(fetchBalance, 10000); // Sync every 10 seconds
 </script>
 </body>
 </html>

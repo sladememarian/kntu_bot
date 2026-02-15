@@ -518,3 +518,80 @@ def record_purchase(chat_id: int, item_id: str, qty: int = 1):
     pc = data.setdefault("purchase_counts", {}).setdefault(str(chat_id), {})
     pc[item_id] = pc.get(item_id, 0) + qty
     save_data(data)
+
+
+# ---- Charity / Donations ----
+
+def add_donation(chat_id: int, user_id: int, amount: int):
+    """Add a donation amount for a user in this chat."""
+    data = load_data()
+    don = data.setdefault("donations", {}).setdefault(str(chat_id), {})
+    don[str(user_id)] = don.get(str(user_id), 0) + amount
+    save_data(data)
+
+
+def get_donations(chat_id: int) -> dict:
+    """Returns {user_id_str: total_donated} for a chat."""
+    data = load_data()
+    return data.get("donations", {}).get(str(chat_id), {})
+
+
+# ---- Real Estate ----
+
+def get_properties(chat_id: int, user_id: int) -> list:
+    """Returns list of property dicts owned by a user."""
+    data = load_data()
+    return data.get("properties", {}).get(str(chat_id), {}).get(str(user_id), [])
+
+
+def add_property(chat_id: int, user_id: int, prop: dict):
+    """Add a property to user's portfolio."""
+    data = load_data()
+    props = data.setdefault("properties", {}).setdefault(str(chat_id), {}).setdefault(str(user_id), [])
+    props.append(prop)
+    save_data(data)
+
+
+def remove_property(chat_id: int, user_id: int, prop_id: str) -> bool:
+    """Remove a property by its ID. Returns True if found and removed."""
+    data = load_data()
+    props = data.get("properties", {}).get(str(chat_id), {}).get(str(user_id), [])
+    for i, p in enumerate(props):
+        if p.get("id") == prop_id:
+            props.pop(i)
+            save_data(data)
+            return True
+    return False
+
+
+def get_all_properties(chat_id: int) -> dict:
+    """Returns {user_id_str: [properties]} for a chat."""
+    data = load_data()
+    return data.get("properties", {}).get(str(chat_id), {})
+
+
+# ── Daily streak ───────────────────────────────────────────
+def get_daily_streak(chat_id: int, user_id: int) -> dict:
+    data = load_data()
+    return data.get("daily_streaks", {}).get(str(chat_id), {}).get(str(user_id), {"count": 0, "last": ""})
+
+def set_daily_streak(chat_id: int, user_id: int, streak: dict):
+    data = load_data()
+    cid, uid = str(chat_id), str(user_id)
+    data.setdefault("daily_streaks", {}).setdefault(cid, {})[uid] = streak
+    save_data(data)
+
+
+# ── Work XP ────────────────────────────────────────────────
+def get_work_xp(chat_id: int, user_id: int) -> int:
+    data = load_data()
+    return data.get("work_xp", {}).get(str(chat_id), {}).get(str(user_id), 0)
+
+def add_work_xp(chat_id: int, user_id: int, amount: int = 1) -> int:
+    data = load_data()
+    cid, uid = str(chat_id), str(user_id)
+    xp = data.setdefault("work_xp", {}).setdefault(cid, {}).get(uid, 0)
+    xp += amount
+    data["work_xp"][cid][uid] = xp
+    save_data(data)
+    return xp
