@@ -4,6 +4,7 @@
 # ==========================================
 
 import logging
+import os
 from telegram import Update
 from telegram.error import TimedOut, NetworkError
 from telegram.ext import (
@@ -14,6 +15,7 @@ from telegram.ext import (
     CallbackQueryHandler,
     filters,
 )
+from aiohttp import web
 
 from config import BOT_TOKEN, DEBUG, BOT_NAME
 
@@ -24,6 +26,7 @@ from handlers.jokes_stories import joke_cmd, story_cmd
 from handlers.news import news_cmd, setnews_cmd, removenews_cmd
 from handlers.ai_chat import ai_cmd
 from handlers.markov_ai import markov_listen, ai2_cmd, ai2stats_cmd, ai2test_cmd
+from handlers.ophelia_ai import ophelia_listen, ai3_cmd, ai3stats_cmd
 from handlers.books import book_cmd
 from handlers.image_gen import imagine_cmd
 from handlers.welcome import greet_new_member, greet_via_message, track_message_members
@@ -59,6 +62,75 @@ logging.basicConfig(
 )
 logger = logging.getLogger(BOT_NAME)
 
+# ═══════════════════════════════════════════════════
+# WEB SERVER for HTML5 Games (served via aiohttp)
+# ═══════════════════════════════════════════════════
+GAME_SHORT_NAME = os.environ.get("GAME_SHORT_NAME", "casino")
+_STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+
+
+async def _serve_casino(request):
+    """Serve the casino HTML5 game page."""
+    path = os.path.join(_STATIC_DIR, "casino.html")
+    if os.path.isfile(path):
+        return web.FileResponse(path)
+    return web.Response(text="Game not found", status=404)
+
+
+async def _start_web_server(app):
+    """Start aiohttp web server alongside the bot (for game hosting)."""
+    web_app = web.Application()
+    web_app.router.add_get("/", _serve_casino)
+    web_app.router.add_get("/casino", _serve_casino)
+    runner = web.AppRunner(web_app)
+    await runner.setup()
+    port = int(os.environ.get("PORT", 8080))
+    site = web.TCPSite(runner, "0.0.0.0", port)
+    await site.start()
+    app.bot_data["_web_runner"] = runner
+    logger.info("🌐 Web server started on port %d", port)
+
+
+async def _stop_web_server(app):
+    """Stop the web server."""
+    runner = app.bot_data.get("_web_runner")
+    if runner:
+        await runner.cleanup()
+        logger.info("🌐 Web server stopped")
+
+
+async def casinogame_cmd(update: Update, context):
+    """
+    /casinogame — Launch the HTML5 Casino game in Telegram.
+    Requires game to be registered via @BotFather first.
+    """
+    try:
+        await context.bot.send_game(
+            chat_id=update.effective_chat.id,
+            game_short_name=GAME_SHORT_NAME,
+        )
+    except Exception as e:
+        await update.message.reply_text(
+            "❌ بازی هنوز تنظیم نشده! / Game not set up!\n"
+            "ادمین باید بازی رو در @BotFather ثبت کنه.\n"
+            "Admin: /newgame in @BotFather → short_name = casino\n"
+            f"Error: {e}"
+        )
+
+
+async def game_callback(update: Update, context):
+    """Handle the 'Play' button click on a Telegram Game message."""
+    query = update.callback_query
+    if not query or not query.game_short_name:
+        return
+    domain = os.environ.get("RAILWAY_PUBLIC_DOMAIN", os.environ.get("WEB_URL", ""))
+    if domain:
+        url = f"https://{domain}/casino"
+    else:
+        port = os.environ.get("PORT", "8080")
+        url = f"http://localhost:{port}/casino"
+    await query.answer(url=url)
+
 
 def main():
     if not BOT_TOKEN or BOT_TOKEN == "YOUR_BOT_TOKEN_HERE":
@@ -70,7 +142,13 @@ def main():
         print("=" * 50)
         return
 
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
+    app = (
+        ApplicationBuilder()
+        .token(BOT_TOKEN)
+        .post_init(_start_web_server)
+        .post_shutdown(_stop_web_server)
+        .build()
+    )
 
     # ---- Command Handlers ----
     app.add_handler(CommandHandler("start", start_cmd))
@@ -102,6 +180,10 @@ def main():
     app.add_handler(CommandHandler("ai2", ai2_cmd))
     app.add_handler(CommandHandler("ai2stats", ai2stats_cmd))
     app.add_handler(CommandHandler("ai2test", ai2test_cmd))
+
+    # AI3 (OPHELIA)
+    app.add_handler(CommandHandler("ai3", ai3_cmd))
+    app.add_handler(CommandHandler("ai3stats", ai3stats_cmd))
 
     # Books
     app.add_handler(CommandHandler("book", book_cmd))
@@ -191,6 +273,10 @@ def main():
     app.add_handler(CommandHandler("bar", bar_cmd))
     app.add_handler(CommandHandler("coinflip", coinflip_cmd))
 
+    # Casino HTML5 Game
+    app.add_handler(CommandHandler("casinogame", casinogame_cmd))
+    app.add_handler(CommandHandler("playcasino", casinogame_cmd))
+
     # Places & Dates
     app.add_handler(CommandHandler("places", places_cmd))
     app.add_handler(CommandHandler("date", date_cmd))
@@ -234,6 +320,12 @@ def main():
 
     # ---- Markov AI: learn from all text messages ----
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, markov_listen), group=2)
+
+    # ---- OPHELIA AI: learn from all text messages ----
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, ophelia_listen), group=3)
+
+    # ---- Game callback handler ----
+    app.add_handler(CallbackQueryHandler(game_callback), group=5)
 
     # ---- Error handler ----
     async def error_handler(update, context):
