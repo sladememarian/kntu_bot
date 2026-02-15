@@ -24,7 +24,7 @@ from config import BOT_TOKEN, DEBUG, BOT_NAME
 from storage import get_balance as _get_balance, add_balance as _add_balance
 
 # Handlers
-from handlers.general import start_cmd, help_cmd, lang_cmd, debug_cmd, dumpdata_cmd, dbstatus_cmd, syncdata_cmd, loaddata_cmd
+from handlers.general import start_cmd, help_cmd, help_callback, lang_cmd, debug_cmd, dumpdata_cmd, dbstatus_cmd, syncdata_cmd, loaddata_cmd
 from handlers.fun import ship_cmd, lagab_cmd, rizz_cmd, gay_cmd, warn_handler, resetwarn_cmd
 from handlers.jokes_stories import joke_cmd, story_cmd
 from handlers.news import news_cmd, setnews_cmd, removenews_cmd
@@ -574,6 +574,9 @@ def main():
     # Family tree
     app.add_handler(CommandHandler("family", family_cmd))
     app.add_handler(CallbackQueryHandler(family_callback, pattern=r"^fam_(accept|reject):"))
+
+    # Help categories callback
+    app.add_handler(CallbackQueryHandler(help_callback, pattern=r"^help:"))
 
     # Image Generation
     app.add_handler(CommandHandler("imagine", imagine_cmd))
