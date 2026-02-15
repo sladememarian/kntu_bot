@@ -1,0 +1,2828 @@
+{
+  "jail": {
+    "-1003657534277": {
+      "107690566": "2026-02-11T21:43:09.832496"
+    },
+    "-1003766429228": {
+      "627098633": "2026-02-14T13:55:10.045588|21600",
+      "785512936": "2026-02-13T20:37:39.774928|14400",
+      "845791174": "2026-02-14T20:32:46.579972|14400",
+      "977743334": "2026-02-14T22:04:19.713319",
+      "1030822217": "2026-02-14T20:32:46.579972|14580",
+      "1054401591": "2026-02-13T15:42:43.907294",
+      "1411756228": "2026-02-13T17:18:13.773837|14400",
+      "5510345757": "2026-02-13T20:37:39.774928|14580",
+      "6185981142": "2026-02-14T20:32:46.579972|14400",
+      "7359504141": "2026-02-14T20:08:34.606119|21600",
+      "7646489621": "2026-02-11T21:40:35.241767"
+    }
+  },
+  "debug": false,
+  "loans": {
+    "-1003766429228": {
+      "627098633": {
+        "amount": 2200,
+        "interest": 0.1,
+        "original": 2000,
+        "taken_at": "2026-02-13T15:31:15.175409"
+      },
+      "785512936": {
+        "amount": 1100,
+        "interest": 0.1,
+        "original": 1000,
+        "taken_at": "2026-02-13T17:27:35.810046"
+      },
+      "1030822217": {
+        "amount": 2200,
+        "interest": 0.1,
+        "original": 2000,
+        "taken_at": "2026-02-13T15:31:21.583840"
+      },
+      "7359504141": {
+        "amount": 2200,
+        "interest": 0.1,
+        "original": 2000,
+        "taken_at": "2026-02-14T20:06:16.058916"
+      }
+    }
+  },
+  "lagabs": {},
+  "stocks": {
+    "-1003766429228": {
+      "627098633": {
+        "META": 1
+      },
+      "785512936": {
+        "SONY": 5,
+        "SPOT": 5
+      },
+      "814851166": {
+        "DIS": 2,
+        "AAPL": 9,
+        "META": 2,
+        "MSFT": 2,
+        "NFLX": 2,
+        "TSLA": 2
+      },
+      "845791174": {
+        "AAPL": 70,
+        "GOOG": 34
+      },
+      "977743334": {
+        "AMD": 3,
+        "DIS": 13,
+        "ETH": 3,
+        "AAPL": 11,
+        "DOGE": 20,
+        "META": 2,
+        "MSFT": 8,
+        "SONY": 8,
+        "SPOT": 7
+      },
+      "1030822217": {
+        "AMD": 6,
+        "AAPL": 6,
+        "GOOG": 3,
+        "META": 32,
+        "TSLA": 6
+      },
+      "1054401591": {
+        "BTC": 6,
+        "DIS": 853,
+        "AAPL": 50,
+        "META": 3,
+        "MSFT": 11
+      },
+      "1411756228": {
+        "BTC": 15,
+        "META": 25
+      },
+      "1556793586": {
+        "GOOG": 24,
+        "META": 36
+      },
+      "5392769449": {
+        "BTC": 4
+      },
+      "5510345757": {
+        "BTC": 39,
+        "AAPL": 2,
+        "AMZN": 2,
+        "META": 3,
+        "SPOT": 20,
+        "TSLA": 2
+      },
+      "5864430289": {
+        "BTC": 11,
+        "DIS": 3,
+        "ETH": 2,
+        "DOGE": 50,
+        "META": 1,
+        "NFLX": 3,
+        "NVDA": 8
+      },
+      "6185981142": {},
+      "7359504141": {},
+      "7646489621": {}
+    }
+  },
+  "wallets": {
+    "107690566": {
+      "107690566": 550
+    },
+    "-1003459460915": {
+      "785512936": 440,
+      "814851166": 2250,
+      "1030822217": 375,
+      "5510345757": 415,
+      "5864430289": 250,
+      "6185981142": 0,
+      "7359504141": 2500,
+      "7646489621": 0
+    },
+    "-1003657534277": {
+      "97191141": 403,
+      "107690566": 436,
+      "814851166": 597
+    },
+    "-1003766429228": {
+      "627098633": 503,
+      "785512936": 2373,
+      "814851166": 771,
+      "845791174": 69,
+      "977743334": 5,
+      "1030822217": 300,
+      "1054401591": 57370,
+      "1411756228": 63,
+      "1556793586": 1660,
+      "5391319107": 520,
+      "5392769449": 0,
+      "5510345757": 6177,
+      "5864430289": 201,
+      "6185981142": 0,
+      "6610315540": 196,
+      "7359504141": 1406,
+      "7646489621": 4403,
+      "8400494104": 3000
+    }
+  },
+  "blackjack": {
+    "-1003766429228": {
+      "1054401591": {
+        "bet": 1000,
+        "deck": [
+          "5♠",
+          "J♦",
+          "6♠",
+          "3♣",
+          "J♣",
+          "A♠",
+          "4♠",
+          "2♥",
+          "7♥",
+          "9♣",
+          "2♠",
+          "3♦",
+          "A♥",
+          "10♦",
+          "7♣",
+          "5♦",
+          "Q♠",
+          "3♥",
+          "Q♦",
+          "A♦",
+          "8♥",
+          "10♥",
+          "5♣",
+          "2♣",
+          "6♣",
+          "9♠",
+          "8♦",
+          "7♠",
+          "K♥",
+          "K♦",
+          "3♠",
+          "10♠",
+          "9♦",
+          "4♣",
+          "A♣",
+          "J♠",
+          "9♥",
+          "Q♣",
+          "4♦",
+          "5♥",
+          "K♣",
+          "10♣",
+          "6♥",
+          "8♣",
+          "J♥",
+          "2♦",
+          "7♦",
+          "8♠"
+        ],
+        "phase": "playing",
+        "dealer_cards": [
+          "K♠",
+          "4♥"
+        ],
+        "player_cards": [
+          "6♦",
+          "Q♥"
+        ]
+      },
+      "7646489621": {
+        "bet": 100,
+        "deck": [
+          "A♥",
+          "4♣",
+          "3♠",
+          "K♠",
+          "10♠",
+          "A♣",
+          "9♦",
+          "2♣",
+          "J♣",
+          "A♠",
+          "5♥",
+          "Q♥",
+          "6♥",
+          "K♣",
+          "2♦",
+          "7♠",
+          "A♦",
+          "7♥",
+          "6♠",
+          "8♥",
+          "8♠",
+          "Q♦",
+          "8♣",
+          "9♣",
+          "7♦",
+          "6♦",
+          "10♥",
+          "2♥",
+          "10♦",
+          "7♣",
+          "9♠",
+          "4♥",
+          "3♦",
+          "3♣",
+          "9♥",
+          "K♥",
+          "4♠",
+          "J♦",
+          "Q♣",
+          "10♣",
+          "6♣",
+          "3♥",
+          "5♦",
+          "Q♠",
+          "2♠",
+          "8♦",
+          "K♦",
+          "J♠"
+        ],
+        "phase": "playing",
+        "dealer_cards": [
+          "J♥",
+          "5♠"
+        ],
+        "player_cards": [
+          "4♦",
+          "5♣"
+        ]
+      }
+    }
+  },
+  "inventory": {
+    "-1003459460915": {
+      "785512936": [
+        {
+          "name": "نوازش",
+          "item_id": "ability_pat",
+          "category": "ability"
+        }
+      ],
+      "1030822217": [
+        {
+          "name": "بوسه",
+          "item_id": "ability_kiss",
+          "category": "ability"
+        }
+      ],
+      "5510345757": [
+        {
+          "name": "بغل",
+          "item_id": "ability_hug",
+          "category": "ability"
+        }
+      ],
+      "5864430289": [
+        {
+          "name": "های‌فایو",
+          "item_id": "ability_highfive",
+          "category": "ability"
+        },
+        {
+          "name": "بغل",
+          "item_id": "ability_hug",
+          "category": "ability"
+        },
+        {
+          "name": "مشت",
+          "item_id": "ability_punch",
+          "category": "ability"
+        }
+      ],
+      "7646489621": [
+        {
+          "name": "بوسه",
+          "item_id": "ability_kiss",
+          "category": "ability"
+        }
+      ]
+    },
+    "-1003766429228": {
+      "627098633": [
+        {
+          "name": "ویسکی",
+          "item_id": "drink_whiskey",
+          "category": "drink"
+        }
+      ],
+      "785512936": [
+        {
+          "name": "بوسه",
+          "item_id": "ability_kiss",
+          "category": "ability"
+        },
+        {
+          "name": "تک‌شاخ",
+          "item_id": "pet_unicorn",
+          "category": "pet"
+        },
+        {
+          "name": "سیخونک",
+          "item_id": "ability_poke",
+          "category": "ability"
+        },
+        {
+          "name": "استیک",
+          "item_id": "food_steak",
+          "category": "food"
+        },
+        {
+          "name": "گاز",
+          "item_id": "ability_bite",
+          "category": "ability"
+        }
+      ],
+      "814851166": [
+        {
+          "name": "کشتن",
+          "item_id": "ability_kill",
+          "category": "ability"
+        },
+        {
+          "name": "زنده کردن",
+          "item_id": "ability_revive",
+          "category": "ability"
+        }
+      ],
+      "977743334": [
+        {
+          "name": "حلقه ساده",
+          "item_id": "ring",
+          "category": "rings"
+        }
+      ],
+      "1030822217": [
+        {
+          "name": "بغل",
+          "item_id": "ability_hug",
+          "category": "ability"
+        },
+        {
+          "name": "بوسه",
+          "item_id": "ability_kiss",
+          "category": "ability"
+        },
+        {
+          "name": "کشتن",
+          "item_id": "ability_kill",
+          "category": "ability"
+        }
+      ],
+      "5510345757": [
+        {
+          "name": "بغل",
+          "item_id": "ability_hug",
+          "category": "ability"
+        },
+        {
+          "name": "بوسه",
+          "item_id": "ability_kiss",
+          "category": "ability"
+        },
+        {
+          "name": "کشتن",
+          "item_id": "ability_kill",
+          "category": "ability"
+        },
+        {
+          "name": "زنده کردن",
+          "item_id": "ability_revive",
+          "category": "ability"
+        },
+        {
+          "name": "گربه",
+          "item_id": "pet_cat",
+          "category": "pet"
+        },
+        {
+          "name": "جغد",
+          "item_id": "pet_owl",
+          "category": "pet"
+        },
+        {
+          "name": "خرگوش",
+          "item_id": "pet_rabbit",
+          "category": "pet"
+        },
+        {
+          "name": "قلقلک",
+          "item_id": "ability_tickle",
+          "category": "ability"
+        },
+        {
+          "name": "سیخونک",
+          "item_id": "ability_poke",
+          "category": "ability"
+        },
+        {
+          "name": "تی‌شرت",
+          "item_id": "tshirt",
+          "category": "clothes"
+        },
+        {
+          "name": "دستبند",
+          "item_id": "bracelet",
+          "category": "accessories"
+        },
+        {
+          "name": "گردنبند",
+          "item_id": "necklace",
+          "category": "accessories"
+        },
+        {
+          "name": "بوت",
+          "item_id": "boots",
+          "category": "shoes"
+        },
+        {
+          "name": "حلقه ساده",
+          "item_id": "ring",
+          "category": "rings"
+        },
+        {
+          "name": "آبجو",
+          "item_id": "drink_beer",
+          "category": "drink"
+        }
+      ],
+      "5864430289": [
+        {
+          "name": "بوسه",
+          "item_id": "ability_kiss",
+          "category": "ability"
+        },
+        {
+          "name": "های‌فایو",
+          "item_id": "ability_highfive",
+          "category": "ability"
+        },
+        {
+          "name": "مشت",
+          "item_id": "ability_punch",
+          "category": "ability"
+        },
+        {
+          "name": "ویسکی",
+          "item_id": "drink_whiskey",
+          "category": "drink"
+        },
+        {
+          "name": "کوکتل",
+          "item_id": "drink_cocktail",
+          "category": "drink"
+        },
+        {
+          "name": "اژدها",
+          "item_id": "pet_dragon",
+          "category": "pet"
+        },
+        {
+          "name": "کت و شلوار",
+          "item_id": "suit",
+          "category": "clothes"
+        },
+        {
+          "name": "کفش رسمی",
+          "item_id": "loafers",
+          "category": "shoes"
+        },
+        {
+          "name": "ویسکی",
+          "item_id": "drink_whiskey",
+          "category": "drink"
+        },
+        {
+          "name": "ویسکی",
+          "item_id": "drink_whiskey",
+          "category": "drink"
+        },
+        {
+          "name": "ویسکی",
+          "item_id": "drink_whiskey",
+          "category": "drink"
+        },
+        {
+          "name": "نوازش",
+          "item_id": "ability_pat",
+          "category": "ability"
+        }
+      ],
+      "7359504141": [
+        {
+          "name": "حلقه ساده",
+          "item_id": "ring",
+          "category": "rings"
+        }
+      ]
+    }
+  },
+  "last_fish": {
+    "-1003766429228": {
+      "627098633": 1771150353.0603707,
+      "785512936": 1771147036.838929,
+      "814851166": 1771082998.271687,
+      "845791174": 1771102581.1726966,
+      "977743334": 1771106315.7505648,
+      "1030822217": 1771150102.4070907,
+      "1054401591": 1771102567.8157415,
+      "1556793586": 1771077173.5989642,
+      "5391319107": 1771028172.5632477,
+      "5510345757": 1771071034.0857022,
+      "5864430289": 1771102962.3212535,
+      "6185981142": 1771150851.9210403,
+      "7359504141": 1771101684.270047,
+      "7646489621": 1771100098.821088
+    }
+  },
+  "last_spin": {
+    "-1003766429228": {
+      "627098633": "2026-02-15T10:12:44.471417",
+      "785512936": "2026-02-15T09:17:06.426101",
+      "814851166": "2026-02-14T10:13:46.271996",
+      "845791174": "2026-02-14T20:46:00.360848",
+      "977743334": "2026-02-14T08:53:20.835158",
+      "1030822217": "2026-02-15T10:08:38.829887",
+      "1054401591": "2026-02-14T20:56:01.210196",
+      "1411756228": "2026-02-13T13:01:17.419290",
+      "1556793586": "2026-02-14T20:57:00.521917",
+      "5510345757": "2026-02-15T09:18:48.999975",
+      "5864430289": "2026-02-14T12:52:27.272794",
+      "6185981142": "2026-02-15T09:45:21.856648",
+      "7359504141": "2026-02-14T13:37:12.411333",
+      "7646489621": "2026-02-13T20:05:14.472803"
+    }
+  },
+  "last_work": {
+    "-1003766429228": {
+      "627098633": "2026-02-15T10:12:39.970983",
+      "785512936": "2026-02-15T09:17:00.793170",
+      "814851166": "2026-02-14T15:30:02.662657",
+      "845791174": "2026-02-14T20:27:21.674973",
+      "977743334": "2026-02-14T21:58:22.098865",
+      "1030822217": "2026-02-14T21:58:31.049586",
+      "1054401591": "2026-02-14T20:55:50.858084",
+      "1411756228": "2026-02-13T15:07:32.972436",
+      "1556793586": "2026-02-14T21:01:39.389725",
+      "5392769449": "2026-02-13T18:21:32.204694",
+      "5510345757": "2026-02-15T09:18:40.421163",
+      "5864430289": "2026-02-14T23:23:44.956559",
+      "6185981142": "2026-02-15T09:45:25.035257",
+      "7359504141": "2026-02-14T23:07:55.731222",
+      "7646489621": "2026-02-14T23:29:54.037943"
+    }
+  },
+  "dead_users": {
+    "-1003766429228": {
+      "1054401591": "2026-02-13T16:31:50.881118",
+      "7359504141": "2026-02-13T19:00:08.658394"
+    }
+  },
+  "group_lang": {},
+  "user_names": {
+    "-1003459460915": {
+      "814851166": "Amirpouyan Memarian",
+      "1030822217": "мσнαмα∂ яєᴢα",
+      "6185981142": "‹ ᴀмɪɴ ›",
+      "7359504141": "André",
+      "7646489621": "Armin"
+    },
+    "-1003766429228": {
+      "627098633": "AMIR🌩️",
+      "785512936": "rıba",
+      "814851166": "Amirpouyan Memarian",
+      "845791174": "MMP",
+      "977743334": "Happy",
+      "1030822217": "мσнαмα∂ яєᴢα",
+      "1054401591": "Ashkan",
+      "1411756228": "𝑽𝒐𝒍𝒌𝒂𝒏",
+      "1556793586": "Saghar",
+      "5391319107": "Alireza M",
+      "5392769449": ".",
+      "5510345757": "Iliya",
+      "5864430289": "Nill.",
+      "6185981142": "‹ ᴀмɪɴ ›",
+      "6610315540": "mani H",
+      "7359504141": "André",
+      "7646489621": "Armin",
+      "7794514685": "KNTU Bot 25",
+      "8400494104": "ㅤ𐙚T"
+    }
+  },
+  "family_tree": {
+    "-1003459460915": {
+      "785512936": [
+        {
+          "user_id": 814851166,
+          "relation": "parent"
+        }
+      ],
+      "814851166": [
+        {
+          "user_id": 785512936,
+          "relation": "child"
+        }
+      ]
+    },
+    "-1003657534277": {
+      "97191141": [
+        {
+          "user_id": 814851166,
+          "relation": "child"
+        }
+      ],
+      "107690566": [
+        {
+          "user_id": 814851166,
+          "relation": "child"
+        }
+      ],
+      "814851166": [
+        {
+          "user_id": 107690566,
+          "relation": "parent"
+        },
+        {
+          "user_id": 97191141,
+          "relation": "parent"
+        }
+      ]
+    },
+    "-1003766429228": {
+      "627098633": [
+        {
+          "user_id": 7646489621,
+          "relation": "partner"
+        },
+        {
+          "user_id": 7359504141,
+          "relation": "parent"
+        }
+      ],
+      "785512936": [
+        {
+          "user_id": 814851166,
+          "relation": "parent"
+        },
+        {
+          "user_id": 845791174,
+          "relation": "parent"
+        },
+        {
+          "user_id": 1054401591,
+          "relation": "parent"
+        },
+        {
+          "user_id": 1030822217,
+          "relation": "child"
+        },
+        {
+          "user_id": 6185981142,
+          "relation": "child"
+        },
+        {
+          "user_id": 5864430289,
+          "relation": "partner"
+        },
+        {
+          "user_id": 5392769449,
+          "relation": "parent"
+        },
+        {
+          "user_id": 5391319107,
+          "relation": "sibling"
+        }
+      ],
+      "814851166": [
+        {
+          "user_id": 785512936,
+          "relation": "child"
+        },
+        {
+          "user_id": 5864430289,
+          "relation": "sibling"
+        },
+        {
+          "user_id": 5510345757,
+          "relation": "child"
+        },
+        {
+          "user_id": 845791174,
+          "relation": "partner"
+        },
+        {
+          "user_id": 5392769449,
+          "relation": "parent"
+        }
+      ],
+      "845791174": [
+        {
+          "user_id": 814851166,
+          "relation": "partner"
+        },
+        {
+          "user_id": 785512936,
+          "relation": "child"
+        },
+        {
+          "user_id": 5510345757,
+          "relation": "child"
+        },
+        {
+          "user_id": 977743334,
+          "relation": "sibling"
+        },
+        {
+          "user_id": 7646489621,
+          "relation": "sibling"
+        },
+        {
+          "user_id": 5391319107,
+          "relation": "sibling"
+        }
+      ],
+      "977743334": [
+        {
+          "user_id": 7646489621,
+          "relation": "partner"
+        },
+        {
+          "user_id": 7359504141,
+          "relation": "parent"
+        },
+        {
+          "user_id": 5510345757,
+          "relation": "parent"
+        },
+        {
+          "user_id": 1054401591,
+          "relation": "parent"
+        },
+        {
+          "user_id": 845791174,
+          "relation": "sibling"
+        }
+      ],
+      "1030822217": [
+        {
+          "user_id": 785512936,
+          "relation": "parent"
+        }
+      ],
+      "1054401591": [
+        {
+          "user_id": 6185981142,
+          "relation": "partner"
+        },
+        {
+          "user_id": 785512936,
+          "relation": "child"
+        },
+        {
+          "user_id": 977743334,
+          "relation": "child"
+        },
+        {
+          "user_id": 5510345757,
+          "relation": "child"
+        },
+        {
+          "user_id": 7359504141,
+          "relation": "child"
+        },
+        {
+          "user_id": 7646489621,
+          "relation": "child"
+        }
+      ],
+      "1411756228": [],
+      "1556793586": [
+        {
+          "user_id": 7646489621,
+          "relation": "partner"
+        }
+      ],
+      "5391319107": [
+        {
+          "user_id": 785512936,
+          "relation": "sibling"
+        },
+        {
+          "user_id": 845791174,
+          "relation": "sibling"
+        }
+      ],
+      "5392769449": [
+        {
+          "user_id": 7646489621,
+          "relation": "partner"
+        },
+        {
+          "user_id": 7359504141,
+          "relation": "child"
+        },
+        {
+          "user_id": 814851166,
+          "relation": "child"
+        },
+        {
+          "user_id": 785512936,
+          "relation": "child"
+        }
+      ],
+      "5510345757": [
+        {
+          "user_id": 814851166,
+          "relation": "parent"
+        },
+        {
+          "user_id": 845791174,
+          "relation": "parent"
+        },
+        {
+          "user_id": 977743334,
+          "relation": "child"
+        },
+        {
+          "user_id": 1054401591,
+          "relation": "parent"
+        },
+        {
+          "user_id": 7646489621,
+          "relation": "child"
+        }
+      ],
+      "5864430289": [
+        {
+          "user_id": 814851166,
+          "relation": "sibling"
+        },
+        {
+          "user_id": 785512936,
+          "relation": "partner"
+        }
+      ],
+      "6185981142": [
+        {
+          "user_id": 1054401591,
+          "relation": "partner"
+        },
+        {
+          "user_id": 785512936,
+          "relation": "parent"
+        }
+      ],
+      "6610315540": [
+        {
+          "user_id": 7646489621,
+          "relation": "partner"
+        },
+        {
+          "user_id": 7359504141,
+          "relation": "parent"
+        }
+      ],
+      "7359504141": [
+
+      ],
+      "7646489621": [
+        {
+          "user_id": 6610315540,
+          "relation": "partner"
+        },
+        {
+          "user_id": 5392769449,
+          "relation": "partner"
+        },
+        {
+          "user_id": 977743334,
+          "relation": "partner"
+        },
+        {
+          "user_id": 7359504141,
+          "relation": "parent"
+        },
+        {
+          "user_id": 627098633,
+          "relation": "partner"
+        },
+        {
+          "user_id": 845791174,
+          "relation": "sibling"
+        },
+        {
+          "user_id": 5510345757,
+          "relation": "parent"
+        },
+        {
+          "user_id": 1054401591,
+          "relation": "parent"
+        }
+      ]
+    }
+  },
+  "stock_costs": {
+    "-1003766429228": {
+      "627098633": {
+        "META": 130
+      },
+      "785512936": {
+        "SONY": 560,
+        "SPOT": 485
+      },
+      "814851166": {
+        "DIS": 176,
+        "AAPL": 200,
+        "META": 260,
+        "MSFT": 856,
+        "NFLX": 238,
+        "TSLA": 468
+      },
+      "845791174": {
+        "AAPL": 10150,
+        "GOOG": 1986
+      },
+      "977743334": {
+        "AMD": 783,
+        "DIS": 1620,
+        "ETH": 777,
+        "AAPL": 1919,
+        "DOGE": 740,
+        "META": 288,
+        "MSFT": 2504,
+        "SONY": 916,
+        "SPOT": 721
+      },
+      "1030822217": {
+        "AMD": 1572,
+        "AAPL": 1089,
+        "META": 3641,
+        "TSLA": 1170
+      },
+      "1054401591": {
+        "BTC": 2985,
+        "DIS": 93060,
+        "AAPL": 7800,
+        "MSFT": 4708
+      },
+      "1411756228": {
+        "BTC": 4719,
+        "META": 657
+      },
+      "5392769449": {
+        "BTC": 1716
+      },
+      "5510345757": {
+        "BTC": 15063,
+        "SPOT": 1940,
+        "TSLA": 640
+      },
+      "5864430289": {
+        "BTC": 4499,
+        "DIS": 444,
+        "ETH": 518,
+        "DOGE": 1600,
+        "META": 144,
+        "NFLX": 420,
+        "NVDA": 3204
+      },
+      "6185981142": {}
+    }
+  },
+  "bank_robbery": {
+    "-1003766429228": {
+      "members": [
+        977743334
+      ],
+      "last_attempt": "2026-02-14T20:32:46.579972"
+    }
+  },
+  "daily_claims": {
+    "-1003766429228": {
+      "627098633": "2026-02-14",
+      "785512936": "2026-02-15",
+      "814851166": "2026-02-14",
+      "845791174": "2026-02-14",
+      "977743334": "2026-02-14",
+      "1030822217": "2026-02-14",
+      "1054401591": "2026-02-15",
+      "1411756228": "2026-02-11",
+      "1556793586": "2026-02-14",
+      "5392769449": "2026-02-13",
+      "5510345757": "2026-02-12",
+      "5864430289": "2026-02-14",
+      "6185981142": "2026-02-15",
+      "7359504141": "2026-02-14",
+      "7646489621": "2026-02-14"
+    }
+  },
+  "daily_events": {
+    "-1003766429228": {
+      "date": "2026-02-13",
+      "desc": "",
+      "name": "",
+      "happened": false
+    }
+  },
+  "seen_members": {
+    "-1003459460915": [
+      1411756228,
+      8317095554,
+      627098633,
+      1030822217,
+      814851166,
+      5391319107,
+      7646489621,
+      1556793586,
+      6185981142,
+      8400494104,
+      977743334,
+      785512936,
+      5510345757,
+      5864430289,
+      845791174,
+      7359504141,
+      961321518,
+      1054401591
+    ],
+    "-1003657534277": [
+      814851166,
+      97191141
+    ],
+    "-1003766429228": [
+      814851166,
+      1556793586,
+      845791174,
+      977743334,
+      7667555082,
+      5510345757,
+      6610315540,
+      785512936,
+      627098633,
+      1411756228,
+      5864430289,
+      1054401591,
+      1030822217,
+      5392769449,
+      8579257239,
+      7646489621,
+      7359504141,
+      6185981142,
+      8400494104,
+      829013157,
+      5391319107,
+      1161638336
+    ]
+  },
+  "bank_accounts": {
+    "-1003766429228": {
+      "627098633": {
+        "balance": 0,
+        "last_interest": "2026-02-13T15:40:22.946486"
+      },
+      "814851166": {
+        "balance": 510,
+        "last_interest": "2026-02-14T20:04:37.028583"
+      },
+      "5864430289": {
+        "balance": 0,
+        "last_interest": "2026-02-13T16:42:14.984404"
+      },
+      "6185981142": {
+        "balance": 0,
+        "last_interest": "2026-02-13T18:58:59.730498"
+      }
+    }
+  },
+  "bank_managers": {
+    "-1003766429228": {
+      "name": "André",
+      "set_at": "2026-02-14T15:30:12.676671",
+      "user_id": 7359504141,
+      "embezzled": true
+    }
+  },
+  "news_channels": {
+    "-1003766429228": [
+      "NE_WG",
+      "FarsiOfficialX"
+    ]
+  },
+  "ophelia_brain": {
+    "stats": {
+      "total_learned": 358,
+      "total_conversations": 0
+    },
+    "chat_moods": {
+      "814851166": {
+        "sad": 0,
+        "love": 0,
+        "angry": 0,
+        "happy": 0,
+        "afraid": 0,
+        "current": "happy"
+      },
+      "-1003459460915": {
+        "sad": 1,
+        "love": 3,
+        "angry": 4,
+        "happy": 271,
+        "afraid": 0,
+        "current": "happy"
+      },
+      "-1003766429228": {
+        "sad": 4,
+        "love": 7,
+        "angry": 1,
+        "happy": 262,
+        "afraid": 1,
+        "current": "happy"
+      }
+    },
+    "user_moods": {
+      "814851166": {
+        "814851166": {
+          "sad": 0,
+          "love": 0,
+          "angry": 0,
+          "happy": 0,
+          "afraid": 0
+        }
+      },
+      "-1003459460915": {
+        "627098633": {
+          "sad": 0,
+          "love": 1,
+          "angry": 0,
+          "happy": 28,
+          "afraid": 0
+        },
+        "785512936": {
+          "sad": 1,
+          "love": 0,
+          "angry": 1,
+          "happy": 43,
+          "afraid": 0
+        },
+        "814851166": {
+          "sad": 0,
+          "love": 1,
+          "angry": 0,
+          "happy": 59,
+          "afraid": 0
+        },
+        "977743334": {
+          "sad": 0,
+          "love": 0,
+          "angry": 0,
+          "happy": 10,
+          "afraid": 0
+        },
+        "1054401591": {
+          "sad": 0,
+          "love": 0,
+          "angry": 0,
+          "happy": 6,
+          "afraid": 0
+        },
+        "1411756228": {
+          "sad": 0,
+          "love": 0,
+          "angry": 0,
+          "happy": 4,
+          "afraid": 0
+        },
+        "1556793586": {
+          "sad": 0,
+          "love": 0,
+          "angry": 0,
+          "happy": 5,
+          "afraid": 0
+        },
+        "5510345757": {
+          "sad": 0,
+          "love": 0,
+          "angry": 2,
+          "happy": 34,
+          "afraid": 0
+        },
+        "5864430289": {
+          "sad": 0,
+          "love": 1,
+          "angry": 0,
+          "happy": 13,
+          "afraid": 0
+        },
+        "6185981142": {
+          "sad": 0,
+          "love": 0,
+          "angry": 0,
+          "happy": 7,
+          "afraid": 0
+        },
+        "7359504141": {
+          "sad": 0,
+          "love": 0,
+          "angry": 1,
+          "happy": 12,
+          "afraid": 0
+        },
+        "7646489621": {
+          "sad": 0,
+          "love": 0,
+          "angry": 0,
+          "happy": 22,
+          "afraid": 0
+        },
+        "8400494104": {
+          "sad": 0,
+          "love": 0,
+          "angry": 0,
+          "happy": 28,
+          "afraid": 0
+        }
+      },
+      "-1003766429228": {
+        "627098633": {
+          "sad": 1,
+          "love": 1,
+          "angry": 0,
+          "happy": 37,
+          "afraid": 0
+        },
+        "785512936": {
+          "sad": 0,
+          "love": 0,
+          "angry": 0,
+          "happy": 6,
+          "afraid": 0
+        },
+        "814851166": {
+          "sad": 0,
+          "love": 0,
+          "angry": 0,
+          "happy": 11,
+          "afraid": 1
+        },
+        "829013157": {
+          "sad": 0,
+          "love": 1,
+          "angry": 0,
+          "happy": 39,
+          "afraid": 0
+        },
+        "977743334": {
+          "sad": 0,
+          "love": 1,
+          "angry": 0,
+          "happy": 30,
+          "afraid": 0
+        },
+        "1030822217": {
+          "sad": 1,
+          "love": 0,
+          "angry": 0,
+          "happy": 40,
+          "afraid": 0
+        },
+        "1054401591": {
+          "sad": 0,
+          "love": 1,
+          "angry": 0,
+          "happy": 29,
+          "afraid": 0
+        },
+        "1161638336": {
+          "sad": 0,
+          "love": 1,
+          "angry": 0,
+          "happy": 14,
+          "afraid": 0
+        },
+        "1556793586": {
+          "sad": 0,
+          "love": 1,
+          "angry": 0,
+          "happy": 16,
+          "afraid": 0
+        },
+        "6185981142": {
+          "sad": 1,
+          "love": 0,
+          "angry": 0,
+          "happy": 9,
+          "afraid": 0
+        },
+        "7359504141": {
+          "sad": 0,
+          "love": 0,
+          "angry": 0,
+          "happy": 8,
+          "afraid": 0
+        },
+        "7646489621": {
+          "sad": 0,
+          "love": 0,
+          "angry": 0,
+          "happy": 6,
+          "afraid": 0
+        },
+        "7667555082": {
+          "sad": 0,
+          "love": 0,
+          "angry": 0,
+          "happy": 3,
+          "afraid": 0
+        },
+        "8400494104": {
+          "sad": 1,
+          "love": 1,
+          "angry": 1,
+          "happy": 14,
+          "afraid": 0
+        }
+      }
+    },
+    "emotion_dict": {
+      "19": "happy",
+      "233": "happy",
+      "1537": "happy",
+      "bad": "sad",
+      "cry": "sad",
+      "fun": "happy",
+      "hug": "love",
+      "joy": "happy",
+      "lol": "happy",
+      "mad": "angry",
+      "omg": "afraid",
+      "run": "afraid",
+      "sad": "sad",
+      "win": "happy",
+      "wow": "happy",
+      "yay": "happy",
+      "baby": "love",
+      "best": "happy",
+      "cool": "happy",
+      "cute": "happy",
+      "damn": "angry",
+      "dark": "afraid",
+      "date": "love",
+      "fear": "afraid",
+      "fool": "angry",
+      "good": "happy",
+      "haha": "happy",
+      "hate": "angry",
+      "hell": "angry",
+      "help": "afraid",
+      "hurt": "sad",
+      "kill": "angry",
+      "kiss": "love",
+      "lame": "angry",
+      "like": "happy",
+      "lost": "sad",
+      "love": "love",
+      "miss": "sad",
+      "nice": "happy",
+      "pain": "sad",
+      "rage": "angry",
+      "rose": "love",
+      "sets": "happy",
+      "shut": "angry",
+      "sick": "angry",
+      "sigh": "sad",
+      "tear": "sad",
+      "ugly": "angry",
+      "wife": "love",
+      "آه": "sad",
+      "ئه": "happy",
+      "اس": "happy",
+      "اش": "happy",
+      "ام": "happy",
+      "ای": "happy",
+      "بد": "sad",
+      "بر": "happy",
+      "بی": "happy",
+      "تا": "happy",
+      "تر": "happy",
+      "حس": "happy",
+      "خب": "happy",
+      "دو": "happy",
+      "زد": "happy",
+      "زن": "happy",
+      "سر": "happy",
+      "سه": "happy",
+      "شر": "happy",
+      "صب": "happy",
+      "صد": "happy",
+      "عا": "happy",
+      "عع": "happy",
+      "عه": "happy",
+      "فر": "happy",
+      "فک": "happy",
+      "نت": "happy",
+      "نه": "happy",
+      "ها": "happy",
+      "هر": "happy",
+      "ول": "happy",
+      "پر": "happy",
+      "پس": "happy",
+      "چه": "happy",
+      "کف": "happy",
+      "کم": "happy",
+      "کن": "happy",
+      "کی": "happy",
+      "گف": "happy",
+      "گل": "love",
+      "یا": "happy",
+      "۱۲": "happy",
+      "۱۴": "happy",
+      "۱۵": "happy",
+      "۱۷": "happy",
+      "۱۹": "happy",
+      "۲۰": "happy",
+      "۳۴": "happy",
+      "۵۹": "happy",
+      "۹۰": "happy",
+      "🎉": "happy",
+      "👊": "angry",
+      "👏": "happy",
+      "💀": "afraid",
+      "💑": "love",
+      "💔": "sad",
+      "💕": "love",
+      "💖": "love",
+      "💗": "love",
+      "💘": "love",
+      "💝": "love",
+      "💢": "angry",
+      "😂": "happy",
+      "😄": "happy",
+      "😊": "happy",
+      "😍": "love",
+      "😔": "sad",
+      "😘": "love",
+      "😞": "sad",
+      "😡": "angry",
+      "😢": "sad",
+      "😤": "angry",
+      "😨": "afraid",
+      "😭": "sad",
+      "😰": "afraid",
+      "😱": "afraid",
+      "🤣": "happy",
+      "🤬": "angry",
+      "🥰": "love",
+      "🥺": "sad",
+      "🫣": "afraid",
+      "alone": "sad",
+      "angry": "angry",
+      "awful": "sad",
+      "bravo": "happy",
+      "broke": "sad",
+      "crush": "love",
+      "enjoy": "happy",
+      "fight": "angry",
+      "funny": "happy",
+      "ghost": "afraid",
+      "great": "happy",
+      "happy": "happy",
+      "heart": "love",
+      "honey": "love",
+      "idiot": "angry",
+      "logic": "happy",
+      "marry": "love",
+      "panic": "afraid",
+      "party": "happy",
+      "shock": "afraid",
+      "smile": "happy",
+      "sorry": "sad",
+      "sweet": "happy",
+      "thank": "happy",
+      "tired": "sad",
+      "trash": "angry",
+      "worst": "angry",
+      "yikes": "afraid",
+      "afraid": "afraid",
+      "couple": "love",
+      "creepy": "afraid",
+      "danger": "afraid",
+      "fed up": "angry",
+      "graphs": "happy",
+      "horror": "afraid",
+      "lonely": "sad",
+      "lovely": "happy",
+      "scared": "afraid",
+      "stress": "afraid",
+      "stupid": "angry",
+      "superb": "happy",
+      "آره": "happy",
+      "آقا": "happy",
+      "آها": "happy",
+      "اخه": "happy",
+      "اره": "happy",
+      "ازش": "happy",
+      "اسم": "happy",
+      "اشک": "sad",
+      "اقا": "happy",
+      "اهر": "happy",
+      "اول": "happy",
+      "اوه": "happy",
+      "اگه": "happy",
+      "اید": "happy",
+      "باز": "happy",
+      "باش": "happy",
+      "بدم": "happy",
+      "بده": "happy",
+      "بدی": "happy",
+      "برا": "happy",
+      "برق": "happy",
+      "برم": "happy",
+      "برو": "happy",
+      "بزا": "happy",
+      "بزن": "happy",
+      "بسه": "angry",
+      "بشن": "happy",
+      "بشه": "happy",
+      "بعد": "happy",
+      "بغل": "love",
+      "بلد": "love",
+      "بله": "happy",
+      "بمب": "happy",
+      "بهش": "happy",
+      "بچه": "happy",
+      "بگه": "happy",
+      "بگو": "happy",
+      "بیف": "happy",
+      "بین": "happy",
+      "تاس": "happy",
+      "ترس": "afraid",
+      "ترم": "happy",
+      "ترو": "happy",
+      "توی": "happy",
+      "ثبت": "happy",
+      "جان": "love",
+      "جای": "happy",
+      "جدا": "happy",
+      "جدی": "happy",
+      "جفت": "happy",
+      "جنگ": "angry",
+      "جون": "happy",
+      "حال": "happy",
+      "حتی": "happy",
+      "حذف": "happy",
+      "حرف": "happy",
+      "خاک": "happy",
+      "ختی": "happy",
+      "خدا": "happy",
+      "خشم": "angry",
+      "خطر": "afraid",
+      "خفن": "happy",
+      "خفه": "angry",
+      "خوب": "happy",
+      "خیر": "happy",
+      "داد": "happy",
+      "درد": "sad",
+      "درس": "happy",
+      "دست": "happy",
+      "دمش": "happy",
+      "دوم": "happy",
+      "دیر": "happy",
+      "راه": "happy",
+      "رفت": "happy",
+      "روح": "afraid",
+      "روز": "happy",
+      "روی": "happy",
+      "زدم": "happy",
+      "زدن": "happy",
+      "زده": "happy",
+      "زشت": "angry",
+      "زنا": "happy",
+      "زنن": "happy",
+      "زنک": "happy",
+      "سال": "happy",
+      "سرخ": "happy",
+      "سرش": "happy",
+      "سرم": "happy",
+      "سرچ": "happy",
+      "سطح": "happy",
+      "سگه": "happy",
+      "سگی": "happy",
+      "شاد": "happy",
+      "شاه": "happy",
+      "شدم": "happy",
+      "شدن": "happy",
+      "شده": "happy",
+      "شدی": "happy",
+      "شما": "happy",
+      "شوک": "afraid",
+      "شید": "happy",
+      "شیش": "happy",
+      "طبق": "happy",
+      "عشق": "love",
+      "عقب": "happy",
+      "عمو": "happy",
+      "عوض": "happy",
+      "فحش": "happy",
+      "فرق": "happy",
+      "فقط": "happy",
+      "فکر": "happy",
+      "قبل": "happy",
+      "قلب": "love",
+      "مثل": "happy",
+      "مخه": "happy",
+      "مرد": "happy",
+      "منم": "happy",
+      "منو": "happy",
+      "مهر": "happy",
+      "مهم": "happy",
+      "مگه": "happy",
+      "میز": "happy",
+      "ناز": "happy",
+      "نام": "happy",
+      "نتی": "happy",
+      "نشه": "happy",
+      "نظر": "happy",
+      "نمی": "happy",
+      "نوت": "happy",
+      "نکن": "happy",
+      "نگو": "happy",
+      "نیم": "happy",
+      "های": "happy",
+      "همه": "happy",
+      "هوش": "happy",
+      "وای": "happy",
+      "وقت": "happy",
+      "ولش": "happy",
+      "ولی": "happy",
+      "پسر": "happy",
+      "چند": "happy",
+      "چون": "happy",
+      "چیز": "happy",
+      "چیه": "happy",
+      "کار": "happy",
+      "کاش": "happy",
+      "کرد": "happy",
+      "کسی": "happy",
+      "کشت": "happy",
+      "کلا": "happy",
+      "کمه": "happy",
+      "کمک": "afraid",
+      "کنم": "happy",
+      "کنن": "happy",
+      "کنه": "happy",
+      "کنی": "happy",
+      "کوه": "happy",
+      "کیه": "happy",
+      "گدا": "happy",
+      "گرم": "happy",
+      "گلی": "happy",
+      "گند": "happy",
+      "گوه": "happy",
+      "یاد": "love",
+      "یرچ": "happy",
+      "یکم": "happy",
+      "یکی": "happy",
+      "یگی": "happy",
+      "۱۶۵": "happy",
+      "۲۳۳": "happy",
+      "۲۳۴": "happy",
+      "۳۳۷": "happy",
+      "❤️": "happy",
+      "amazing": "happy",
+      "anxious": "afraid",
+      "awesome": "happy",
+      "blessed": "happy",
+      "darling": "love",
+      "destroy": "angry",
+      "forever": "love",
+      "furious": "angry",
+      "garbage": "angry",
+      "husband": "love",
+      "monster": "afraid",
+      "nervous": "afraid",
+      "nianled": "happy",
+      "perfect": "happy",
+      "romance": "love",
+      "worried": "afraid",
+      "adorable": "happy",
+      "annoying": "angry",
+      "horrible": "sad",
+      "miss you": "love",
+      "terrible": "angry",
+      "together": "love",
+      "trwtbsy8": "happy",
+      "آئین": "happy",
+      "آورد": "happy",
+      "احمق": "angry",
+      "اخیش": "happy",
+      "اذیت": "angry",
+      "اساس": "happy",
+      "اسمش": "happy",
+      "اصلی": "happy",
+      "الان": "happy",
+      "امشب": "happy",
+      "اهان": "happy",
+      "اولا": "happy",
+      "اونو": "happy",
+      "اوکی": "happy",
+      "اینه": "happy",
+      "اینو": "happy",
+      "ایهی": "happy",
+      "بابا": "happy",
+      "باته": "happy",
+      "باشن": "love",
+      "باشه": "happy",
+      "باشی": "happy",
+      "بانو": "happy",
+      "باهم": "happy",
+      "باید": "happy",
+      "ببین": "happy",
+      "براش": "happy",
+      "برام": "happy",
+      "برای": "happy",
+      "بریم": "happy",
+      "برین": "happy",
+      "بزنم": "happy",
+      "بزنه": "happy",
+      "بشیم": "happy",
+      "بعدا": "happy",
+      "بعید": "happy",
+      "بهتر": "happy",
+      "بودش": "happy",
+      "بودم": "happy",
+      "بودن": "happy",
+      "بوده": "happy",
+      "بودی": "happy",
+      "بوسه": "love",
+      "بچها": "happy",
+      "بکنه": "happy",
+      "بگید": "happy",
+      "بگیر": "love",
+      "تایم": "happy",
+      "تتها": "happy",
+      "ترمو": "happy",
+      "ترین": "happy",
+      "تموم": "happy",
+      "تنها": "sad",
+      "توجه": "happy",
+      "تورم": "happy",
+      "تورو": "happy",
+      "تومن": "happy",
+      "ثابت": "happy",
+      "جلسه": "happy",
+      "جواب": "happy",
+      "جونم": "love",
+      "حاجی": "happy",
+      "حاضر": "happy",
+      "حالا": "happy",
+      "حروم": "happy",
+      "حساب": "happy",
+      "حسرت": "happy",
+      "خاطر": "happy",
+      "خالی": "happy",
+      "خسته": "sad",
+      "خنده": "happy",
+      "خوبه": "happy",
+      "خوبی": "love",
+      "خودم": "happy",
+      "خوشش": "happy",
+      "خونه": "happy",
+      "خیلی": "happy",
+      "دادع": "happy",
+      "دادن": "happy",
+      "داده": "happy",
+      "دادی": "happy",
+      "دارن": "happy",
+      "داشت": "happy",
+      "دانش": "happy",
+      "دختر": "happy",
+      "درست": "happy",
+      "درود": "happy",
+      "دوتا": "happy",
+      "دوست": "happy",
+      "دوما": "happy",
+      "دکتر": "happy",
+      "دیدی": "happy",
+      "دیگه": "happy",
+      "راست": "happy",
+      "رسید": "happy",
+      "روشن": "happy",
+      "ریال": "happy",
+      "ریدم": "happy",
+      "زبان": "happy",
+      "زمان": "happy",
+      "زمین": "happy",
+      "زودی": "happy",
+      "زیاد": "happy",
+      "زیبا": "happy",
+      "سارا": "happy",
+      "ساعت": "happy",
+      "ساکت": "angry",
+      "سایت": "happy",
+      "سریا": "happy",
+      "سفید": "happy",
+      "سلام": "happy",
+      "سوال": "happy",
+      "شدیم": "happy",
+      "شروع": "happy",
+      "شنبه": "happy",
+      "شوهر": "happy",
+      "شکرت": "happy",
+      "صحبت": "happy",
+      "صداش": "happy",
+      "عاشق": "love",
+      "عالی": "happy",
+      "عزیز": "love",
+      "عطیه": "happy",
+      "عملا": "happy",
+      "عهعه": "happy",
+      "غیبت": "happy",
+      "فرار": "afraid",
+      "فعلا": "happy",
+      "فوری": "happy",
+      "قبلش": "happy",
+      "قبلی": "happy",
+      "قرار": "happy",
+      "قران": "happy",
+      "قشنگ": "happy",
+      "قطعا": "happy",
+      "لطفا": "happy",
+      "مارو": "happy",
+      "ماها": "happy",
+      "مدار": "happy",
+      "مراپ": "happy",
+      "مرسی": "happy",
+      "مسیر": "happy",
+      "مشتی": "happy",
+      "مشخص": "happy",
+      "معدل": "happy",
+      "مقدم": "happy",
+      "منطق": "happy",
+      "مهمه": "happy",
+      "میان": "happy",
+      "میدم": "happy",
+      "میده": "happy",
+      "میرم": "happy",
+      "میره": "happy",
+      "میشد": "happy",
+      "میشن": "happy",
+      "میشه": "happy",
+      "میشی": "happy",
+      "میگن": "happy",
+      "نامی": "happy",
+      "نبود": "happy",
+      "نداد": "happy",
+      "نشدن": "happy",
+      "نمره": "happy",
+      "نکنه": "happy",
+      "نگاه": "happy",
+      "هایی": "happy",
+      "هستش": "happy",
+      "هستن": "happy",
+      "همرو": "happy",
+      "همون": "happy",
+      "هنوز": "happy",
+      "هورا": "happy",
+      "واحد": "happy",
+      "وارد": "happy",
+      "واسه": "happy",
+      "واعظ": "happy",
+      "والا": "happy",
+      "وحشت": "afraid",
+      "ویای": "happy",
+      "ویکی": "happy",
+      "پایه": "happy",
+      "پدیا": "happy",
+      "پسرا": "happy",
+      "چارت": "happy",
+      "چقدر": "happy",
+      "چندش": "angry",
+      "چهار": "happy",
+      "چیزی": "happy",
+      "کارت": "happy",
+      "کارش": "happy",
+      "کامپ": "happy",
+      "کردم": "happy",
+      "کردن": "happy",
+      "کرده": "happy",
+      "کلاس": "happy",
+      "کنید": "happy",
+      "کنیم": "happy",
+      "گروه": "happy",
+      "گریه": "sad",
+      "گفتن": "happy",
+      "گوهی": "happy",
+      "یادم": "happy",
+      "یارو": "happy",
+      "۱۴۳۲": "happy",
+      "۱۴۳۴": "happy",
+      "۱۴۳۹": "happy",
+      "۱۵۲۵": "happy",
+      "۴۹۰۰": "happy",
+      "۴۹۵۰": "happy",
+      "ash_far_a": "happy",
+      "beautiful": "happy",
+      "boyfriend": "love",
+      "brilliant": "happy",
+      "celebrate": "happy",
+      "depressed": "sad",
+      "excellent": "happy",
+      "fantastic": "happy",
+      "induction": "happy",
+      "nightmare": "afraid",
+      "terrified": "afraid",
+      "valentine": "love",
+      "wonderful": "happy",
+      "disgusting": "angry",
+      "girlfriend": "love",
+      "sweetheart": "love",
+      "thatbigone": "happy",
+      "آفرین": "happy",
+      "آقایی": "love",
+      "آوردم": "happy",
+      "احساس": "happy",
+      "احسنت": "happy",
+      "ادامه": "happy",
+      "ادمای": "love",
+      "ارائه": "happy",
+      "استاد": "happy",
+      "استرس": "afraid",
+      "اضافه": "happy",
+      "افرین": "happy",
+      "اقایی": "happy",
+      "الانه": "happy",
+      "البته": "happy",
+      "امیدم": "happy",
+      "انجام": "happy",
+      "انقدر": "happy",
+      "اومدم": "happy",
+      "اومده": "happy",
+      "اونام": "happy",
+      "ایشون": "happy",
+      "ایمیل": "happy",
+      "اینجا": "happy",
+      "اینها": "happy",
+      "اینکه": "happy",
+      "بابام": "happy",
+      "باختم": "happy",
+      "باشیم": "happy",
+      "بامزه": "happy",
+      "باهاش": "happy",
+      "باهام": "happy",
+      "باهمه": "happy",
+      "بدبخت": "happy",
+      "بدتره": "happy",
+      "بردیم": "happy",
+      "برقیا": "happy",
+      "بزاره": "happy",
+      "بزنیم": "happy",
+      "بزنین": "happy",
+      "بشکنه": "happy",
+      "بهتره": "happy",
+      "بهتون": "happy",
+      "بهروز": "happy",
+      "بودید": "happy",
+      "بیایم": "happy",
+      "بیاین": "happy",
+      "بیدار": "happy",
+      "بیشتر": "happy",
+      "بیشرف": "happy",
+      "بیشور": "happy",
+      "تاریک": "afraid",
+      "تحقیق": "happy",
+      "تظاهر": "happy",
+      "تعریف": "happy",
+      "تلاشی": "happy",
+      "توابع": "happy",
+      "تومنه": "happy",
+      "تکلیف": "happy",
+      "ثانیا": "happy",
+      "حضورش": "happy",
+      "حضوری": "happy",
+      "حواست": "happy",
+      "خانوم": "happy",
+      "خدافس": "happy",
+      "خدایا": "happy",
+      "خواجه": "happy",
+      "خواهد": "happy",
+      "داریم": "happy",
+      "دخترا": "happy",
+      "درسای": "happy",
+      "درسته": "happy",
+      "درسشو": "happy",
+      "دقیقا": "happy",
+      "دقیقه": "happy",
+      "دلتنگ": "sad",
+      "دیرتر": "happy",
+      "دینیم": "happy",
+      "راجبه": "happy",
+      "رادین": "love",
+      "رشتست": "happy",
+      "رفتیم": "happy",
+      "رندوم": "happy",
+      "روابط": "happy",
+      "ریاضی": "happy",
+      "زندگی": "happy",
+      "ساعتش": "happy",
+      "سایته": "happy",
+      "سکینه": "happy",
+      "شهریه": "happy",
+      "طراحی": "happy",
+      "عجیبه": "happy",
+      "عددشو": "happy",
+      "عزیزم": "love",
+      "عظیمی": "happy",
+      "عقبیم": "happy",
+      "عوامل": "happy",
+      "غمگین": "sad",
+      "فاصله": "happy",
+      "فریبا": "happy",
+      "فشرده": "happy",
+      "قراره": "happy",
+      "قماری": "happy",
+      "قیافه": "happy",
+      "لبخند": "happy",
+      "لینکه": "happy",
+      "مادرت": "happy",
+      "مارکو": "happy",
+      "ماشین": "happy",
+      "مبانی": "happy",
+      "متاسف": "sad",
+      "متنفر": "angry",
+      "مسئول": "happy",
+      "معمار": "happy",
+      "ممنون": "happy",
+      "منطقی": "happy",
+      "مهمتر": "happy",
+      "مونده": "happy",
+      "مگههه": "happy",
+      "میارم": "happy",
+      "میاره": "happy",
+      "میداد": "happy",
+      "میزنم": "happy",
+      "میشیم": "happy",
+      "میکرد": "happy",
+      "میکنم": "happy",
+      "میکنن": "happy",
+      "میگفت": "happy",
+      "نابود": "angry",
+      "نباید": "happy",
+      "نبوده": "happy",
+      "نخوره": "happy",
+      "ندادم": "happy",
+      "ندادن": "happy",
+      "نداده": "happy",
+      "ندارم": "happy",
+      "نداره": "happy",
+      "نداشم": "happy",
+      "نصیری": "happy",
+      "نظریه": "happy",
+      "نمرتو": "happy",
+      "نمیاد": "happy",
+      "نمیام": "happy",
+      "نمیدم": "happy",
+      "نمیگن": "happy",
+      "نهایی": "happy",
+      "نوشتم": "happy",
+      "نوشته": "happy",
+      "نکنیم": "happy",
+      "نگران": "afraid",
+      "نیستن": "happy",
+      "همشون": "happy",
+      "همونه": "happy",
+      "همونو": "happy",
+      "همینن": "happy",
+      "واحده": "happy",
+      "واقعا": "happy",
+      "واقعع": "happy",
+      "واکنش": "happy",
+      "وایسا": "happy",
+      "پاشیم": "happy",
+      "پایهی": "happy",
+      "پرواز": "happy",
+      "پروژه": "happy",
+      "پیویش": "happy",
+      "چجوری": "happy",
+      "چرااا": "happy",
+      "چطوری": "happy",
+      "چگونه": "happy",
+      "چیزای": "love",
+      "کابوس": "afraid",
+      "کافیه": "happy",
+      "کدومی": "happy",
+      "کردیم": "happy",
+      "کسخله": "happy",
+      "کصشعر": "happy",
+      "کلاسش": "happy",
+      "کنترل": "happy",
+      "گذاری": "happy",
+      "گذاشت": "happy",
+      "گزارش": "happy",
+      "گسسته": "happy",
+      "گویاس": "happy",
+      "۱۲۲۰۰": "happy",
+      "disappointed": "sad",
+      "jackstouches": "happy",
+      "آریانا": "happy",
+      "آقاییه": "happy",
+      "آهنگاش": "happy",
+      "آکادمی": "happy",
+      "ازدواج": "love",
+      "اساتید": "happy",
+      "استقرا": "happy",
+      "اسکرین": "happy",
+      "اشتباه": "happy",
+      "اضطراب": "afraid",
+      "اعتراض": "happy",
+      "افتادم": "happy",
+      "افسرده": "sad",
+      "التماس": "happy",
+      "امادگی": "happy",
+      "امتحان": "happy",
+      "اموزشی": "happy",
+      "انتخاب": "happy",
+      "اندازه": "happy",
+      "اندیشه": "happy",
+      "انصراف": "happy",
+      "اوفلیا": "happy",
+      "اولویت": "happy",
+      "اونقدر": "happy",
+      "ایشالا": "happy",
+      "ایناست": "happy",
+      "اینقدر": "happy",
+      "بالایی": "happy",
+      "ببینین": "happy",
+      "بخواید": "happy",
+      "بدترین": "sad",
+      "بردارم": "happy",
+      "برندار": "happy",
+      "بلخاری": "happy",
+      "بهترین": "happy",
+      "بهستان": "happy",
+      "بیشرفا": "happy",
+      "تاحالا": "happy",
+      "تحصیلی": "happy",
+      "تقریبا": "happy",
+      "تنهایی": "happy",
+      "تکلیفم": "happy",
+      "حوزهها": "happy",
+      "خانوما": "happy",
+      "خودکشی": "happy",
+      "خوشحال": "happy",
+      "داستان": "happy",
+      "داشتین": "happy",
+      "دراومد": "happy",
+      "درساهم": "happy",
+      "درسهای": "happy",
+      "دروغگو": "happy",
+      "دستمون": "happy",
+      "دوباره": "happy",
+      "دوستان": "happy",
+      "دوشنبه": "happy",
+      "دیوونه": "angry",
+      "دیگهای": "happy",
+      "ریاضیا": "happy",
+      "زبانها": "happy",
+      "سهشنبه": "happy",
+      "سیگنال": "happy",
+      "عصبانی": "angry",
+      "عقلانی": "happy",
+      "علیقلی": "happy",
+      "فراموش": "happy",
+      "فهمیده": "happy",
+      "قاعدتا": "happy",
+      "لینوکس": "happy",
+      "مخصوصا": "happy",
+      "مصنوعی": "happy",
+      "مطمئنم": "happy",
+      "مطمعنم": "happy",
+      "معمولا": "happy",
+      "مفاهیم": "happy",
+      "مقدمتر": "happy",
+      "ممنونم": "happy",
+      "مهربون": "happy",
+      "مهمتره": "happy",
+      "مهندسی": "happy",
+      "موقعیت": "happy",
+      "میبینه": "happy",
+      "میترسم": "happy",
+      "میتونه": "happy",
+      "میخوره": "happy",
+      "میدونم": "happy",
+      "میلیون": "happy",
+      "میمونه": "happy",
+      "میپرسه": "happy",
+      "میکردم": "happy",
+      "میکنیم": "happy",
+      "میگفتن": "happy",
+      "میگیری": "happy",
+      "ناامید": "sad",
+      "نامتون": "happy",
+      "ندادین": "happy",
+      "نداشته": "happy",
+      "نشنیدم": "happy",
+      "نمیاره": "happy",
+      "نمیکنه": "happy",
+      "نهاییه": "happy",
+      "هردوتا": "happy",
+      "پرداخت": "happy",
+      "پردازش": "happy",
+      "پرسیده": "happy",
+      "چادریا": "happy",
+      "کائنات": "happy",
+      "کاربرد": "happy",
+      "کارگاه": "happy",
+      "کلاساش": "happy",
+      "گذاشتن": "happy",
+      "گرافها": "happy",
+      "گرافیک": "happy",
+      "گوگولی": "happy",
+      "یجوریه": "happy",
+      "یکشنبه": "happy",
+      "combinatorics": "happy",
+      "unfortunately": "sad",
+      "❤️‍🔥": "love",
+      "احتمالا": "happy",
+      "ارتباطی": "happy",
+      "استادای": "happy",
+      "استفاده": "happy",
+      "اطلاعات": "happy",
+      "افتادید": "happy",
+      "الانخهه": "happy",
+      "التماسش": "happy",
+      "الووووو": "happy",
+      "امبدوار": "happy",
+      "انداختن": "happy",
+      "انداخته": "happy",
+      "انلاینه": "happy",
+      "ایشالله": "happy",
+      "اینطوری": "happy",
+      "برداریم": "happy",
+      "بلخاریه": "happy",
+      "خانوادس": "happy",
+      "خانواده": "happy",
+      "خدانکنه": "happy",
+      "خوابیدم": "happy",
+      "دانشگاه": "happy",
+      "رمانتیک": "love",
+      "ریاضیات": "happy",
+      "زمانیان": "happy",
+      "ساختمان": "happy",
+      "شیطانیش": "happy",
+      "فوریتره": "happy",
+      "فیزیکمم": "happy",
+      "لینوکسه": "happy",
+      "ماشینها": "happy",
+      "مستقیما": "happy",
+      "معادلات": "happy",
+      "میانترم": "happy",
+      "میتونیم": "happy",
+      "میفهمید": "happy",
+      "میندازه": "happy",
+      "میپرسید": "happy",
+      "نامشخصه": "happy",
+      "نستیزیم": "happy",
+      "نمیبینه": "happy",
+      "نمیدونم": "happy",
+      "نمیزاره": "happy",
+      "نمیپرسه": "happy",
+      "نمیگفتی": "happy",
+      "وااااای": "happy",
+      "واحدشون": "happy",
+      "وایساده": "happy",
+      "وحشتناک": "afraid",
+      "پیشرفته": "happy",
+      "کدومشون": "happy",
+      "کسخلتره": "happy",
+      "کلاساشم": "happy",
+      "گذاشتنش": "happy",
+      "یادگیری": "happy",
+      "دلم تنگه": "love",
+      "اسماشونو": "happy",
+      "الگوریتم": "happy",
+      "امتحانشو": "happy",
+      "امیدوارم": "love",
+      "ایمیلاشو": "happy",
+      "ترکیبیات": "happy",
+      "جنسیتیشو": "happy",
+      "حداقلللل": "happy",
+      "خانمیرزا": "happy",
+      "دربارشون": "happy",
+      "رمزنگاری": "happy",
+      "سحرخیزید": "happy",
+      "متاسفانه": "sad",
+      "مجموعهها": "happy",
+      "موضوعاتی": "happy",
+      "نبوددددد": "happy",
+      "نرمافزار": "happy",
+      "چهارشنبه": "happy",
+      "کامپیوتر": "happy",
+      "الکترونیک": "happy",
+      "انقالابیا": "happy",
+      "خواستگاری": "happy",
+      "خوشبختانه": "happy",
+      "دیفرانسیل": "happy",
+      "عطیهههههه": "happy",
+      "محمودزاده": "happy",
+      "معمااااار": "happy",
+      "میخوابیدی": "happy",
+      "میگیرمتون": "happy",
+      "کامپیوتره": "happy",
+      "امادگیامون": "happy",
+      "نمیپرسیددد": "happy",
+      "برنامهنویسی": "happy",
+      "نمیارهههههه": "happy",
+      "httpsb2nirregistration_4042": "happy"
+    },
+    "message_pairs": {
+      "sad": {},
+      "love": {
+        "این باته چرا اینقدر گوه میخوره": "چیزای خوبی بلد نیست",
+        "اخه بیشرف هنوز نمره میانترم نداده": "رادین جان از آقایی یاد بگیر",
+        "علیقلی که مثل گدا ها نیم نمره گذاشت کف دستمون من التماسش کرده بودم": "+ رادین عزیز \n\nامیدوارم ادمای خوبی باشن"
+      },
+      "angry": {},
+      "happy": {
+        ":))": "در حال حاضر فقط مبانی میتونه کوه عظیمی به معدل من بزنه",
+        "عا": "خیلی",
+        "عع": "عهعه",
+        "عه": "ایناست که بده",
+        "نه": "همشون زنن",
+        "ها": "کجا ۱۲ تومن",
+        "۱۵": "میگفتن رندوم نمره میده",
+        "۳۴": "نگو اینو اوفلیا داره میبینه",
+        "15:37": "عه",
+        "آره": "دوستان ریال بود",
+        "آها": "تظاهر می کرد نمیبینه و درسشو میداد>>",
+        "اره": "نه",
+        "اوه": "چه استاد گلی",
+        "باش": "چند بودی قبلش",
+        "شاه": "ایشون اوفلیا هستن @nianled",
+        "منم": "۱۴:۳۹",
+        "هست": "این باته چرا اینقدر گوه میخوره",
+        "وای": "تا شما بخواید وارد زمین جنگ شید ما تموم کردیم",
+        "چرا": "نه",
+        "من 19": "به من داده ۱۷",
+        "۲.۳۳": "جنگ قراره بشه سر انتخاب واحد واقعا",
+        "۳.۳۷": "اول ترم بالایی ها \nبعد برق\nبعد دخترا\nبعد ما",
+        "اخیش": "وای",
+        "اهان": "یه آقاییه ۲۰ میده",
+        "بابا": "گزارش ۵۹ تای�� انتخاب واحد",
+        "خیلی": "تورم دختر حساب کردن؟",
+        "ریدم": "هست",
+        "عهعه": "و زبان",
+        "عه😭": "نمیپرسه که",
+        "قطعا": "اره \nبهش میخوره از این انقالابیا قراره باشه☺️",
+        "هورا": "این چیه؟",
+        "ویای": "سرچ کن خب",
+        "چهار": "🥀🥀",
+        "😂😂": "دختر خانوم باهام دوست می‌شی",
+        "🥀🥀": "دو و نیم ک منم",
+        "۱۴:۳۲": "۳۴",
+        "۱۴:۳۴": "۱۴:۳۲",
+        "۱۴:۳۹": "کی افتادید",
+        "۱۵.۲۵": "من ساعت ۳",
+        "۲۰ 😁": "ساعت دو و نیم شدم",
+        "@ash_far_a": "عطیه به من ۱۴ داده🔥",
+        "احسنت": "مثل اینکه واقعا رندوم نمره داده",
+        "افرین": "اول بیاین امبدوار باشیم دیفرانسیل پر نشه",
+        "قطعاً": "درسای دیگه‌ای که داره هم همینن",
+        "۱۲۲۰۰": "خیلی بیشتر از ۱۲ تومنه",
+        "☺️🙏": "وایسا حالا رادین نمره نداده هنوز😊",
+        "بچه ها": "اون به تومن مگه نیست",
+        "ساعت ۴": "وای عطیه اگه کم داده باشی",
+        "مبانی:": "به قیافه گوگولی بهروز نگاه نکن",
+        "نه عمو": "سه شنبه",
+        "و تورو": "🤣🤣🤣🤣🤣🤣🤣🤣🤣🤣🤣🤣",
+        "و زبان": "الانخهه مگههه",
+        "چی شده": "برنامه‌نویسی دوباره با زمانیان ؟",
+        "2:33 ن من": "@ash_far_a",
+        "آهنگاش": "💀💀💀",
+        "اندیشه": "یه استاد اندیشه که به همه ۲۰ داد رفت",
+        "ایشالا": "نمیگن بد نمره میده؟؟",
+        "💀💀💀": "وای",
+        "😐😐😐": "معمااااار",
+        "اوه آره": "من دقیقا قبل تو ام",
+        "ای بابا": "سوال هم میپرسه سر کلاساش یکم رو مخه البته",
+        "بابا عه": "☺️🙏",
+        "دمش گرم": "خدانکنه😭😭😭 \nهمه میگن دیر نمره میده \nولی ایشالله اذیت نکنه",
+        "سه شنبه": "اره",
+        "نه بابا": "اگه به تومنه",
+        "نگو پسر": "رادین دیگه کیه که از واعظ دیرتر نمره میده",
+        "وای جدی": "دمش گرم",
+        "کم نکنه": "میترسم کم کنه",
+        "یکی بگه": "اسکرین بده",
+        "۲۰ شدی؟": "عطیهههههه",
+        "الووووو": "یکی بگه",
+        "دو و نیم": "این که از قبلی هم کسخل‌تره",
+        "فهمیده؟": "فکر کنم یگی از عوامل زمان ثبت نام بوده",
+        "وااااای": "خاک تو سرم اونو یادم رفت",
+        "ای بیشور": "عوض اون همه قماری که باختم دراومد",
+        "این چیه؟": "بابا",
+        "من خدافس": "فعلا که ۴۹۰۰ ئه",
+        "چند داده": "۱۵",
+        "الانه؟؟؟": "نمیارهههههه",
+        "بزا ترم ۳": "افرین",
+        "سرچ کن خب": "الانه؟؟؟",
+        "من ساعت ۳": "چقدر فاصله هست",
+        "نبوددددد": "فقط بلخاریه فکر کنم",
+        "پس جنگ شد": "عه",
+        "💀💀💀💀": "آقا طبق این یارو گزارش ۵۹ الان ما اون روز و ساعت میتونیم انتخاب واحد کنیم؟",
+        "😂😂😂😂": "وای نه ترو قران \nاستاد مرد نداره چرااا",
+        "اقایی کیه": "اندیشه",
+        "خیلی مشتی": "واقعا تو بی نتی بودش",
+        "معمار کیه": "دو و نیم",
+        "من انصراف": "😂😂😂😂😂😂",
+        "من ۲:۳۴ ام": "اسماشونو بگو",
+        "همشون زنن": "من ۲:۳۴ ام",
+        "به گ رفتیم": "برو شهریه رو نگاه کن",
+        "خوشبختانه": "😂😂😂😂😂",
+        "عطیهههههه": "ای بیشور",
+        "معمااااار": "من خدافس",
+        "یه چیز ��گو": "توی گروه انتخاب واحد بچه ها پرسیده بودن؛ خیلی از مقدم فر تعریف می کردن",
+        "اسکرین بده": "انصراف میدم",
+        "خدایا شکرت": "ساعت ۴",
+        "خیلی درسته": "تو کدومی اوفلیا یا مارکو؟",
+        "دروغگو سگه": "😭😭😭😭😭",
+        "سکینه جون؟": "از الان مطمئنم باهام بیف خواهد داشت",
+        "مگه نوشته؟": "برای من زده اساتید گروه اموزشی",
+        "نمیپرسه که": "از شما نمیپرسیددد؟",
+        "کی افتادید": "۱۴:۳۴",
+        "19 خوبه دیگه": "۱۹ رو اعتراض بزنم حس می کنم کم کمه",
+        "بچه ها فوری": "برین تو بهستان گزارش ۵۹",
+        "کجا ۱۲ تومن": "اشتباه دیدی",
+        "۱ واحده کلا": "التماس میکنم وایسا",
+        "😂😂😂😂😂": "ایشالله کلاساش انلاینه🙏🏻",
+        "😭😭😭😭😭": "تو انتخاب واحد دربارشون زیاد حرف زدن",
+        "اشتباه دیدی": "۱۲۲۰۰",
+        "انصراف میدم": "ساعت انتخاب واحده عوض شد",
+        "جون مادرت🙏": "از عطیه چیزی بعید نیست",
+        "نمرتو نداد؟": "علیقلی که مثل گدا ها نیم نمره گذاشت کف دستمون من التماسش کرده بودم",
+        "نمیاره برام": "یک دقیقه هم برام کافیه",
+        "واکنش اقایی": "اندیشه اونام خوب بود دیگه",
+        "اگه به تومنه": "الووووو",
+        "با کی بردارم": "زبان با کی بردارم",
+        "بابام کسخله.": "من نیم ساعت اومدم عقب",
+        "حاجی کم دادع": "چند داد بهتون؟",
+        "خیلی کم شدیم": "بلخاری هم بد نمره نداد",
+        "نمیارهههههه": "نه عمو",
+        "چه استاد گلی": "💀💀💀💀",
+        "چه کنیم مراپ": "خیلی کم شدیم",
+        "آئین زندگی😍": "خب چی قراره مگه بگه😭",
+        "اسماشونو بگو": "چقدر فشرده شده",
+        "اعتراض بزنین": "کم نکنه",
+        "به من داده ۱۷": "فهمیده؟",
+        "به من ۲۰ داده": "عجیبه فک میکردم عطیه به همه خوب بده",
+        "فعلا نامشخصه": "من دارم اعتراض میزنم",
+        "چطوری اوفلیا": "معمار کیه",
+        "۱۹ داده به مح": "دوستان ، دانش خانواده هنوز برای من نیست 😭😭",
+        "ایناست که بده": "چطوری اوفلیا",
+        "بشکنه این دست": "بچها خب مگه اون امتحانشو خوب ندادین؟؟",
+        "دو و نیم ک منم": "۲.۳۳",
+        "ریدم تو مبانی": "ایمیلاشو نمی خونه",
+        "میترسم کم کنه": "احتمالا واسه همون سوال لینوکسه اس",
+        "چقدر داده مگه": "رادین قشنگ وایساده دقیقه ۹۰ یه نمره کصشعر بده وقت اعتراض هم نداشته باشیم",
+        "چند بودی قبلش": "چهار",
+        "کاش نمی‌گفتی": "عا",
+        "یه تکلیف داشت": "وااااای",
+        "😂😂😂😂😂😂": "نه بابا",
+        "😭😭😭💋💋💋": "بمب گذاری کلاس",
+        "الانخهه مگههه": "ویای",
+        "بلخاری نداره؟": "من می‌گیرمتون",
+        "زمانیان بهتره": "چون دوشنبه خالی میمونه",
+        "ممنونم کائنات": "باش",
+        "چقدر سحرخیزید": "ما هم که خیلی مرد نستیزیم🫷🏻",
+        "یجوریه اسمش😭": "سکینه جون؟",
+        "امیدم به همونه": "می‌دونم\nخنده های شیطانیش گویاس",
+        "با اون برداریم": "این زن اسم عجیبه",
+        "بلخاری خوب بود": "نه استاد نوشته بود\nوایسا الان میارم",
+        "بمب گذاری ک��اس": "و تورو",
+        "من می‌گیرمتون": "اون دوتا چادریا مطمعنم قراره ایهی ایهی کنن و سرخ و سفید بشن",
+        "پرواز مارو کشت": "چگونه شوهر کنید",
+        "چقدر فاصله هست": "خیلی درسته",
+        "چقدر فشرده شده": "باهم وارد زمین جنگ میشیم",
+        "چند داد بهتون؟": "من 19",
+        "کسی اینو میره؟": "برای ادامه در مهندسی کامپیوتر، معمولاً بین ریاضیات گسسته و ریاضی دیفرانسیل (معادلات دیفرانسیل)، انتخاب بهتر اینه:\n\n✅ اولویت با: ریاضیات گسسته\n\nچرا گسسته مهم‌تره؟\n\nریاضیات گسسته پایه‌ی اصلی خیلی از درس‌های مهم کامپیوتره، مثل:\n • برنامه‌نویسی پیشرفته\n • ساختمان داده\n • طراحی الگوریتم\n • نظریه زبان‌ها و ماشین‌ها\n • مدار منطقی\n • هوش مصنوعی\n • رمزنگاری\n\nموضوعاتی که در گسسته یاد می‌گیری:\n • منطق (logic)\n • مجموعه‌ها (sets)\n • روابط و توابع\n • ترکیبیات (combinatorics)\n • گراف‌ها (graphs)\n • استقرا (induction)\n\nاین‌ها مستقیماً در برنامه‌نویسی و الگوریتم استفاده می‌شن.\n\n⸻\n\n⏳ دیفرانسیل کی مهم میشه؟\n\nریاضی دیفرانسیل بیشتر در این حوزه‌ها کاربرد داره:\n • پردازش سیگنال\n • کنترل\n • الکترونیک\n • هوش مصنوعی پیشرفته\n • یادگیری ماشین\n • گرافیک\n\nولی برای شروع مسیر نرم‌افزار و مفاهیم پایه، گسسته مهم‌تر و فوری‌تره.",
+        "بعد بزن ترم دوم": "😐😐😐",
+        "فعلا که ۴۹۰۰ ئه": "من انصراف",
+        "دوستان ریال بود": "اخیش",
+        "من فیزیکمم ریدم": "احساس تنهایی نکن🫷🏻",
+        "چرا اینقدر زودی": "۳.۳۷",
+        "چگونه شوهر کنید": "۲۰ 😁",
+        "این زن اسم عجیبه": "یجوریه اسمش😭",
+        "جفت شیش آوردم پس": "۲۰ شدی؟",
+        "خیر و شر جدا هست.": "فعلا نامشخصه",
+        "فقط با پسرا داره": "وای",
+        "میز اول خوابیدم*": "الان این تایم حضوری باید بریم ثبت نام؟",
+        "بابا زنک ۱۶.۵ چیه": "به من داده ۱۹ چرا",
+        "به من داده ۱۹ چرا": "احسنت",
+        "ساعت دو و نیم شدم": "اقا من میرم سر کلاس استاد مرد \nمن با این زنا نمیام",
+        "بله \nمخصوصا من☺️": "مگه باهاش داشتین؟",
+        "تکلیف گوهی هم بود": "خب نوشتم و ۱۹ شدم :)",
+        "ریدم تو بانو عطیه": "اعتراض بزنیم ؟ 🔥🔥🔥🔥 @thatbigone",
+        "زبان با کی بردارم": "ها",
+        "یه آقاییه ۲۰ میده": "وای جدی",
+        "ایمیلاشو نمی خونه": "ببین کارت یه کجا رسید",
+        "جنسیتیشو حذف کردن": "😂😂",
+        "من دقیقا قبل تو ام": "۱۵.۲۵",
+        "مگه باهاش داشتین؟": "اره",
+        "آره ویکی پدیا آورد": "یک استاد مهربون نداشم این ترم",
+        "بدبخت شدیم @jackstouches": "به گ رفتیم",
+        "خب نوشتم و ۱۹ شدم :)": "ایمیل بزن بگو نت نبوده",
+        "قبل من بیدار بودید": "بلخاری نداره؟",
+        "چرا انقدر ما عقبیم": "احتمالا برقیا رو گذاشتن اول💔",
+        "کاش میشد نوت گذاشت": "جون مادرت🙏",
+        "۴۹۵۰ عه شهریه ثابت": "درساهم اضافه کنی همون ۱۵ میشه",
+        "از شما نمیپرسیددد؟": "@trwtbsy8 مثل اینکه واقعع بلخاری از دخترا خوشش نمیاد",
+        "التماس میکنم وایسا": ":))",
+        "برق و کامپ جدا نیست": "من خودم از روی بچه ها نوشتم",
+        "تایم هر کدومشون چیه": "زمانیان یکشنبه و سه‌شنبه \nخانمیرزا دوشنبه چهارشنبه",
+        "فقط بلخاریه فکر کنم": "چه کنیم مراپ",
+        "چیزای خوبی بلد نیست": "خیر و شر جدا هست.",
+        "البته بین بد و بدتره": "فریبا یه سارا نامی بود",
+        "امتحان نهاییه مگه😂": "کاش میشد نوت گذاشت",
+        "اون به تومن مگه نیست": "نه بابا",
+        "برو شهریه رو نگاه کن": "سلام بچه ها\nبا توجه به چارت هایی که دادن به نظر من منطقی ترین کار اینه که ماها به جای گسسته دیفرانسیل برداریم چون اولا گسسته تتها درس روز ۲ شنبه هستش و عملا روز ۲ شنبه حروم می‌شه سرش ثانیا گسسته رو دوستان سال بالایی به من گفتن بهتره ترم ۳ یا حتی ترم ۴ برداریم",
+        "عزیزم دانش خانوادس!!": "آئین زندگی😍",
+        "عطیه به من ۱۴ داده🔥": "ریدم تو بانو عطیه",
+        "قرار بود همه ۲۰ بشیم": "این همه سر کلاساش بودم",
+        "نمی‌دونم تو ۲۰ شدی؟": "قاعدتا نباید فرق میکرد نمره",
+        "واقعا تو بی نتی بودش": "۱ واحده کلا",
+        "😭😭😭😭😭😭😭😭😭": "بعد اندیشه هم مرد بود",
+        "استاد بهتر از این؟🥰": "میز اول خوابیدم*",
+        "انتخاب واحد تو سایته": "آها",
+        "بانو عطیه کارش درسته": "حاجی کم دادع",
+        "تورم دختر حساب کردن؟": "😭😭😭💋💋💋",
+        "من دارم اعتراض میزنم": "چقدر داده مگه",
+        "نمیگن بد نمره میده؟؟": "آره ختی یه سریا ارائه ۴ نمره ای رو ندادن ولی همه ۲۰ شدن",
+        "نه والا اینطوری نبود": "بله \nمخصوصا من☺️",
+        "چجوری باید صداش کنیم": "پس جنگ شد",
+        "احساس تنهایی نکن🫷🏻": "ریدم",
+        "امادگی دانشگاه ندارم": "جنسیتیشو حذف کردن",
+        "ببین کارت یه کجا رسید": "من امشب تکلیفم روشن میشه واقعا",
+        "بعد اندیشه هم مرد بود": "پرواز مارو کشت",
+        "خب چی قراره مگه بگه😭": "😭😭😭😭😭😭😭😭😭",
+        "من نیم ساعت اومدم عقب": "منم",
+        "۱۲ میلیون 😭😭😭😭😭": "جفت شیش آوردم پس",
+        "بزن رو اطلاعات تحصیلی": "بعد بزن ترم دوم",
+        "سطح امادگیامون به خدا": "دروغگو سگه",
+        "از عطیه چیزی بعید نیست": "جواب لینوکس همرو نوشتم ولی ۲۰ نشدن بچه ها",
+        "ایمیل بزن بگو نت نبوده": "خیلی مشتی",
+        "این همه سر کلاساش بودم": "بشکنه این دست",
+        "بلخاری هم بد نمره نداد": "نه نشنیدم تاحالا \n\nاستادای مرد تا الان اونقدر بد نمره ندادن",
+        "خیلی بیشتر از ۱۲ تومنه": "نه",
+        "فریبا یه سارا نامی بود": "با اون برداریم",
+        "یک دقیقه هم برام کافیه": "خیلی",
+        "ایشون اوفلیا هستن @nianled": "https://b2n.ir/registration_4042\nبچه ها این لینکه کار نمیکنه کمک",
+        "میگفتن رندوم نمره میده": "۱۲ میلیون 😭😭😭😭😭",
+        "چون دوشنبه خالی میمونه": "عطیه تاس انداخته نمره داده",
+        "این ریاضیا بودن گند زدن": "مگه نوشته؟",
+        "برین تو بهستان گزارش ۵۹": "اولویت ثبت نامتون رو ببینین",
+        "من ایمیل زدم جواب نداده": "نمرتو نداد؟",
+        "ولی حضورش سگی نمره داره": "ای بابا",
+        "خاک تو سرم اونو یادم رفت": "تکلیف گوهی هم بود",
+        "راه ارتباطی نداره عطیه؟": "مسئول سایت کامپیوتر \nیرچ کنی میاره",
+        "کاش بلخاری بود حداقلللل": "ولی حضورش سگی نمره داره",
+        "باهم وارد زمین جنگ میشیم": "نمیاره برام",
+        "ساعت انتخاب واحده عوض شد": "عه",
+        "وای عطیه اگه کم داده باشی": "ببین بریم خودکشی به راست😭😭",
+        "اقایی نبود بلخاری هم خوبه": "کاش بلخاری بود حداقلللل",
+        "اندیشه اونام خوب بود دیگه": "سر کلاسش میخوابیدی میگفت خسته اید دیگه درس نمیدم",
+        "بچها کارگاه نمره اش اومده": "چرا اینقدر زودی",
+        "تو کدومی اوفلیا یا مارکو؟": "ساعتش بر چه اساس مشخص شده؟",
+        "من افتادم ساعت ۴ و ۸ دقیقه": "بیشرفا خیلی منو عقب انداختن",
+        "چون برا کن هردوتا بلخاریه": "عه😭",
+        "گزارش ۵۹ تایم انتخاب واحد": "بگید دانش خانواده با کی بردارم",
+        "ساعتش بر چه اساس مشخص شده؟": "بچها کارگاه نمره اش اومده",
+        "این که از قبلی هم کسخل‌تره": "هورا",
+        "دیگه خانوما مقدم‌تر نیستن": "چقدر سحرخیزید",
+        "عطیه تاس انداخته نمره داده": "چند داده",
+        "من خودم از روی بچه ها نوشتم": "پروژه های سر کلاساشم انجام دادی دیگه؟\nپس چرا کم داده",
+        "وای سر نهایی هم دینیم تر زد": "قطعا",
+        "کسی اینجا مدار منطقی میره؟": "بابا زنک ۱۶.۵ چیه",
+        "🤣🤣🤣🤣🤣🤣🤣🤣🤣🤣🤣🤣": "خوشبختانه",
+        "درست هم به همون اندازه مهمه": "ایشالا میان ترمو فراموش کنه",
+        "رادین جان از آقایی یاد بگیر": "درست هم به همون اندازه مهمه",
+        "اولویت ثبت نامتون رو ببینین": "من افتادم ساعت ۴ و ۸ دقیقه",
+        "ایشالا میان ترمو فراموش کنه": "اقایی کیه",
+        "ایشالله کلاساش انلاینه🙏🏻": "امادگی دانشگاه ندارم",
+        "بیشرفا خیلی منو عقب انداختن": "15:37",
+        "ساعت تو کارگاه انتخاب رشتست": "2:33 ن من",
+        "قاعدتا نباید فرق میکرد نمره": "اره",
+        "نگو اینو اوفلیا داره میبینه": "😭😭😭😭😭",
+        "دختر خانوم باهام دوست می‌شی": "همه باهمه انتخاب واحدشون تقریبا",
+        "۷ صب ما باید باز ساعت ۵ پاشیم": "یه روز فقط به خاطر یه درس باید بیایم \nعقلانی نیست",
+        "آکادمی آریانا چیه دیگه @ash_far_a": "چی شده",
+        "ببین بریم خودکشی به راست😭😭": "بانو عطیه کارش درسته",
+        "سکینه مارو شوهر میده صد در صد": "😂😂😂😂",
+        "درساهم اضافه کنی همون ۱۵ میشه": "بچه ها",
+        "ما هم که خیلی مرد نستیزیم🫷🏻": "قبل من بیدار بودید",
+        "یک استاد مهربون نداشم این ترم": "بابا عه",
+        "احتمالا برقیا رو گذاشتن اول💔": "فک کنم اون داستان خانوما اولویت دارن درست بود 🥀🥀",
+        "فکر کنم با دخترا نداره ترم بعد": "چون برا کن هردوتا بلخاریه",
+        "کم مونده تو پیویش فحش بدم دیگه": "ممنونم کائنات",
+        "اعتراض بزنیم ؟ 🔥🔥🔥🔥 @thatbigone": "نه ولش کن احساس میکنم اعتراض بزنیم میندازه",
+        "برای من زده اساتید گروه اموزشی": "بلخاری خوب بود",
+        "به قیافه گوگولی بهروز نگاه نکن": "امیدم به همونه",
+        "بگید دانش خانواده با کی بردارم": "عع",
+        "خدایا اندیشه ۲ آقایی باشه لطفا": "ایشالا",
+        "من امشب تکلیفم روشن میشه واقعا": "حالا به تلاشی بکنه \nبعدا حسرت نخوره",
+        "و دوما خیلی موقعیت بدی گذاشتنش": "۷ صب ما باید باز ساعت ۵ پاشیم",
+        "درسای دیگه‌ای که داره هم همینن": "عزیزم دانش خانوادس!!",
+        "مثل اینکه واقعا رندوم نمره داده": "قرار بود همه ۲۰ بشیم",
+        "می‌د��نم\nخنده های شیطانیش گویاس": "آهنگاش",
+        "عوض اون همه قماری که باختم دراومد": "یادم باشه برم ازش خواستگاری کنم",
+        "۱۹ رو اعتراض بزنم حس می کنم کم کمه": "امتحان نهاییه مگه😂",
+        "احتمالا واسه همون سوال لینوکسه اس": "19 خوبه دیگه",
+        "برنامه‌نویسی دوباره با زمانیان ؟": "تایم هر کدومشون چیه",
+        "جنگ قراره بشه سر انتخاب واحد واقعا": "دیگه خانوما مقدم‌تر نیستن",
+        "مسئول سایت کامپیوتر \nیرچ کنی میاره": "آره ویکی پدیا آورد",
+        "حالا به تلاشی بکنه \nبعدا حسرت نخوره": "من ایمیل زدم جواب نداده",
+        "عجیبه فک میکردم عطیه به همه خوب بده": "آره پسر من همونو زدم عددشو عوض کردم فقط",
+        "وایسا حالا رادین نمره نداده هنوز😊": "مبانی:",
+        "از الان مطمئنم باهام بیف خواهد داشت": "وای سر نهایی هم دینیم تر زد",
+        "نه استاد نوشته بود\nوایسا الان میارم": "ببین من تحقیق انجام ندادم دو جلسه ام غیبت کردم ۲۰ داد",
+        "یه استاد اندیشه که به همه ۲۰ داد رفت": "اهان",
+        "تو انتخاب واحد دربارشون زیاد حرف زدن": "البته بین بد و بدتره",
+        "بچها خب مگه اون امتحانشو خوب ندادین؟؟": "چرا",
+        "فکر کنم یگی از عوامل زمان ثبت نام بوده": "کسی اینجا مدار منطقی میره؟",
+        "وای نه ترو قران \nاستاد مرد نداره چرااا": "قطعاً",
+        "+ رادین عزیز \n\nامیدوارم ادمای خوبی باشن": "من فیزیکمم ریدم",
+        "الان این تایم حضوری باید بریم ثبت نام؟": "انتخاب واحد تو سایته",
+        "آره پسر من همونو زدم عددشو عوض کردم فقط": "یه تکلیف داشت",
+        "اول بیاین امبدوار باشیم دیفرانسیل پر نشه": "آکادمی آریانا چیه دیگه @ash_far_a",
+        "جواب لینوکس همرو نوشتم ولی ۲۰ نشدن بچه ها": "به من ۲۰ داده",
+        "رادین دیگه کیه که از واعظ دیرتر نمره میده": "اخه بیشرف هنوز نمره میانترم نداده",
+        "سوال هم میپرسه سر کلاساش یکم رو مخه البته": "فکر کنم با دخترا نداره ترم بعد",
+        "اول ترم بالایی ها \nبعد برق\nبعد دخترا\nبعد ما": "خدایا شکرت",
+        "نه ولش کن احساس میکنم اعتراض بزنیم میندازه": "راه ارتباطی نداره عطیه؟",
+        "دوستان ، دانش خانواده هنوز برای من نیست 😭😭": "با کی بردارم",
+        "میفهمید حواست نیست سر کلاس یه سوال می‌پرسید": "نه والا اینطوری نبود",
+        "تا شما بخواید وارد زمین جنگ شید ما تموم کردیم": "نه",
+        "اره \nبهش میخوره از این انقالابیا قراره باشه☺️": "سکینه مارو شوهر میده صد در صد",
+        "@trwtbsy8 مثل اینکه واقعع بلخاری از دخترا خوشش نمیاد": "نه\nرندوم که جواب بدی اهر ولی اینکه نمره بزاره مهم باشه براش نه",
+        "شهریه رو پرداخت نکنیم نمیزاره انتخاب واحد کنیم؟": "بزن رو اطلاعات تحصیلی",
+        "یه روز فقط به خاطر یه درس باید بیایم \nعقلانی نیست": "عمو نظر هم من باهاش حرف زدم گف ول کن گسسته رو برندار",
+        "اقا من میرم سر کلاس استاد مرد \nمن با این زنا نمیام": "کم مونده تو پیویش فحش بدم دیگه",
+        "سر کلاسش میخوابیدی میگفت خسته اید دیگه درس نمیدم": "استاد بهتر از این؟🥰",
+        "https://b2n.ir/registration_4042\nبچه ها این لینکه کار نمیکنه کمک": "بچه ها فوری",
+        "کلا دو تا کلاس اندیشه ۲ عه که نوشته دکتر محمودزاده": "اقایی نبود بلخاری هم خوبه",
+        "فک کنم اون داستان خانوما اولویت دارن درست بود 🥀🥀": "اوه آره",
+        "عمو نظر هم من باهاش حرف زدم گف ول کن گسسته رو برندار": "بزا ترم ۳",
+        "من الان ۲ تا از دوستان تو برق بعد از من انتخاب میکنن": "نمی‌دونم تو ۲۰ شدی؟",
+        "زمانیان یکشنبه و سه‌شنبه \nخانمیرزا دوشنبه چهارشنبه": "زمانیان بهتره",
+        "پروژه های سر کلاساشم انجام دادی دیگه؟\nپس چرا کم داده": "من الان ۲ تا از دوستان تو برق بعد از من انتخاب میکنن",
+        "ببین من تحقیق انجام ندادم دو جلسه ام غیبت کردم ۲۰ داد": "اوه",
+        "آره ختی یه سریا ارائه ۴ نمره ای رو ندادن ولی همه ۲۰ شدن": "نبوددددد",
+        "در حال حاضر فقط مبانی میتونه کوه عظیمی به معدل من بزنه": "ریدم تو مبانی",
+        "اون دوتا چادریا مطمعنم قراره ایهی ایهی کنن و سرخ و سفید بشن": "فقط با پسرا داره",
+        "نه نشنیدم تاحالا \n\nاستادای مرد تا الان اونقدر بد نمره ندادن": "این ریاضیا بودن گند زدن",
+        "خدانکنه😭😭😭 \nهمه میگن دیر نمره میده \nولی ایشالله اذیت نکنه": "خدایا اندیشه ۲ آقایی باشه لطفا",
+        "نه\nرندوم که جواب بدی اهر ولی اینکه نمره بزاره مهم باشه براش نه": "میفهمید حواست نیست سر کلاس یه سوال می‌پرسید",
+        "توی گروه انتخاب واحد بچه ها پرسیده بودن؛ خیلی از مقدم فر تعریف می کردن": "شاه",
+        "رادین قشنگ وایساده دقیقه ۹۰ یه نمره کصشعر بده وقت اعتراض هم نداشته باشیم": "نگو پسر",
+        "آقا طبق این یارو گزارش ۵۹ الان ما اون روز و ساعت میتونیم انتخاب واحد کنیم؟": "کاش نمی‌گفتی",
+        "خب اوکی واحد خوبی هست ولی اول اینکه ما داریم راجبه خواجه نصیری صحبت میکنیم که کلا ۱ استاد واسه گسسته بیشتر نداره": "و دوما خیلی موقعیت بدی گذاشتنش",
+        "سلام بچه ها\nبا توجه به چارت هایی که دادن به نظر من منطقی ترین کار اینه که ماها به جای گسسته دیفرانسیل برداریم چون اولا گسسته تتها درس روز ۲ شنبه هستش و عملا روز ۲ شنبه حروم می‌شه سرش ثانیا گسسته رو دوستان سال بالایی به من گفتن بهتره ترم ۳ یا حتی ترم ۴ برداریم": "کسی اینو میره؟",
+        "برای ادامه در مهندسی کامپیوتر، معمولاً بین ریاضیات گسسته و ریاضی دیفرانسیل (معادلات دیفرانسیل)، انتخاب بهتر اینه:\n\n✅ اولویت با: ریاضیات گسسته\n\nچرا گسسته مهم‌تره؟\n\nریاضیات گسسته پایه‌ی اصلی خیلی از درس‌های مهم کامپیوتره، مثل:\n • برنامه‌نویسی پیشرفته\n • ساختمان داده\n • طراحی الگوریتم\n • نظریه زبان‌ها و ماشین‌ها\n • مدار منطقی\n • هوش مصنوعی\n • رمزنگاری\n\nموضوعاتی که در گسسته یاد می‌گیری:\n • منطق (logic)\n • مجموعه‌ها (sets)\n • روابط و توابع\n • ترکیبیات (combinatorics)\n • گراف‌ها (graphs)\n • استقرا (induction)\n\nاین‌ها مستقیماً در برنامه‌نویسی و الگوریتم استفاده می‌شن.\n\n⸻\n\n⏳ دیفرانسیل کی مهم میشه؟\n\nریاضی دیفرانسیل بیشتر در این حوزه‌ها کاربرد داره:\n • پردازش سیگنال\n • کنترل\n • الکترونیک\n • هوش مصنوعی پیشرفته\n • یادگیری ماشین\n • گرافیک\n\nولی برای شروع مسیر نرم‌افزار و مفاهیم پایه، گسسته مهم‌تر و فوری‌تره.": "خب اوکی واحد خوبی هست ولی اول اینکه ما داریم راجبه خواجه نصیری صحبت میکنیم که کلا ۱ استاد واسه گسسته بیشتر نداره"
+      },
+      "afraid": {}
+    }
+  },
+  "riddle_counts": {
+    "-1003766429228": {
+      "785512936": {
+        "date": "2026-02-14",
+        "count": 15
+      },
+      "845791174": {
+        "date": "2026-02-14",
+        "count": 15
+      },
+      "977743334": {
+        "date": "2026-02-14",
+        "count": 15
+      },
+      "1556793586": {
+        "date": "2026-02-14",
+        "count": 1
+      },
+      "6185981142": {
+        "date": "2026-02-14",
+        "count": 1
+      },
+      "7359504141": {
+        "date": "2026-02-14",
+        "count": 15
+      },
+      "7646489621": {
+        "date": "2026-02-14",
+        "count": 15
+      }
+    }
+  },
+  "jailbreak_attempts": {
+    "-1003766429228": {
+      "627098633": {
+        "helpers": [
+          6185981142,
+          977743334
+        ],
+        "last_attempt": "2026-02-14T13:38:37.489946"
+      },
+      "785512936": {
+        "helpers": [
+          5510345757,
+          5864430289
+        ],
+        "last_attempt": "2026-02-13T18:54:55.312987"
+      },
+      "845791174": {
+        "helpers": [
+          1030822217,
+          5510345757
+        ],
+        "last_attempt": "2026-02-13T19:07:43.381108"
+      },
+      "977743334": {
+        "helpers": [
+          627098633
+        ],
+        "last_attempt": "2026-02-14T09:43:28.679320"
+      },
+      "1030822217": {
+        "helpers": [],
+        "last_attempt": "2026-02-14T20:54:49.904765"
+      },
+      "1411756228": {
+        "helpers": [
+          785512936
+        ],
+        "last_attempt": ""
+      },
+      "5510345757": {
+        "helpers": [],
+        "last_attempt": "2026-02-13T20:38:56.082326"
+      },
+      "5864430289": {
+        "helpers": [],
+        "last_attempt": "2026-02-14T20:41:51.975456"
+      },
+      "6185981142": {
+        "helpers": [],
+        "last_attempt": "2026-02-14T09:25:40.976254"
+      },
+      "7359504141": {
+        "helpers": [
+          845791174,
+          5510345757
+        ],
+        "last_attempt": ""
+      }
+    }
+  }
+}

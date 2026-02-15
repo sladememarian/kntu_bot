@@ -19,6 +19,7 @@ from storage import (
     get_jail_time, set_jail_time,
     track_member,
 )
+from handlers.casino import CASINO_LEADER_ID, _get_casino_data, _check_leader_tax
 from config import ADMIN_IDS
 
 # ── Constants ──────────────────────────────────────────────
@@ -33,7 +34,7 @@ MANAGER_BONUS_RATE = 0.05     # 5 %
 EMBEZZLE_AMOUNT = 500
 EMBEZZLE_SUCCESS_CHANCE = 0.30
 INVESTIGATE_COST = 100
-INVESTIGATE_SUCCESS_CHANCE = 0.20
+INVESTIGATE_SUCCESS_CHANCE = 0.50
 JAIL_DURATION_EMBEZZLE = 21600  # 6 hours
 
 # ── Image palette (same as the rest of the bot) ───────────
@@ -308,6 +309,19 @@ async def bank_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # ── withdraw ────────────────────────────────────────
     if args and args[0].lower() in ("withdraw", "برداشت"):
+        # Casino leader freeze check
+        if user.id == CASINO_LEADER_ID:
+            d = load_data()
+            casino = _get_casino_data(d, cid)
+            _check_leader_tax(d, cid)
+            save_data(d)
+            if casino.get("leader_frozen", False):
+                msg = ("🔒 حساب بانکی شما به دلیل عدم پرداخت مالیات کازینو منجمد شده!\n💡 از /paytax استفاده کنید."
+                       if lang == "fa"
+                       else "🔒 Your bank account is frozen for unpaid casino tax!\n💡 Use /paytax to pay.")
+                await update.message.reply_text(msg, parse_mode="Markdown")
+                return
+
         if len(args) < 2 or not args[1].isdigit():
             msg = "📤 مثال: `/bank withdraw 500`" if lang == "fa" else "📤 Usage: `/bank withdraw 500`"
             await update.message.reply_text(msg, parse_mode="Markdown")
@@ -934,13 +948,28 @@ async def investigate_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
                    f"💸 Cost: *{INVESTIGATE_COST}$*\n"
                    f"💰 Wallet: *{get_balance(chat.id, user.id)}$*")
     else:
-        if lang == "fa":
-            msg = (f"🔍 بازرسی انجام شد ولی مدرکی پیدا نشد.\n"
-                   f"💸 هزینه: *{INVESTIGATE_COST}$*\n"
-                   f"💰 کیف پول: *{get_balance(chat.id, user.id)}$*")
+        if embezzled:
+            # Manager DID embezzle but investigator didn't find strong evidence — give a hint
+            if lang == "fa":
+                msg = (f"🔍 بازرسی انجام شد...\n"
+                       f"🤔 چیزی مشکوکه ولی مدرک قطعی پیدا نشد.\n"
+                       f"💡 *شاید یه بار دیگه امتحان کنی...*\n"
+                       f"💸 هزینه: *{INVESTIGATE_COST}$*\n"
+                       f"💰 کیف پول: *{get_balance(chat.id, user.id)}$*")
+            else:
+                msg = (f"🔍 Investigation done...\n"
+                       f"🤔 Something seems suspicious but no solid proof.\n"
+                       f"💡 *Maybe try again...*\n"
+                       f"💸 Cost: *{INVESTIGATE_COST}$*\n"
+                       f"💰 Wallet: *{get_balance(chat.id, user.id)}$*")
         else:
-            msg = (f"🔍 Investigation done but no evidence found.\n"
-                   f"💸 Cost: *{INVESTIGATE_COST}$*\n"
-                   f"💰 Wallet: *{get_balance(chat.id, user.id)}$*")
+            if lang == "fa":
+                msg = (f"🔍 بازرسی انجام شد ولی مدرکی پیدا نشد.\n"
+                       f"💸 هزینه: *{INVESTIGATE_COST}$*\n"
+                       f"💰 کیف پول: *{get_balance(chat.id, user.id)}$*")
+            else:
+                msg = (f"🔍 Investigation done but no evidence found.\n"
+                       f"💸 Cost: *{INVESTIGATE_COST}$*\n"
+                       f"💰 Wallet: *{get_balance(chat.id, user.id)}$*")
 
     await update.message.reply_text(msg, parse_mode="Markdown")
