@@ -5,6 +5,7 @@
 import random
 import io
 import os
+import time
 from datetime import datetime, timedelta
 from collections import Counter
 
@@ -22,6 +23,7 @@ from storage import (
 KOLLAR = "کلار $"
 MIN_BET = 20
 MAX_BET = 100000
+BJ_TIMEOUT = 300  # 5 minutes timeout for blackjack games
 
 MEGA_SYMBOLS = ["🍒", "🍋", "🍊", "🍇", "💎", "7️⃣", "🔔", "⭐"]
 CARD_SUITS = ["♠", "♥", "♦", "♣"]
@@ -612,12 +614,18 @@ def _bj_keyboard(lang: str, cid: str, uid: str) -> InlineKeyboardMarkup:
             [
                 InlineKeyboardButton("🃏 کارت بکش", callback_data=f"bj:hit:{cid}:{uid}"),
                 InlineKeyboardButton("🛑 بسه", callback_data=f"bj:stand:{cid}:{uid}"),
+            ],
+            [
+                InlineKeyboardButton("🏳️ انصراف", callback_data=f"bj:forfeit:{cid}:{uid}"),
             ]
         ])
     return InlineKeyboardMarkup([
         [
             InlineKeyboardButton("🃏 Hit", callback_data=f"bj:hit:{cid}:{uid}"),
             InlineKeyboardButton("🛑 Stand", callback_data=f"bj:stand:{cid}:{uid}"),
+        ],
+        [
+            InlineKeyboardButton("🏳️ Forfeit", callback_data=f"bj:forfeit:{cid}:{uid}"),
         ]
     ])
 
@@ -682,10 +690,27 @@ async def blackjack_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     data = load_data()
     existing = _get_bj_games(data, cid).get(uid)
     if existing and existing.get("phase") == "playing":
+        # Auto-expire games older than BJ_TIMEOUT
+        started = existing.get("started_at", 0)
+        if time.time() - started > BJ_TIMEOUT:
+            # Game expired — refund bet and clean up
+            refund = existing.get("bet", 0)
+            _del_bj_game(data, cid, uid)
+            save_data(data)
+            add_balance(chat.id, user.id, refund)
+            if lang == "fa":
+                await update.message.reply_text(
+                    f"⏰ بازی قبلیت منقضی شد! شرطت (*{refund}$*) برگشت. حالا بازی جدید شروع کن.",
+                    parse_mode="Markdown")
+            else:
+                await update.message.reply_text(
+                    f"⏰ Your previous game expired! Bet (*{refund}$*) refunded. Start a new game.",
+                    parse_mode="Markdown")
+            return
         if lang == "fa":
-            msg = "❌ تو الان یه بازی فعال داری! اول اون رو تموم کن."
+            msg = "❌ تو الان یه بازی فعال داری! اول اون رو تموم کن. (بازی بعد از ۵ دقیقه خودکار منقضی میشه)"
         else:
-            msg = "❌ You have an active game! Finish it first."
+            msg = "❌ You have an active game! Finish it first. (Game auto-expires after 5 min)"
         await update.message.reply_text(msg, parse_mode="Markdown")
         return
 
@@ -735,6 +760,7 @@ async def blackjack_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "deck": deck,
         "bet": bet,
         "phase": "playing",
+        "started_at": time.time(),
     }
 
     # Check natural blackjack
@@ -810,10 +836,37 @@ async def bj_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode="Markdown")
         return
 
+    # Auto-expire check
+    started = game.get("started_at", 0)
+    if time.time() - started > BJ_TIMEOUT:
+        refund = game.get("bet", 0)
+        _del_bj_game(data, cid, uid)
+        save_data(data)
+        add_balance(int(cid), int(uid), refund)
+        msg = (f"⏰ بازی منقضی شد! شرطت (*{refund}$*) برگشت." if lang == "fa"
+               else f"⏰ Game expired! Bet (*{refund}$*) refunded.")
+        await query.edit_message_text(msg, parse_mode="Markdown")
+        return
+
     deck = game["deck"]
     player_cards = game["player_cards"]
     dealer_cards = game["dealer_cards"]
     bet = game["bet"]
+
+    if action == "forfeit":
+        # Player forfeits — loses bet
+        game["phase"] = "done"
+        _del_bj_game(data, cid, uid)
+        save_data(data)
+        _process_casino_loss(int(cid), bet)
+        new_bal = get_balance(int(cid), int(uid))
+        if lang == "fa":
+            result = f"🏳️ *انصراف دادی!*\n💸 *{bet}$* از دست دادی!"
+        else:
+            result = f"🏳️ *You forfeited!*\n💸 Lost *{bet}$*!"
+        text = _bj_game_text(game, lang, phase="done", result=result, final_balance=new_bal)
+        await query.edit_message_text(text, parse_mode="Markdown")
+        return
 
     if action == "hit":
         # Draw a card

@@ -62,7 +62,13 @@ _HELP_CATEGORIES = {
                 "📊 /profit — سود و زیان\n"
                 "🌍 /event — رویداد روز\n"
                 "🔒 /jail — لیست زندانیان\n"
-                "🏆 /leaderboard — جدول ثروتمندان\n\n"
+                "🏆 /leaderboard — جدول ثروتمندان\n"
+                "💝 /donate \\[مبلغ\\] — کمک مالی\n"
+                "🏅 /charity — جدول خیریه\n"
+                "🏠 /realestate — بازار املاک\n"
+                "🏘 /buyproperty \\[نوع\\] — خرید ملک\n"
+                "🏚 /sellproperty \\[نوع\\] — فروش ملک\n"
+                "📊 /economy — وضعیت اقتصادی\n\n"
                 "💡 _قیمت‌ها با تورم بالا میره! (عرضه و تقاضا)_"
             ),
         },
@@ -192,7 +198,13 @@ _HELP_CATEGORIES = {
                 "📊 /profit — Investment P&L\n"
                 "🌍 /event — Daily world event\n"
                 "🔒 /jail — Jailed members\n"
-                "🏆 /leaderboard — Richest members\n\n"
+                "🏆 /leaderboard — Richest members\n"
+                "💝 /donate \\[amount\\] — Donate to charity\n"
+                "🏅 /charity — Charity leaderboard\n"
+                "🏠 /realestate — Real estate market\n"
+                "🏘 /buyproperty \\[type\\] — Buy property\n"
+                "🏚 /sellproperty \\[type\\] — Sell property\n"
+                "📊 /economy — Economy status & taxes\n\n"
                 "💡 _Prices rise with demand! (supply & demand)_"
             ),
         },

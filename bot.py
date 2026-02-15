@@ -43,6 +43,9 @@ from handlers.economy import (
     work_cmd, spin_cmd, invest_cmd, sell_cmd, portfolio_cmd, event_cmd,
     jail_list_cmd, profit_cmd, bail_cmd, jailbreak_cmd,
     fish_cmd, mine_cmd, quest_cmd,
+    donate_cmd, charity_cmd,
+    realestate_cmd, buyproperty_cmd, sellproperty_cmd,
+    economy_cmd,
 )
 from handlers.xo import xo_cmd, xo_callback
 from handlers.riddle import riddle_cmd, riddle_callback
@@ -604,6 +607,14 @@ def main():
     app.add_handler(CommandHandler("fish", fish_cmd))
     app.add_handler(CommandHandler("mine", mine_cmd))
     app.add_handler(CommandHandler("quest", quest_cmd))
+
+    # Charity & Real Estate & Economy
+    app.add_handler(CommandHandler("donate", donate_cmd))
+    app.add_handler(CommandHandler("charity", charity_cmd))
+    app.add_handler(CommandHandler("realestate", realestate_cmd))
+    app.add_handler(CommandHandler("buyproperty", buyproperty_cmd))
+    app.add_handler(CommandHandler("sellproperty", sellproperty_cmd))
+    app.add_handler(CommandHandler("economy", economy_cmd))
 
     # Shop system
     app.add_handler(CommandHandler("shop", shop_cmd))
