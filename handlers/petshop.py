@@ -12,8 +12,23 @@ from PIL import Image, ImageDraw, ImageFont
 from storage import (
     get_lang, get_balance, add_balance,
     get_inventory, add_inventory_item, has_item,
+    get_purchase_counts, record_purchase,
 )
 from strings import STRINGS
+
+
+# ── Inflation / Supply-Demand ──
+_INFLATION_STEP = 15
+_INFLATION_DIVISOR = 5
+_MAX_MULTIPLIER = 3.0
+
+
+def _dynamic_price(base: int, item_id: str, chat_id: int) -> int:
+    counts = get_purchase_counts(chat_id)
+    bought = counts.get(item_id, 0)
+    multiplier = 1.0 + (bought / _INFLATION_DIVISOR) * (_INFLATION_STEP / 100)
+    multiplier = min(multiplier, _MAX_MULTIPLIER)
+    return max(base, int(base * multiplier))
 
 # ---------- Icon cache & downloader ----------
 _icon_cache: dict = {}
@@ -103,7 +118,7 @@ def _render_petshop_image(lang):
             draw.ellipse([pad + 10, y + 10, pad + 50, y + item_h - 10], fill=info["color"])
 
         draw.text((pad + 60, y + 8), name, fill=TEXT_COLOR, font=font)
-        draw.text((pad + 60, y + 32), f"{price}$", fill=PRICE_COLOR, font=font_price)
+        draw.text((pad + 60, y + 32), f"{price}K", fill=PRICE_COLOR, font=font_price)
 
         id_text = f"/buypet {pet_id}"
         ptb = draw.textbbox((0, 0), id_text, font=font_price)
@@ -178,7 +193,7 @@ async def buypet_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     info = PETS[pet_id]
-    price = info["price"]
+    price = _dynamic_price(info["price"], f"pet_{pet_id}", chat.id)
     bal = get_balance(chat.id, user.id)
 
     if price > bal:
@@ -192,6 +207,7 @@ async def buypet_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     add_balance(chat.id, user.id, -price)
+    record_purchase(chat.id, f"pet_{pet_id}")
     name = info["name_fa"] if lang == "fa" else info["name_en"]
     add_inventory_item(chat.id, user.id, {
         "item_id": f"pet_{pet_id}",

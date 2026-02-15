@@ -502,3 +502,19 @@ def has_item(chat_id: int, user_id: int, item_id: str) -> bool:
 def get_all_jailed(chat_id: int) -> dict:
     data = load_data()
     return data.get("jail", {}).get(str(chat_id), {})
+
+
+# ---- Purchase tracking (for inflation / supply-demand) ----
+
+def get_purchase_counts(chat_id: int) -> dict:
+    """Returns {item_id: count} for a chat's purchase history."""
+    data = load_data()
+    return data.get("purchase_counts", {}).get(str(chat_id), {})
+
+
+def record_purchase(chat_id: int, item_id: str, qty: int = 1):
+    """Increment the purchase counter for an item in this chat."""
+    data = load_data()
+    pc = data.setdefault("purchase_counts", {}).setdefault(str(chat_id), {})
+    pc[item_id] = pc.get(item_id, 0) + qty
+    save_data(data)

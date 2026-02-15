@@ -18,8 +18,10 @@ from telegram.ext import (
 )
 from aiohttp import web
 from telegram import InlineQueryResultGame
+import json as _json
 
 from config import BOT_TOKEN, DEBUG, BOT_NAME
+from storage import get_balance as _get_balance, add_balance as _add_balance
 
 # Handlers
 from handlers.general import start_cmd, help_cmd, lang_cmd, debug_cmd, dumpdata_cmd, dbstatus_cmd, syncdata_cmd, loaddata_cmd
@@ -79,11 +81,353 @@ async def _serve_casino(request):
     return web.Response(text="Game not found", status=404)
 
 
+# ── Wallet API for HTML5 game ──────────────────────
+async def _api_get_balance(request):
+    """GET /api/balance?chat_id=X&user_id=Y → returns wallet balance."""
+    try:
+        chat_id = int(request.query.get("chat_id", 0))
+        user_id = int(request.query.get("user_id", 0))
+        if not chat_id or not user_id:
+            return web.json_response({"error": "missing chat_id or user_id"}, status=400)
+        bal = _get_balance(chat_id, user_id)
+        return web.json_response({"balance": bal})
+    except Exception as e:
+        return web.json_response({"error": str(e)}, status=500)
+
+
+async def _api_update_balance(request):
+    """POST /api/balance {chat_id, user_id, delta} → add/subtract from wallet."""
+    try:
+        body = await request.json()
+        chat_id = int(body.get("chat_id", 0))
+        user_id = int(body.get("user_id", 0))
+        delta = int(body.get("delta", 0))
+        if not chat_id or not user_id:
+            return web.json_response({"error": "missing chat_id or user_id"}, status=400)
+        if delta == 0:
+            bal = _get_balance(chat_id, user_id)
+            return web.json_response({"balance": bal})
+        new_bal = _add_balance(chat_id, user_id, delta)
+        # If it was a loss, also process casino leader cut
+        if delta < 0:
+            try:
+                from handlers.casino import _process_casino_loss
+                _process_casino_loss(chat_id, abs(delta))
+            except Exception:
+                pass
+        return web.json_response({"balance": new_bal})
+    except Exception as e:
+        return web.json_response({"error": str(e)}, status=500)
+
+
+# ── Poker lobby API ────────────────────────────────
+import asyncio
+_poker_lobbies = {}  # chat_id -> {players: [{user_id, name}], state, deck, ...}
+_poker_lock = asyncio.Lock()
+
+
+async def _api_poker_join(request):
+    """POST /api/poker/join {chat_id, user_id, name, bet} → join a poker lobby."""
+    try:
+        body = await request.json()
+        chat_id = str(body.get("chat_id", ""))
+        user_id = str(body.get("user_id", ""))
+        name = body.get("name", "Player")
+        bet = int(body.get("bet", 50))
+        if not chat_id or not user_id:
+            return web.json_response({"error": "missing params"}, status=400)
+
+        async with _poker_lock:
+            lobby = _poker_lobbies.setdefault(chat_id, {
+                "players": [], "state": "waiting", "bet": bet,
+                "deck": [], "hands": {}, "community": [],
+                "pot": 0, "turn": 0, "round": 0, "folded": [],
+            })
+            # Reset if game was finished
+            if lobby["state"] == "finished":
+                lobby.update({"players": [], "state": "waiting", "bet": bet,
+                              "deck": [], "hands": {}, "community": [],
+                              "pot": 0, "turn": 0, "round": 0, "folded": []})
+
+            # Check if already in lobby
+            if any(p["user_id"] == user_id for p in lobby["players"]):
+                return web.json_response({
+                    "status": "already_joined",
+                    "players": lobby["players"],
+                    "state": lobby["state"],
+                    "count": len(lobby["players"]),
+                })
+
+            # Check balance
+            bal = _get_balance(int(chat_id), int(user_id))
+            if bal < bet:
+                return web.json_response({"error": "not enough kollars"}, status=400)
+
+            lobby["players"].append({"user_id": user_id, "name": name})
+
+            return web.json_response({
+                "status": "joined",
+                "players": lobby["players"],
+                "state": lobby["state"],
+                "count": len(lobby["players"]),
+            })
+    except Exception as e:
+        return web.json_response({"error": str(e)}, status=500)
+
+
+async def _api_poker_status(request):
+    """GET /api/poker/status?chat_id=X&user_id=Y → get lobby/game state."""
+    try:
+        chat_id = request.query.get("chat_id", "")
+        user_id = request.query.get("user_id", "")
+        async with _poker_lock:
+            lobby = _poker_lobbies.get(chat_id)
+            if not lobby:
+                return web.json_response({"state": "no_lobby", "players": [], "count": 0})
+
+            resp = {
+                "state": lobby["state"],
+                "players": lobby["players"],
+                "count": len(lobby["players"]),
+                "pot": lobby.get("pot", 0),
+                "bet": lobby.get("bet", 50),
+                "turn": lobby.get("turn", 0),
+                "round": lobby.get("round", 0),
+                "community": lobby.get("community", []),
+                "folded": lobby.get("folded", []),
+            }
+            # Send player's own hand
+            if user_id and user_id in lobby.get("hands", {}):
+                resp["hand"] = lobby["hands"][user_id]
+            return web.json_response(resp)
+    except Exception as e:
+        return web.json_response({"error": str(e)}, status=500)
+
+
+def _make_deck():
+    """Create and shuffle a standard 52-card deck."""
+    import random as _r
+    suits = ["♠", "♥", "♦", "♣"]
+    ranks = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"]
+    deck = [{"rank": r, "suit": s} for s in suits for r in ranks]
+    _r.shuffle(deck)
+    return deck
+
+
+async def _api_poker_start(request):
+    """POST /api/poker/start {chat_id} → start the game if 4+ players."""
+    try:
+        body = await request.json()
+        chat_id = str(body.get("chat_id", ""))
+
+        async with _poker_lock:
+            lobby = _poker_lobbies.get(chat_id)
+            if not lobby or len(lobby["players"]) < 4:
+                return web.json_response({"error": "need at least 4 players"}, status=400)
+            if lobby["state"] != "waiting":
+                return web.json_response({"error": "game already started"}, status=400)
+
+            bet = lobby["bet"]
+            # Deduct bet from all players
+            for p in lobby["players"]:
+                _add_balance(int(chat_id), int(p["user_id"]), -bet)
+            lobby["pot"] = bet * len(lobby["players"])
+
+            # Deal cards  
+            deck = _make_deck()
+            lobby["deck"] = deck
+            lobby["hands"] = {}
+            for p in lobby["players"]:
+                lobby["hands"][p["user_id"]] = [deck.pop(), deck.pop()]
+            lobby["community"] = []
+            lobby["state"] = "preflop"
+            lobby["turn"] = 0
+            lobby["round"] = 0
+            lobby["folded"] = []
+
+            return web.json_response({
+                "status": "started",
+                "state": lobby["state"],
+                "pot": lobby["pot"],
+                "players": lobby["players"],
+                "count": len(lobby["players"]),
+            })
+    except Exception as e:
+        return web.json_response({"error": str(e)}, status=500)
+
+
+async def _api_poker_action(request):
+    """POST /api/poker/action {chat_id, user_id, action} → fold/check/raise."""
+    try:
+        body = await request.json()
+        chat_id = str(body.get("chat_id", ""))
+        user_id = str(body.get("user_id", ""))
+        action = body.get("action", "check")  # fold, check, raise
+        raise_amt = int(body.get("raise_amount", 0))
+
+        async with _poker_lock:
+            lobby = _poker_lobbies.get(chat_id)
+            if not lobby or lobby["state"] in ("waiting", "finished"):
+                return web.json_response({"error": "no active game"}, status=400)
+
+            active = [p for p in lobby["players"] if p["user_id"] not in lobby["folded"]]
+            if not active:
+                return web.json_response({"error": "no active players"}, status=400)
+
+            current_player = active[lobby["turn"] % len(active)]
+            if current_player["user_id"] != user_id:
+                return web.json_response({"error": "not your turn"}, status=400)
+
+            if action == "fold":
+                lobby["folded"].append(user_id)
+                active = [p for p in lobby["players"] if p["user_id"] not in lobby["folded"]]
+                if len(active) == 1:
+                    # Winner by fold
+                    winner = active[0]
+                    _add_balance(int(chat_id), int(winner["user_id"]), lobby["pot"])
+                    lobby["state"] = "finished"
+                    lobby["winner"] = winner
+                    return web.json_response({
+                        "status": "game_over",
+                        "winner": winner,
+                        "pot": lobby["pot"],
+                        "reason": "all_folded",
+                    })
+            elif action == "raise" and raise_amt > 0:
+                bal = _get_balance(int(chat_id), int(user_id))
+                if bal >= raise_amt:
+                    _add_balance(int(chat_id), int(user_id), -raise_amt)
+                    lobby["pot"] += raise_amt
+
+            # Advance turn
+            lobby["turn"] += 1
+            active = [p for p in lobby["players"] if p["user_id"] not in lobby["folded"]]
+
+            # Check if round is complete (everyone acted)
+            if lobby["turn"] >= len(active):
+                lobby["turn"] = 0
+                lobby["round"] += 1
+
+                # Advance community cards
+                deck = lobby["deck"]
+                if lobby["state"] == "preflop":
+                    lobby["community"] = [deck.pop(), deck.pop(), deck.pop()]
+                    lobby["state"] = "flop"
+                elif lobby["state"] == "flop":
+                    lobby["community"].append(deck.pop())
+                    lobby["state"] = "turn"
+                elif lobby["state"] == "turn":
+                    lobby["community"].append(deck.pop())
+                    lobby["state"] = "river"
+                elif lobby["state"] == "river":
+                    # Showdown — evaluate hands
+                    lobby["state"] = "showdown"
+                    winner = _evaluate_showdown(lobby, active)
+                    _add_balance(int(chat_id), int(winner["user_id"]), lobby["pot"])
+                    lobby["state"] = "finished"
+                    lobby["winner"] = winner
+                    # Reveal all hands
+                    all_hands = {p["user_id"]: lobby["hands"].get(p["user_id"], []) for p in active}
+                    return web.json_response({
+                        "status": "game_over",
+                        "winner": winner,
+                        "pot": lobby["pot"],
+                        "reason": "showdown",
+                        "all_hands": all_hands,
+                        "community": lobby["community"],
+                    })
+
+            return web.json_response({
+                "status": "ok",
+                "state": lobby["state"],
+                "pot": lobby["pot"],
+                "turn": lobby["turn"],
+                "community": lobby["community"],
+                "active_count": len(active),
+                "folded": lobby["folded"],
+            })
+    except Exception as e:
+        return web.json_response({"error": str(e)}, status=500)
+
+
+def _hand_rank(cards):
+    """Evaluate a 5-7 card poker hand and return (rank, tiebreaker)."""
+    import itertools
+    def rank_val(r):
+        vals = {"2":2,"3":3,"4":4,"5":5,"6":6,"7":7,"8":8,"9":9,"10":10,"J":11,"Q":12,"K":13,"A":14}
+        return vals.get(r, 0)
+
+    best = (0, [])
+    for combo in itertools.combinations(cards, 5):
+        ranks = sorted([rank_val(c["rank"]) for c in combo], reverse=True)
+        suits = [c["suit"] for c in combo]
+        is_flush = len(set(suits)) == 1
+        is_straight = (ranks[0] - ranks[4] == 4 and len(set(ranks)) == 5)
+        # Ace-low straight
+        if set(ranks) == {14, 2, 3, 4, 5}:
+            is_straight = True
+            ranks = [5, 4, 3, 2, 1]
+
+        counts = {}
+        for r in ranks:
+            counts[r] = counts.get(r, 0) + 1
+        groups = sorted(counts.items(), key=lambda x: (x[1], x[0]), reverse=True)
+        pattern = tuple(g[1] for g in groups)
+
+        if is_flush and is_straight and ranks[0] == 14:
+            score = (9, ranks)  # Royal flush
+        elif is_flush and is_straight:
+            score = (8, ranks)  # Straight flush
+        elif pattern[:1] == (4,):
+            score = (7, ranks)
+        elif pattern[:2] == (3, 2):
+            score = (6, ranks)
+        elif is_flush:
+            score = (5, ranks)
+        elif is_straight:
+            score = (4, ranks)
+        elif pattern[:1] == (3,):
+            score = (3, ranks)
+        elif pattern[:2] == (2, 2):
+            score = (2, ranks)
+        elif pattern[:1] == (2,):
+            score = (1, ranks)
+        else:
+            score = (0, ranks)
+
+        if score > best:
+            best = score
+    return best
+
+
+def _evaluate_showdown(lobby, active):
+    """Find the winner among active players at showdown."""
+    community = lobby.get("community", [])
+    best_score = (-1, [])
+    winner = active[0]
+    for p in active:
+        hand = lobby["hands"].get(p["user_id"], [])
+        all_cards = hand + community
+        score = _hand_rank(all_cards)
+        if score > best_score:
+            best_score = score
+            winner = p
+    return winner
+
+
 async def _start_web_server(app):
-    """Start aiohttp web server alongside the bot (for game hosting)."""
+    """Start aiohttp web server alongside the bot (for game hosting + API)."""
     web_app = web.Application()
     web_app.router.add_get("/", _serve_casino)
     web_app.router.add_get("/casino", _serve_casino)
+    # Wallet API
+    web_app.router.add_get("/api/balance", _api_get_balance)
+    web_app.router.add_post("/api/balance", _api_update_balance)
+    # Poker lobby API
+    web_app.router.add_post("/api/poker/join", _api_poker_join)
+    web_app.router.add_get("/api/poker/status", _api_poker_status)
+    web_app.router.add_post("/api/poker/start", _api_poker_start)
+    web_app.router.add_post("/api/poker/action", _api_poker_action)
     runner = web.AppRunner(web_app)
     await runner.setup()
     port = int(os.environ.get("PORT", 8080))
@@ -138,8 +482,13 @@ async def game_callback(update: Update, context):
     # Only handle game callbacks (not regular button callbacks)
     if not query.game_short_name:
         return
-    url = _get_game_url()
-    logger.info("Game callback from %s: sending URL %s", query.from_user.id, url)
+    base_url = _get_game_url()
+    # Pass chat_id and user_id so the game can sync wallet
+    chat_id = query.message.chat.id if query.message else 0
+    user_id = query.from_user.id
+    user_name = query.from_user.first_name or "Player"
+    url = f"{base_url}?chat_id={chat_id}&user_id={user_id}&name={user_name}"
+    logger.info("Game callback from %s: sending URL %s", user_id, url)
     try:
         await query.answer(url=url)
     except Exception as e:
