@@ -5,6 +5,7 @@
 import random
 import io
 import os
+from datetime import datetime, timedelta
 from collections import Counter
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
@@ -20,7 +21,7 @@ from storage import (
 # ── Constants ──────────────────────────────────────────────
 KOLLAR = "کلار $"
 MIN_BET = 20
-MAX_BET = 1000
+MAX_BET = 100000
 
 MEGA_SYMBOLS = ["🍒", "🍋", "🍊", "🍇", "💎", "7️⃣", "🔔", "⭐"]
 CARD_SUITS = ["♠", "♥", "♦", "♣"]
@@ -156,6 +157,74 @@ def _remember_user(chat_id, user):
     set_user_name(chat_id, user.id,
                   (user.full_name or user.first_name or "User").strip())
     track_member(chat_id, user.id)
+
+
+# ── Casino Leader System ──────────────────────────────────
+CASINO_LEADER_ID = 5864430289
+CASINO_LEADER_CUT = 0.20       # 20% of losses go to leader
+CASINO_SAFE_CUT = 0.80         # 80% to casino safe
+CASINO_DAILY_TAX = 1500        # daily tax leader must pay
+
+
+def _get_casino_data(data: dict, cid: str) -> dict:
+    """Get casino leader/safe data for a chat."""
+    return data.setdefault("casino_system", {}).setdefault(cid, {
+        "leader_id": CASINO_LEADER_ID,
+        "safe": 0,
+        "leader_earnings": 0,
+        "last_tax_date": "",
+        "leader_frozen": False,
+    })
+
+
+def _check_leader_tax(data: dict, cid: str):
+    """Check if leader has paid daily tax. If not, freeze their bank."""
+    casino = _get_casino_data(data, cid)
+    today = datetime.utcnow().strftime("%Y-%m-%d")
+    last_tax = casino.get("last_tax_date", "")
+
+    if last_tax == today:
+        return  # Already paid today
+
+    # If there was a previous day and leader didn't pay, freeze
+    if last_tax and last_tax != today:
+        casino["leader_frozen"] = True
+
+
+def _process_casino_loss(chat_id: int, lost_amount: int):
+    """
+    When a player loses in casino, split the loss:
+    20% → casino leader's bank account
+    80% → casino safe
+    """
+    if lost_amount <= 0:
+        return
+
+    data = load_data()
+    cid = str(chat_id)
+    casino = _get_casino_data(data, cid)
+    _check_leader_tax(data, cid)
+
+    leader_share = int(lost_amount * CASINO_LEADER_CUT)
+    safe_share = lost_amount - leader_share
+
+    casino["safe"] = casino.get("safe", 0) + safe_share
+
+    # Only give leader their cut if not frozen
+    if not casino.get("leader_frozen", False):
+        leader_uid = str(casino.get("leader_id", CASINO_LEADER_ID))
+        leader_acc = data.setdefault("bank_accounts", {}).setdefault(cid, {}).get(leader_uid, {})
+        if not leader_acc:
+            leader_acc = {"balance": 0, "last_interest": datetime.utcnow().isoformat()}
+        leader_acc["balance"] = leader_acc.get("balance", 0) + leader_share
+        data.setdefault("bank_accounts", {}).setdefault(cid, {})[leader_uid] = leader_acc
+        casino["leader_earnings"] = casino.get("leader_earnings", 0) + leader_share
+    else:
+        # Frozen: leader's share also goes to safe
+        casino["safe"] = casino.get("safe", 0) + leader_share
+
+    data["casino_system"][cid] = casino
+    save_data(data)
 
 
 def _get_font(size: int) -> ImageFont.FreeTypeFont:
@@ -475,6 +544,7 @@ async def megaslots_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         new_bal = bal
     else:
         new_bal = add_balance(chat.id, user.id, payout)  # payout is negative
+        _process_casino_loss(chat.id, abs(payout))
 
     # Render image
     display_payout = payout if won else bet
@@ -757,6 +827,7 @@ async def bj_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             game["phase"] = "done"
             _del_bj_game(data, cid, uid)
             save_data(data)
+            _process_casino_loss(int(cid), bet)
             new_bal = get_balance(int(cid), int(uid))
             if lang == "fa":
                 result = f"💥 *سوختی!* مجموع: {p_val}\n💸 *{bet}$* از دست دادی!"
@@ -819,6 +890,7 @@ async def bj_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             else:
                 result = f"🤝 *Push!* {p_val} = {d_val}\n↩️ Bet (*{bet}$*) returned."
         else:
+            _process_casino_loss(int(cid), bet)
             new_bal = get_balance(int(cid), int(uid))
             if lang == "fa":
                 result = f"💀 *باختی!* {p_val} < {d_val}\n💸 *{bet}$* از دست دادی!"
@@ -1002,6 +1074,7 @@ async def coinflip_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
     else:
         new_bal = add_balance(chat.id, user.id, -bet)
+        _process_casino_loss(chat.id, bet)
         if lang == "fa":
             result = (
                 f"🪙 *شیر یا خط*\n\n"
@@ -1037,3 +1110,121 @@ async def coinflip_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await msg.edit_text(f"{result}\n\n{dramatic}", parse_mode="Markdown")
     except Exception:
         await update.message.reply_text(f"{result}\n\n{dramatic}", parse_mode="Markdown")
+
+
+# ════════════════════════════════════════════════════════════
+# 6. /casinoleader — Show casino leader status
+# ════════════════════════════════════════════════════════════
+async def casinoleader_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat = update.effective_chat
+    lang = get_lang(chat.id)
+    data = load_data()
+    cid = str(chat.id)
+    casino = _get_casino_data(data, cid)
+    _check_leader_tax(data, cid)
+    save_data(data)
+
+    leader_id = casino.get("leader_id", CASINO_LEADER_ID)
+    safe = casino.get("safe", 0)
+    earnings = casino.get("leader_earnings", 0)
+    frozen = casino.get("leader_frozen", False)
+    last_tax = casino.get("last_tax_date", "never")
+
+    # Try to get leader name from chat member
+    try:
+        member = await context.bot.get_chat_member(chat.id, leader_id)
+        leader_name = member.user.first_name or str(leader_id)
+    except Exception:
+        leader_name = str(leader_id)
+
+    status_emoji = "🔴 FROZEN" if frozen else "🟢 Active"
+    frozen_fa = "🔴 منجمد" if frozen else "🟢 فعال"
+
+    if lang == "fa":
+        text = (
+            f"🎰 *وضعیت رئیس کازینو*\n\n"
+            f"👤 رئیس: *{leader_name}*\n"
+            f"📊 وضعیت: *{frozen_fa}*\n"
+            f"💰 گاوصندوق: *{safe}$*\n"
+            f"💵 درآمد رئیس: *{earnings}$*\n"
+            f"📅 آخرین مالیات: *{last_tax}*\n"
+            f"💸 مالیات روزانه: *{CASINO_DAILY_TAX}$*\n\n"
+            f"📌 رئیس کازینو *{int(CASINO_LEADER_CUT*100)}%* از باخت‌ها رو می‌گیره\n"
+            f"📌 *{int(CASINO_SAFE_CUT*100)}%* میره تو گاوصندوق"
+        )
+    else:
+        text = (
+            f"🎰 *Casino Leader Status*\n\n"
+            f"👤 Leader: *{leader_name}*\n"
+            f"📊 Status: *{status_emoji}*\n"
+            f"💰 Casino Safe: *{safe}$*\n"
+            f"💵 Leader Earnings: *{earnings}$*\n"
+            f"📅 Last Tax Paid: *{last_tax}*\n"
+            f"💸 Daily Tax: *{CASINO_DAILY_TAX}$*\n\n"
+            f"📌 Leader gets *{int(CASINO_LEADER_CUT*100)}%* of all gambling losses\n"
+            f"📌 *{int(CASINO_SAFE_CUT*100)}%* goes to the casino safe"
+        )
+
+    await update.message.reply_text(text, parse_mode="Markdown")
+
+
+# ════════════════════════════════════════════════════════════
+# 7. /paytax — Casino leader pays daily tax
+# ════════════════════════════════════════════════════════════
+async def paytax_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat = update.effective_chat
+    user = update.effective_user
+    lang = get_lang(chat.id)
+    data = load_data()
+    cid = str(chat.id)
+    casino = _get_casino_data(data, cid)
+
+    leader_id = casino.get("leader_id", CASINO_LEADER_ID)
+    if user.id != leader_id:
+        msg = "❌ فقط رئیس کازینو می‌تونه مالیات بده!" if lang == "fa" else "❌ Only the casino leader can pay tax!"
+        await update.message.reply_text(msg)
+        return
+
+    today = datetime.utcnow().strftime("%Y-%m-%d")
+    if casino.get("last_tax_date") == today:
+        msg = "✅ مالیات امروز رو قبلاً دادی!" if lang == "fa" else "✅ You already paid today's tax!"
+        await update.message.reply_text(msg)
+        return
+
+    bal = get_balance(chat.id, user.id)
+    if bal < CASINO_DAILY_TAX:
+        if lang == "fa":
+            msg = f"❌ پول کافی نداری! نیاز: *{CASINO_DAILY_TAX}$* | موجودی: *{bal}$*"
+        else:
+            msg = f"❌ Not enough money! Need: *{CASINO_DAILY_TAX}$* | Balance: *{bal}$*"
+        await update.message.reply_text(msg, parse_mode="Markdown")
+        return
+
+    # Deduct tax from wallet
+    new_bal = add_balance(chat.id, user.id, -CASINO_DAILY_TAX)
+
+    # Add to bank safe
+    bank_safe = data.setdefault("bank_safes", {}).get(cid, 0)
+    data["bank_safes"][cid] = bank_safe + CASINO_DAILY_TAX
+
+    # Update casino data
+    casino["last_tax_date"] = today
+    casino["leader_frozen"] = False
+    save_data(data)
+
+    if lang == "fa":
+        text = (
+            f"✅ *مالیات پرداخت شد!*\n\n"
+            f"💸 مبلغ: *{CASINO_DAILY_TAX}$*\n"
+            f"💰 موجودی جدید: *{new_bal}$*\n"
+            f"🏦 صندوق بانک: *{data['bank_safes'][cid]}$*"
+        )
+    else:
+        text = (
+            f"✅ *Tax Paid!*\n\n"
+            f"💸 Amount: *{CASINO_DAILY_TAX}$*\n"
+            f"💰 New Balance: *{new_bal}$*\n"
+            f"🏦 Bank Safe: *{data['bank_safes'][cid]}$*"
+        )
+
+    await update.message.reply_text(text, parse_mode="Markdown")

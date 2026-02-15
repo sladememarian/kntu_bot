@@ -9,6 +9,7 @@ import math
 import time
 from datetime import date, datetime
 from telegram import Update
+from handlers.casino import _process_casino_loss
 from telegram.ext import ContextTypes
 from PIL import Image, ImageDraw, ImageFont
 
@@ -303,6 +304,7 @@ async def bet_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
     else:
         new_bal = add_balance(chat.id, user.id, -amount)
+        _process_casino_loss(chat.id, amount)
         await update.message.reply_text(
             s["bet_lose"].format(amount=amount, balance=new_bal),
             parse_mode="Markdown",
@@ -538,6 +540,7 @@ async def slots_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         # Loss
         new_bal = add_balance(chat.id, user.id, -amount)
+        _process_casino_loss(chat.id, amount)
         u_name = (user.first_name or "User")
 
         buf = _render_slot_machine(reels, amount, 0, new_bal, u_name, lang)
@@ -610,6 +613,7 @@ async def dice_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
     else:
         new_bal = add_balance(chat.id, user.id, -amount)
+        _process_casino_loss(chat.id, amount)
         await update.message.reply_text(
             s["dice_lose"].format(dice=dice_display, roll=roll, amount=amount, balance=new_bal),
             parse_mode="Markdown",
@@ -835,6 +839,7 @@ async def rps_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
     else:
         new_bal = add_balance(chat.id, user.id, -amount)
+        _process_casino_loss(chat.id, amount)
         await update.message.reply_text(
             s["rps_lose"].format(you=pe, bot=be, amount=amount, balance=new_bal),
             parse_mode="Markdown",
@@ -919,6 +924,7 @@ async def spin_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode="Markdown",
         )
     else:
+        _process_casino_loss(chat.id, abs(amount))
         await update.message.reply_text(
             s["spin_lose"].format(emoji=emoji, amount=abs(amount), balance=new_bal),
             parse_mode="Markdown",

@@ -54,7 +54,7 @@ from handlers.foodshop import foodshop_cmd, buyfood_cmd, eat_cmd, drink_cmd
 from handlers.abilities import abilities_cmd, buyability_cmd, use_ability_cmd
 from handlers.calendar import calendar_cmd
 from handlers.bank import bank_cmd, loan_cmd, bankmanager_cmd, embezzle_cmd, investigate_cmd, bankrob_cmd
-from handlers.casino import casino_cmd, megaslots_cmd, blackjack_cmd, bj_callback, bar_cmd, coinflip_cmd
+from handlers.casino import casino_cmd, megaslots_cmd, blackjack_cmd, bj_callback, bar_cmd, coinflip_cmd, casinoleader_cmd, paytax_cmd
 from handlers.places import places_cmd, date_cmd, giftpet_cmd, giftfood_cmd
 
 # ---- Logging ----
@@ -300,6 +300,8 @@ def main():
     app.add_handler(CallbackQueryHandler(bj_callback, pattern=r"^bj:"))
     app.add_handler(CommandHandler("bar", bar_cmd))
     app.add_handler(CommandHandler("coinflip", coinflip_cmd))
+    app.add_handler(CommandHandler("casinoleader", casinoleader_cmd))
+    app.add_handler(CommandHandler("paytax", paytax_cmd))
 
     # Casino HTML5 Game
     app.add_handler(CommandHandler("casinogame", casinogame_cmd))
