@@ -125,12 +125,16 @@ async def roll_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     info = get_roll_info(chat.id, user.id)
     now = time.time()
-    reset_at = info.get("reset_at", "")
+    reset_at = info.get("reset_at") or 0
+    try:
+        reset_at = float(reset_at)
+    except (ValueError, TypeError):
+        reset_at = 0
     count = info.get("count", 0)
 
-    if reset_at and float(reset_at) > now:
+    if reset_at and reset_at > now:
         if count >= MAX_ROLLS:
-            remaining = int(float(reset_at) - now)
+            remaining = int(reset_at - now)
             h, m = divmod(remaining // 60, 60)
             if lang == "fa":
                 await update.message.reply_text(
@@ -189,7 +193,7 @@ async def roll_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if count >= MAX_ROLLS:
         reset_time = now + ROLL_COOLDOWN
     else:
-        reset_time = float(info.get("reset_at", 0)) or (now + ROLL_COOLDOWN)
+        reset_time = reset_at if reset_at > 0 else (now + ROLL_COOLDOWN)
     set_roll_info(chat.id, user.id, {"count": count, "reset_at": str(reset_time)})
 
     img_url = _char_image_url(char)
