@@ -36,11 +36,27 @@ _HELP_CATEGORIES = {
                 "🎯 /whois \\[سوال\\] — کی هست؟\n"
                 "💬 /quote — نقل قول\n"
                 "💡 /advice — نصیحت\n"
-                "🪪 /profile — پروفایل بامزه\n"
-                "🎰 /roll — رول گاچا (شخصیت بگیر!)\n"
-                "🃏 /collection — مجموعه شخصیت\n"
-                "💰 /sellchar — فروش شخصیت\n"
-                "🔄 /tradechar — معامله شخصیت (ریپلای)\n"
+                "🪪 /profile — کارت پروفایل\n"
+            ),
+        },
+        "gacha": {
+            "title": "🎰 گاچا و کلکسیون",
+            "text": (
+                "🎰 *گاچا و کلکسیون*\n\n"
+                "🎲 /roll — رول کن! شخصیت اسطوره‌ای بگیر\n"
+                "🃏 /collection — مجموعه شخصیت‌هات\n"
+                "💰 /sellchar \\[نام\\] — فروش شخصیت\n"
+                "🔄 /tradechar \\[نام\\] — معامله (ریپلای)\n\n"
+                "📊 *نادرگی‌ها:*\n"
+                "⚪ معمولی (45%) | 🟢 غیرمعمول (25%)\n"
+                "🔵 کمیاب (18%) | 🟣 حماسی (9%)\n"
+                "🟡 افسانه‌ای (3%)\n\n"
+                "🏛️ *شخصیت‌ها:* اسطوره‌های جهان\n"
+                "⚡ زئوس | 👁️ اودین | ☀️ رع\n"
+                "🦁 رستم | 🔨 ثور | 🦉 آتنا\n"
+                "🃏 لوکی | 🧙‍♂️ مرلین | ...\n\n"
+                "🖼 _هر شخصیت تصویر آواتار منحصر به فرد داره!_\n"
+                "💡 _۵ رول هر ۴ ساعت — اولین نفری که بزنه میگیره!_"
             ),
         },
         "economy": {
@@ -48,35 +64,45 @@ _HELP_CATEGORIES = {
             "text": (
                 "💰 *اقتصاد*\n\n"
                 "👛 /wallet — موجودی کیف پول\n"
-                "📅 /daily — دریافت روزانه\n"
-                "🪙 /bet \\[مبلغ\\] — شرط‌بندی\n"
-                "🎰 /slots \\[مبلغ\\] — اسلات\n"
-                "🎲 /dice \\[فرد/زوج\\] \\[مبلغ\\] — تاس\n"
-                "✂️ /rps \\[سنگ/کاغذ/قیچی\\] \\[مبلغ\\] — سنگ کاغذ قیچی\n"
-                "🦹 /rob — دزدی (ریپلای)\n"
-                "💸 /give \\[مبلغ\\] — انتقال (ریپلای)\n"
+                "📅 /daily — دریافت روزانه (+ استریک!)\n"
                 "💼 /work — کار کردن (هر ۱ ساعت)\n"
                 "🎡 /spin — چرخ شانس (هر ۸ ساعت)\n"
                 "🎣 /fish — ماهیگیری\n"
                 "⛏ /mine — معدن\n"
-                "📜 /quest — ماموریت\n"
-                "📈 /invest \\[شرکت\\] \\[تعداد\\] — خرید سهام\n"
-                "📉 /sell \\[شرکت\\] \\[تعداد\\] — فروش سهام\n"
-                "💼 /portfolio — سبد سهام\n"
-                "📊 /profit — سود و زیان\n"
-                "🌍 /event — رویداد روز\n"
-                "🔒 /jail — لیست زندانیان\n"
-                "🏆 /leaderboard — جدول ثروتمندان\n"
-                "💝 /donate \\[مبلغ\\] — کمک مالی\n"
-                "🏅 /charity — جدول خیریه\n"
-                "🏠 /realestate — بازار املاک\n"
-                "🏘 /buyproperty \\[نوع\\] — خرید ملک\n"
-                "🏚 /sellproperty \\[نوع\\] — فروش ملک\n"
-                "📊 /economy — وضعیت اقتصادی\n"
+                "📜 /quest — ماموریت روزانه\n\n"
+                "🎲 *شرط‌بندی:*\n"
+                "🪙 /bet \\[مبلغ\\] | 🎰 /slots \\[مبلغ\\]\n"
+                "🎲 /dice \\[فرد/زوج\\] \\[مبلغ\\]\n"
+                "✂️ /rps \\[سنگ/کاغذ/قیچی\\] \\[مبلغ\\]\n\n"
+                "💸 *تعاملی:*\n"
+                "🦹 /rob — دزدی (ریپلای)\n"
+                "💸 /give \\[مبلغ\\] — انتقال (ریپلای)\n"
                 "🎯 /bounty \\[مبلغ\\] — بانتی (ریپلای)\n"
-                "🎯 /bounties — لیست بانتی‌ها\n"
-                "⚔️ /clan — سیستم کلن\n\n"
-                "💡 _قیمت‌ها با تورم بالا میره! (عرضه و تقاضا)_"
+                "🎯 /bounties — لیست بانتی‌ها\n\n"
+                "📈 *سرمایه‌گذاری:*\n"
+                "📈 /invest | 📉 /sell | 💼 /portfolio | 📊 /profit\n\n"
+                "🏠 /realestate — املاک | 🏘 /buyproperty | 🏚 /sellproperty\n"
+                "🔒 /jail | 🏆 /leaderboard | 💝 /donate | 🏅 /charity\n"
+                "🌍 /event — رویداد روز | 📊 /economy — وضعیت اقتصادی\n\n"
+                "🛡️ _سپر و مین از فروشگاه بخر تا از دزدی محافظت کنی!_\n"
+                "🎁 _کیف پول‌های تصادفی هر ۸۰-۱۵۰ پیام میفتن!_"
+            ),
+        },
+        "clan": {
+            "title": "⚔️ کلن و جنگ",
+            "text": (
+                "⚔️ *سیستم کلن*\n\n"
+                "📝 /clan create \\[نام\\] — ساخت کلن (5,000$)\n"
+                "🤝 /clan join — عضویت (ریپلای)\n"
+                "🚪 /clan leave — خروج\n"
+                "📊 /clan info — اطلاعات کلن\n"
+                "👥 /clan members — لیست اعضا\n"
+                "💰 /clan deposit \\[مبلغ\\] — واریز به صندوق\n"
+                "💸 /clan withdraw \\[مبلغ\\] — برداشت (فقط رهبر)\n"
+                "⚔️ /clan war — جنگ با کلن دشمن (ریپلای)\n"
+                "📋 /clan list — لیست همه کلن‌ها\n\n"
+                "💡 _حداکثر ۱۰ عضو • رهبر میتونه برداشت کنه_\n"
+                "⚔️ _قدرت جنگ = اعضا×۱۰ + بردها×۳ + شانس!_"
             ),
         },
         "shops": {
@@ -95,6 +121,9 @@ _HELP_CATEGORIES = {
                 "⚡ /buyability \\[قدرت\\] — خرید قدرت\n"
                 "🎒 /inventory — کوله‌پشتی\n"
                 "🎁 /gift \\[آیتم\\] — هدیه (ریپلای)\n\n"
+                "🛡️ *محافظت:*\n"
+                "🛡️ /buy shield — سپر (۳۰۰$) — جلوی دزدی رو بگیر\n"
+                "💣 /buy landmine — مین (۵۰۰$) — دزد رو منفجر کن!\n\n"
                 "🥊 *قدرت‌ها:*\n"
                 "/punch /hug /kiss /kill /slap\n"
                 "/tickle /poke /bite /pat /highfive /revive\n\n"
@@ -152,7 +181,7 @@ _HELP_CATEGORIES = {
                 "💑 /date \\[مکان\\] — قرار (ریپلای)\n"
                 "🐾 /giftpet — هدیه حیوان (ریپلای)\n"
                 "🍽 /giftfood — هدیه غذا (ریپلای)\n"
-                "⚠️ اخطار — اخطار (ریپلای، ادمین)\n"
+                "⚠️ warn — اخطار (ریپلای، ادمین)\n"
                 "🌐 /lang — تغییر زبان\n"
             ),
         },
@@ -177,11 +206,27 @@ _HELP_CATEGORIES = {
                 "🎯 /whois \\[question\\] — Who is?\n"
                 "💬 /quote — Random quote\n"
                 "💡 /advice — Random advice\n"
-                "🪪 /profile — Fun profile card\n"
-                "🎰 /roll — Gacha roll (collect characters!)\n"
-                "🃏 /collection — Your characters\n"
-                "💰 /sellchar — Sell a character\n"
-                "🔄 /tradechar — Trade character (reply)\n"
+                "🪪 /profile — Profile card\n"
+            ),
+        },
+        "gacha": {
+            "title": "🎰 Gacha & Collection",
+            "text": (
+                "🎰 *Gacha & Collection*\n\n"
+                "🎲 /roll — Roll for mythological characters!\n"
+                "🃏 /collection — View your collection\n"
+                "💰 /sellchar \\[name\\] — Sell a character\n"
+                "🔄 /tradechar \\[name\\] — Trade (reply)\n\n"
+                "📊 *Rarities:*\n"
+                "⚪ Common (45%) | 🟢 Uncommon (25%)\n"
+                "🔵 Rare (18%) | 🟣 Epic (9%)\n"
+                "🟡 Legendary (3%)\n\n"
+                "🏛️ *Characters:* World mythology\n"
+                "⚡ Zeus | 👁️ Odin | ☀️ Ra\n"
+                "🦁 Rostam | 🔨 Thor | 🦉 Athena\n"
+                "🃏 Loki | 🧙‍♂️ Merlin | ...\n\n"
+                "🖼 _Each character has a unique avatar portrait!_\n"
+                "💡 _5 rolls every 4 hours — first click claims!_"
             ),
         },
         "economy": {
@@ -189,35 +234,45 @@ _HELP_CATEGORIES = {
             "text": (
                 "💰 *Economy*\n\n"
                 "👛 /wallet — Check balance\n"
-                "📅 /daily — Daily reward\n"
-                "🪙 /bet \\[amount\\] — Bet (coin flip)\n"
-                "🎰 /slots \\[amount\\] — Slot machine\n"
-                "🎲 /dice \\[odd/even\\] \\[amount\\] — Dice roll\n"
-                "✂️ /rps \\[rock/paper/scissors\\] \\[amount\\] — RPS\n"
-                "🦹 /rob — Rob someone (reply)\n"
-                "💸 /give \\[amount\\] — Transfer (reply)\n"
+                "📅 /daily — Daily reward (+ streak!)\n"
                 "💼 /work — Work & earn (1h cooldown)\n"
                 "🎡 /spin — Spin wheel (8h cooldown)\n"
                 "🎣 /fish — Go fishing\n"
                 "⛏ /mine — Mine for resources\n"
-                "📜 /quest — Daily quest\n"
-                "📈 /invest \\[ticker\\] \\[shares\\] — Buy stocks\n"
-                "📉 /sell \\[ticker\\] \\[shares\\] — Sell stocks\n"
-                "💼 /portfolio — Stock portfolio\n"
-                "📊 /profit — Investment P&L\n"
-                "🌍 /event — Daily world event\n"
-                "🔒 /jail — Jailed members\n"
-                "🏆 /leaderboard — Richest members\n"
-                "💝 /donate \\[amount\\] — Donate to charity\n"
-                "🏅 /charity — Charity leaderboard\n"
-                "🏠 /realestate — Real estate market\n"
-                "🏘 /buyproperty \\[type\\] — Buy property\n"
-                "🏚 /sellproperty \\[type\\] — Sell property\n"
-                "📊 /economy — Economy status & taxes\n"
+                "📜 /quest — Daily quest\n\n"
+                "🎲 *Gambling:*\n"
+                "🪙 /bet \\[amount\\] | 🎰 /slots \\[amount\\]\n"
+                "🎲 /dice \\[odd/even\\] \\[amount\\]\n"
+                "✂️ /rps \\[rock/paper/scissors\\] \\[amount\\]\n\n"
+                "💸 *Social:*\n"
+                "🦹 /rob — Rob someone (reply)\n"
+                "💸 /give \\[amount\\] — Transfer (reply)\n"
                 "🎯 /bounty \\[amount\\] — Place bounty (reply)\n"
-                "🎯 /bounties — Active bounties\n"
-                "⚔️ /clan — Clan system\n\n"
-                "💡 _Prices rise with demand! (supply & demand)_"
+                "🎯 /bounties — Active bounties\n\n"
+                "📈 *Investing:*\n"
+                "📈 /invest | 📉 /sell | 💼 /portfolio | 📊 /profit\n\n"
+                "🏠 /realestate | 🏘 /buyproperty | 🏚 /sellproperty\n"
+                "🔒 /jail | 🏆 /leaderboard | 💝 /donate | 🏅 /charity\n"
+                "🌍 /event — Daily event | 📊 /economy — Status\n\n"
+                "🛡️ _Buy shields & landmines from shop to protect yourself!_\n"
+                "🎁 _Random cash bags drop every 80-150 messages!_"
+            ),
+        },
+        "clan": {
+            "title": "⚔️ Clans & War",
+            "text": (
+                "⚔️ *Clan System*\n\n"
+                "📝 /clan create \\[name\\] — Create clan (5,000$)\n"
+                "🤝 /clan join — Join (reply to member)\n"
+                "🚪 /clan leave — Leave clan\n"
+                "📊 /clan info — Clan stats\n"
+                "👥 /clan members — Member list\n"
+                "💰 /clan deposit \\[amount\\] — Deposit to clan bank\n"
+                "💸 /clan withdraw \\[amount\\] — Withdraw (leader only)\n"
+                "⚔️ /clan war — War vs enemy clan (reply)\n"
+                "📋 /clan list — All clans\n\n"
+                "💡 _Max 10 members • Leader can withdraw_\n"
+                "⚔️ _War power = members×10 + wins×3 + luck!_"
             ),
         },
         "shops": {
@@ -236,6 +291,9 @@ _HELP_CATEGORIES = {
                 "⚡ /buyability \\[ability\\] — Buy ability\n"
                 "🎒 /inventory — Your inventory\n"
                 "🎁 /gift \\[item\\] — Gift item (reply)\n\n"
+                "🛡️ *Protection:*\n"
+                "🛡️ /buy shield — Shield (300$) — Block robbers\n"
+                "💣 /buy landmine — Landmine (500$) — Explode robbers!\n\n"
                 "🥊 *Abilities:*\n"
                 "/punch /hug /kiss /kill /slap\n"
                 "/tickle /poke /bite /pat /highfive /revive\n\n"
@@ -300,7 +358,7 @@ _HELP_CATEGORIES = {
     },
 }
 
-_HELP_CAT_ORDER = ["fun", "economy", "shops", "bank", "ai", "tools"]
+_HELP_CAT_ORDER = ["fun", "gacha", "economy", "clan", "shops", "bank", "ai", "tools"]
 
 
 def _help_main_keyboard(lang: str) -> InlineKeyboardMarkup:
@@ -330,12 +388,14 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if lang == "fa":
         text = (
             "📋 *راهنمای kntu\\_bot25*\n\n"
-            "یه دسته‌بندی انتخاب کن تا دستورات رو ببینی 👇"
+            "🏛️ اقتصاد • گاچا • کلن • کازینو • هوش مصنوعی\n"
+            "۸۰+ دستور — یه دسته‌بندی انتخاب کن 👇"
         )
     else:
         text = (
             "📋 *kntu\\_bot25 Help*\n\n"
-            "Pick a category to see commands 👇"
+            "🏛️ Economy • Gacha • Clans • Casino • AI\n"
+            "80+ commands — Pick a category 👇"
         )
     await update.message.reply_text(
         text, parse_mode="Markdown",
@@ -355,12 +415,14 @@ async def help_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if lang == "fa":
             text = (
                 "📋 *راهنمای kntu\\_bot25*\n\n"
-                "یه دسته‌بندی انتخاب کن تا دستورات رو ببینی 👇"
+                "🏛️ اقتصاد • گاچا • کلن • کازینو • هوش مصنوعی\n"
+                "۸۰+ دستور — یه دسته‌بندی انتخاب کن 👇"
             )
         else:
             text = (
                 "📋 *kntu\\_bot25 Help*\n\n"
-                "Pick a category to see commands 👇"
+                "🏛️ Economy • Gacha • Clans • Casino • AI\n"
+                "80+ commands — Pick a category 👇"
             )
         await query.edit_message_text(
             text, parse_mode="Markdown",
