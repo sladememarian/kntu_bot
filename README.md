@@ -9,7 +9,7 @@ A feature-packed, bilingual (Persian 🇮🇷 / English 🇬🇧) Telegram group
 | System | Highlights |
 |--------|-----------|
 | 🎮 **Fun & Games** | Ship, XO, riddles, truth/dare, 8-ball, profile cards |
-| 🎰 **Gacha** | Roll 41 mythology characters with DiceBear portraits, trade & sell |
+| 🎰 **Gacha** | Roll 141 mythology characters with portraits, trade & sell |
 | 💰 **Economy** | Wallet, daily, work, fish, mine, quest, gambling, stocks, real estate |
 | ⚔️ **Clans** | Create clans, deposit, war, leaderboards |
 | 🛒 **Shops** | Clothing, pets, food, abilities, shields & landmines |
@@ -51,14 +51,14 @@ A feature-packed, bilingual (Persian 🇮🇷 / English 🇬🇧) Telegram group
 | `/sellchar [name]` | Sell a character for coins |
 | `/tradechar [name]` | Trade a character (reply) |
 
-**41 characters** across 5 rarities:
-- ⚪ Common (45%) — Anansi, Coyote, Puck, Tanuki, Nymph, Goblin, …
-- 🟢 Uncommon (25%) — Hermes, Bastet, Kaveh, Persephone, …
-- 🔵 Rare (18%) — Artemis, Loki, Horus, Sun Wukong, Gilgamesh, …
-- 🟣 Epic (9%) — Athena, Thor, Anubis, Rostam, Amaterasu
-- 🟡 Legendary (3%) — Zeus, Odin, Ra
+**141 characters** across 5 rarities:
+- ⚪ Common (45%) — Anansi, Coyote, Sprite, Troll, Alchemist, Corsair, …
+- 🟢 Uncommon (25%) — Hermes, Bastet, Medusa, Sphinx, Tiamat, Morpheus, …
+- 🟣 Rare (18%) — Artemis, Loki, Poseidon, Hades, Vishnu, Achilles, …
+- 🟣 Epic (9%) — Athena, Thor, Hercules, Prometheus, Rama, Surtr, …
+- 🟡 Legendary (3%) — Zeus, Odin, Ra, Brahma, Kronos, Izanami
 
-Each character has a unique **DiceBear** avatar portrait.
+Each character has a unique portrait (local RPG art or **DiceBear** avatar).
 
 ### 💰 Economy
 | Command | Description |
