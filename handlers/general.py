@@ -37,6 +37,10 @@ _HELP_CATEGORIES = {
                 "💬 /quote — نقل قول\n"
                 "💡 /advice — نصیحت\n"
                 "🪪 /profile — پروفایل بامزه\n"
+                "🎰 /roll — رول گاچا (شخصیت بگیر!)\n"
+                "🃏 /collection — مجموعه شخصیت\n"
+                "💰 /sellchar — فروش شخصیت\n"
+                "🔄 /tradechar — معامله شخصیت (ریپلای)\n"
             ),
         },
         "economy": {
@@ -68,7 +72,10 @@ _HELP_CATEGORIES = {
                 "🏠 /realestate — بازار املاک\n"
                 "🏘 /buyproperty \\[نوع\\] — خرید ملک\n"
                 "🏚 /sellproperty \\[نوع\\] — فروش ملک\n"
-                "📊 /economy — وضعیت اقتصادی\n\n"
+                "📊 /economy — وضعیت اقتصادی\n"
+                "🎯 /bounty \\[مبلغ\\] — بانتی (ریپلای)\n"
+                "🎯 /bounties — لیست بانتی‌ها\n"
+                "⚔️ /clan — سیستم کلن\n\n"
                 "💡 _قیمت‌ها با تورم بالا میره! (عرضه و تقاضا)_"
             ),
         },
@@ -171,6 +178,10 @@ _HELP_CATEGORIES = {
                 "💬 /quote — Random quote\n"
                 "💡 /advice — Random advice\n"
                 "🪪 /profile — Fun profile card\n"
+                "🎰 /roll — Gacha roll (collect characters!)\n"
+                "🃏 /collection — Your characters\n"
+                "💰 /sellchar — Sell a character\n"
+                "🔄 /tradechar — Trade character (reply)\n"
             ),
         },
         "economy": {
@@ -202,7 +213,10 @@ _HELP_CATEGORIES = {
                 "🏠 /realestate — Real estate market\n"
                 "🏘 /buyproperty \\[type\\] — Buy property\n"
                 "🏚 /sellproperty \\[type\\] — Sell property\n"
-                "📊 /economy — Economy status & taxes\n\n"
+                "📊 /economy — Economy status & taxes\n"
+                "🎯 /bounty \\[amount\\] — Place bounty (reply)\n"
+                "🎯 /bounties — Active bounties\n"
+                "⚔️ /clan — Clan system\n\n"
                 "💡 _Prices rise with demand! (supply & demand)_"
             ),
         },

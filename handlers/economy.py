@@ -27,6 +27,8 @@ from storage import (
     get_properties, add_property, remove_property, get_all_properties,
     get_daily_streak, set_daily_streak,
     get_work_xp, add_work_xp,
+    has_item, remove_inventory_item,
+    get_bounties, set_bounty, remove_bounty,
 )
 from strings import STRINGS
 from config import ADMIN_IDS
@@ -770,16 +772,62 @@ async def rob_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
             pass
         return
 
+    # --- Protection items ---
+    if has_item(chat.id, target.id, "landmine"):
+        remove_inventory_item(chat.id, target.id, "landmine")
+        fine = random.randint(100, 300)
+        add_balance(chat.id, user.id, -fine)
+        set_jail_time(chat.id, user.id, datetime.utcnow().isoformat())
+        bal_now = get_balance(chat.id, user.id)
+        if lang == "fa":
+            txt = (
+                f"💥 *بووووم!* {target.first_name} مین کار گذاشته بود!\n\n"
+                f"💸 جریمه: *{fine}$*\n"
+                f"⛓️ زندانی شدی!\n"
+                f"💰 موجودی: *{bal_now}$*"
+            )
+        else:
+            txt = (
+                f"💥 *BOOM!* {target.first_name} had a landmine!\n\n"
+                f"💸 Fine: *{fine}$*\n"
+                f"⛓️ You're jailed!\n"
+                f"💰 Balance: *{bal_now}$*"
+            )
+        await update.message.reply_text(txt, parse_mode="Markdown")
+        return
+
+    if has_item(chat.id, target.id, "shield"):
+        remove_inventory_item(chat.id, target.id, "shield")
+        if lang == "fa":
+            txt = (
+                f"🛡️ *{target.first_name}* سپر داشت!\n\n"
+                f"🚫 سرقت ناموفق بود! سپر مصرف شد."
+            )
+        else:
+            txt = (
+                f"🛡️ *{target.first_name}* had a shield!\n\n"
+                f"🚫 Rob blocked! Shield consumed."
+            )
+        await update.message.reply_text(txt, parse_mode="Markdown")
+        return
+
     success = random.random() < 0.35  # 35% success
     if success:
         stolen = random.randint(10, min(200, target_bal // 3))
         add_balance(chat.id, user.id, stolen)
         add_balance(chat.id, target.id, -stolen)
+        bounty = remove_bounty(chat.id, target.id)
+        bounty_text = ""
+        if bounty:
+            bounty_amt = bounty["amount"]
+            add_balance(chat.id, user.id, bounty_amt)
+            bounty_text = (f"\n🎯 *بانتی {bounty_amt}$ هم گرفتی!*" if lang == "fa"
+                           else f"\n🎯 *Bounty {bounty_amt}$ collected!*")
         await update.message.reply_text(
             s["rob_success"].format(
                 amount=stolen, user=target.first_name or "User",
                 balance=get_balance(chat.id, user.id)
-            ),
+            ) + bounty_text,
             parse_mode="Markdown",
         )
     else:
@@ -2568,3 +2616,88 @@ async def economy_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"🏦 Group money supply: *{total_supply}$*"
         )
     await update.message.reply_text(msg, parse_mode="Markdown")
+
+
+# --------- /bounty (place a bounty on someone) ---------
+async def bounty_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat = update.effective_chat
+    lang = get_lang(chat.id)
+    user = update.effective_user
+    _remember_user(chat.id, user)
+
+    if not update.message.reply_to_message or not context.args or not context.args[0].isdigit():
+        if lang == "fa":
+            await update.message.reply_text(
+                "📝 به پیام کسی ریپلای کن و بنویس: /bounty <مبلغ>\n"
+                "🎯 وقتی کسی اون فرد رو /rob کنه، بانتی رو هم میگیره!",
+                parse_mode="Markdown")
+        else:
+            await update.message.reply_text(
+                "📝 Reply to someone: /bounty <amount>\n"
+                "🎯 When someone robs that person, they collect the bounty!",
+                parse_mode="Markdown")
+        return
+
+    target = update.message.reply_to_message.from_user
+    _remember_user(chat.id, target)
+    if target.id == user.id or target.is_bot:
+        msg = "❌ نمیتونی روی خودت یا ربات بانتی بذاری!" if lang == "fa" else "❌ Can't bounty yourself or a bot!"
+        await update.message.reply_text(msg)
+        return
+
+    amount = int(context.args[0])
+    if amount < 50:
+        msg = "❌ حداقل بانتی: 50$" if lang == "fa" else "❌ Minimum bounty: 50$"
+        await update.message.reply_text(msg)
+        return
+
+    bal = get_balance(chat.id, user.id)
+    if bal < amount:
+        msg = f"❌ پول کافی نداری! موجودی: *{bal}$*" if lang == "fa" else f"❌ Not enough! Balance: *{bal}$*"
+        await update.message.reply_text(msg, parse_mode="Markdown")
+        return
+
+    add_balance(chat.id, user.id, -amount)
+    # Stack bounties
+    existing = get_bounties(chat.id)
+    old_amount = existing.get(str(target.id), {}).get("amount", 0)
+    set_bounty(chat.id, target.id, old_amount + amount, user.id)
+
+    total = old_amount + amount
+    if lang == "fa":
+        await update.message.reply_text(
+            f"🎯 *بانتی روی {target.first_name} گذاشته شد!*\n\n"
+            f"💰 مبلغ: *{amount}$*\n"
+            f"💎 کل بانتی: *{total}$*\n\n"
+            f"_هرکسی که اون رو /rob کنه، بانتی رو هم میگیره!_",
+            parse_mode="Markdown")
+    else:
+        await update.message.reply_text(
+            f"🎯 *Bounty placed on {target.first_name}!*\n\n"
+            f"💰 Amount: *{amount}$*\n"
+            f"💎 Total bounty: *{total}$*\n\n"
+            f"_Anyone who /rob's them collects the bounty!_",
+            parse_mode="Markdown")
+
+
+# --------- /bounties (list active bounties) ---------
+async def bounties_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat = update.effective_chat
+    lang = get_lang(chat.id)
+
+    bounties = get_bounties(chat.id)
+    if not bounties:
+        msg = "🎯 هیچ بانتی فعالی نیست!" if lang == "fa" else "🎯 No active bounties!"
+        await update.message.reply_text(msg)
+        return
+
+    sorted_b = sorted(bounties.items(), key=lambda x: x[1].get("amount", 0), reverse=True)
+    lines = []
+    medals = ["🥇", "🥈", "🥉"]
+    for i, (uid, info) in enumerate(sorted_b[:10]):
+        name = get_user_name(chat.id, int(uid)) or f"User {uid}"
+        prefix = medals[i] if i < 3 else f"*{i + 1}.*"
+        lines.append(f"{prefix} {name} — 💰 *{info['amount']:,}$*")
+
+    header = "🎯 *بانتی‌های فعال*\n" + "═" * 24 + "\n\n" if lang == "fa" else "🎯 *Active Bounties*\n" + "═" * 24 + "\n\n"
+    await update.message.reply_text(header + "\n".join(lines), parse_mode="Markdown")
