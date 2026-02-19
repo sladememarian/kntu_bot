@@ -595,3 +595,110 @@ def add_work_xp(chat_id: int, user_id: int, amount: int = 1) -> int:
     data["work_xp"][cid][uid] = xp
     save_data(data)
     return xp
+
+
+# ── Gacha collections ─────────────────────────────────────
+def get_gacha_collection(chat_id: int, user_id: int) -> list:
+    data = load_data()
+    return data.get("gacha_collections", {}).get(str(chat_id), {}).get(str(user_id), [])
+
+def add_gacha_character(chat_id: int, user_id: int, char: dict):
+    data = load_data()
+    col = data.setdefault("gacha_collections", {}).setdefault(str(chat_id), {}).setdefault(str(user_id), [])
+    col.append(char)
+    save_data(data)
+
+def remove_gacha_character(chat_id: int, user_id: int, char_id: str) -> bool:
+    data = load_data()
+    col = data.get("gacha_collections", {}).get(str(chat_id), {}).get(str(user_id), [])
+    for i, c in enumerate(col):
+        if c.get("id") == char_id:
+            col.pop(i)
+            save_data(data)
+            return True
+    return False
+
+def get_claimed_characters(chat_id: int) -> dict:
+    data = load_data()
+    return data.get("gacha_claimed", {}).get(str(chat_id), {})
+
+def claim_character(chat_id: int, user_id: int, char_id: str):
+    data = load_data()
+    claimed = data.setdefault("gacha_claimed", {}).setdefault(str(chat_id), {})
+    claimed[char_id] = user_id
+    save_data(data)
+
+def unclaim_character(chat_id: int, char_id: str):
+    data = load_data()
+    claimed = data.get("gacha_claimed", {}).get(str(chat_id), {})
+    if char_id in claimed:
+        del claimed[char_id]
+        save_data(data)
+
+def get_roll_info(chat_id: int, user_id: int) -> dict:
+    data = load_data()
+    return data.get("gacha_rolls", {}).get(str(chat_id), {}).get(str(user_id), {"count": 0, "reset_at": ""})
+
+def set_roll_info(chat_id: int, user_id: int, info: dict):
+    data = load_data()
+    rolls = data.setdefault("gacha_rolls", {}).setdefault(str(chat_id), {})
+    rolls[str(user_id)] = info
+    save_data(data)
+
+
+# ── Bounties ───────────────────────────────────────────────
+def get_bounties(chat_id: int) -> dict:
+    data = load_data()
+    return data.get("bounties", {}).get(str(chat_id), {})
+
+def set_bounty(chat_id: int, target_uid: int, amount: int, placed_by: int):
+    data = load_data()
+    bounties = data.setdefault("bounties", {}).setdefault(str(chat_id), {})
+    existing = bounties.get(str(target_uid), {}).get("amount", 0)
+    bounties[str(target_uid)] = {"amount": existing + amount, "by": placed_by}
+    save_data(data)
+
+def remove_bounty(chat_id: int, target_uid: int) -> dict | None:
+    data = load_data()
+    bounties = data.get("bounties", {}).get(str(chat_id), {})
+    if str(target_uid) in bounties:
+        bounty = bounties.pop(str(target_uid))
+        save_data(data)
+        return bounty
+    return None
+
+
+# ── Clans ──────────────────────────────────────────────────
+def get_all_clans(chat_id: int) -> dict:
+    data = load_data()
+    return data.get("clans", {}).get(str(chat_id), {})
+
+def get_clan(chat_id: int, clan_name: str) -> dict | None:
+    data = load_data()
+    return data.get("clans", {}).get(str(chat_id), {}).get(clan_name)
+
+def save_clan(chat_id: int, clan_name: str, clan_data: dict):
+    data = load_data()
+    clans = data.setdefault("clans", {}).setdefault(str(chat_id), {})
+    clans[clan_name] = clan_data
+    save_data(data)
+
+def delete_clan(chat_id: int, clan_name: str):
+    data = load_data()
+    clans = data.get("clans", {}).get(str(chat_id), {})
+    if clan_name in clans:
+        del clans[clan_name]
+        save_data(data)
+
+def get_user_clan(chat_id: int, user_id: int) -> str | None:
+    data = load_data()
+    return data.get("user_clans", {}).get(str(chat_id), {}).get(str(user_id))
+
+def set_user_clan(chat_id: int, user_id: int, clan_name: str | None):
+    data = load_data()
+    uc = data.setdefault("user_clans", {}).setdefault(str(chat_id), {})
+    if clan_name is None:
+        uc.pop(str(user_id), None)
+    else:
+        uc[str(user_id)] = clan_name
+    save_data(data)

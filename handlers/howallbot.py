@@ -6,7 +6,11 @@ import random
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from storage import get_lang, get_members
+from storage import (
+    get_lang, get_members, get_balance, get_daily_streak,
+    get_work_xp, get_gacha_collection, get_user_clan, get_clan,
+    get_donations, get_properties, get_inventory,
+)
 from strings import STRINGS
 
 
@@ -330,13 +334,33 @@ async def advice_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(text, parse_mode="Markdown")
 
 
-# --------- /profile (fun fake profile card) ---------
-TITLES_FA = ["هکر حرفه‌ای 💻", "نابغه ریاضی 🧮", "عاشق بی‌قرار 💕", "خوابالوی حرفه‌ای 😴",
-             "جوکر گروه 🃏", "استاد پیتزا خوری 🍕", "سلطان میم 👑", "قهرمان پروکرستینیشن 🏆",
-             "مهندس ناسا 🚀", "دکتر عشق 💝"]
-TITLES_EN = ["Pro Hacker 💻", "Math Genius 🧮", "Hopeless Romantic 💕", "Professional Sleeper 😴",
-             "Group Jester 🃏", "Pizza Master 🍕", "Meme Lord 👑", "Procrastination Champion 🏆",
-             "NASA Engineer 🚀", "Love Doctor 💝"]
+# --------- /profile (real stats profile card) ---------
+def _get_title(bal, streak, xp, col_count, has_legendary, is_leader, donations, lang):
+    if lang == "fa":
+        titles = {
+            "tycoon": "🏦 تایکون", "legend": "👑 کلکسیونر افسانه‌ای",
+            "leader": "⚔️ رهبر کلن", "generous": "💝 سخاوتمند",
+            "collector": "🃏 کلکسیونر", "rich": "💰 پولدار",
+            "streaker": "🔥 استریکر", "worker": "👷 کارگر حرفه‌ای",
+            "newbie": "🆕 تازه‌وارد",
+        }
+    else:
+        titles = {
+            "tycoon": "🏦 Tycoon", "legend": "👑 Legendary Collector",
+            "leader": "⚔️ Clan Leader", "generous": "💝 Generous",
+            "collector": "🃏 Collector", "rich": "💰 Wealthy",
+            "streaker": "🔥 Streaker", "worker": "👷 Pro Worker",
+            "newbie": "🆕 Newcomer",
+        }
+    if bal >= 50000: return titles["tycoon"]
+    if has_legendary: return titles["legend"]
+    if is_leader: return titles["leader"]
+    if donations >= 5000: return titles["generous"]
+    if col_count >= 10: return titles["collector"]
+    if bal >= 10000: return titles["rich"]
+    if streak >= 7: return titles["streaker"]
+    if xp >= 10: return titles["worker"]
+    return titles["newbie"]
 
 
 async def profile_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -349,30 +373,62 @@ async def profile_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user = update.effective_user
 
     name = user.first_name or "User"
-    iq = random.randint(30, 200)
-    beauty = random.randint(0, 100)
-    luck = random.randint(0, 100)
-    title = random.choice(TITLES_FA if lang == "fa" else TITLES_EN)
-    mood_fa = random.choice(["خوشحال 😊", "خسته 😩", "عصبی 😤", "عاشق 😍", "گشنه 🍔", "خوابالو 😴", "هیجان‌زده 🤩"])
-    mood_en = random.choice(["Happy 😊", "Tired 😩", "Angry 😤", "In Love 😍", "Hungry 🍔", "Sleepy 😴", "Excited 🤩"])
+    bal = get_balance(chat.id, user.id)
+    streak = get_daily_streak(chat.id, user.id)
+    xp = get_work_xp(chat.id, user.id)
+    level = xp // 5
+    collection = get_gacha_collection(chat.id, user.id)
+    col_count = len(collection)
+    total_power = sum(c.get("power", 0) for c in collection)
+    has_legendary = any(c.get("rarity") == "legendary" for c in collection)
+    clan_name = get_user_clan(chat.id, user.id)
+    clan_info = ""
+    is_leader = False
+    if clan_name:
+        clan = get_clan(chat.id, clan_name)
+        if clan:
+            is_leader = clan.get("leader") == user.id
+            role = ("👑 رهبر" if is_leader else "⚔️ عضو") if lang == "fa" else ("👑 Leader" if is_leader else "⚔️ Member")
+            clan_info = f"{clan_name} ({role})"
+    donations_dict = get_donations(chat.id)
+    donations = donations_dict.get(str(user.id), 0)
+    properties = get_properties(chat.id, user.id)
+    inventory = get_inventory(chat.id, user.id)
+    title = _get_title(bal, streak, xp, col_count, has_legendary, is_leader, donations, lang)
 
     if lang == "fa":
         text = (
-            f"🪪 *پروفایل {name}*\n\n"
-            f"🏷 لقب: {title}\n"
-            f"🧠 IQ: *{iq}*\n"
-            f"💄 زیبایی: *{beauty}%*\n"
-            f"🍀 شانس: *{luck}%*\n"
-            f"😊 حال: {mood_fa}\n"
+            f"🪪 *پروفایل {name}*\n"
+            f"{'═' * 24}\n\n"
+            f"🏷 لقب: {title}\n\n"
+            f"💰 موجودی: *{bal:,}$*\n"
+            f"🔥 استریک: *{streak} روز*\n"
+            f"⭐ سطح کار: *{level}* ({xp} XP)\n"
+            f"🃏 کلکسیون: *{col_count}* شخصیت | ⚔️ *{total_power}*\n"
+        )
+        if clan_info:
+            text += f"⚔️ کلن: *{clan_info}*\n"
+        text += (
+            f"🏠 ملک: *{len(properties)}*\n"
+            f"🎒 آیتم‌ها: *{len(inventory)}*\n"
+            f"💝 کمک‌ها: *{donations:,}$*\n"
         )
     else:
         text = (
-            f"🪪 *{name}'s Profile*\n\n"
-            f"🏷 Title: {title}\n"
-            f"🧠 IQ: *{iq}*\n"
-            f"💄 Beauty: *{beauty}%*\n"
-            f"🍀 Luck: *{luck}%*\n"
-            f"😊 Mood: {mood_en}\n"
+            f"🪪 *{name}'s Profile*\n"
+            f"{'═' * 24}\n\n"
+            f"🏷 Title: {title}\n\n"
+            f"💰 Balance: *{bal:,}$*\n"
+            f"🔥 Streak: *{streak} days*\n"
+            f"⭐ Work Level: *{level}* ({xp} XP)\n"
+            f"🃏 Collection: *{col_count}* chars | ⚔️ *{total_power}*\n"
+        )
+        if clan_info:
+            text += f"⚔️ Clan: *{clan_info}*\n"
+        text += (
+            f"🏠 Properties: *{len(properties)}*\n"
+            f"🎒 Items: *{len(inventory)}*\n"
+            f"💝 Donations: *{donations:,}$*\n"
         )
 
     await update.message.reply_text(text, parse_mode="Markdown")

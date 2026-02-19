@@ -98,6 +98,10 @@ SHOP_ITEMS = {
         "ruby_ring":     {"name_fa": "حلقه یاقوت", "name_en": "Ruby Ring", "price": 700, "icon": "2764-fe0f", "color": (200, 20, 20)},
         "diamond_ring":  {"name_fa": "حلقه الماس", "name_en": "Diamond Ring", "price": 900, "icon": "1f48e", "color": (185, 242, 255)},
     },
+    "protection": {
+        "shield":    {"name_fa": "سپر محافظ", "name_en": "Shield", "price": 300, "icon": "1f6e1-fe0f", "color": (70, 130, 220)},
+        "landmine":  {"name_fa": "مین زمینی", "name_en": "Landmine", "price": 500, "icon": "1f4a3", "color": (180, 50, 50)},
+    },
 }
 
 CATEGORY_NAMES = {

@@ -46,6 +46,7 @@ from handlers.economy import (
     donate_cmd, charity_cmd,
     realestate_cmd, buyproperty_cmd, sellproperty_cmd,
     economy_cmd,
+    bounty_cmd, bounties_cmd,
 )
 from handlers.xo import xo_cmd, xo_callback
 from handlers.riddle import riddle_cmd, riddle_callback
@@ -61,6 +62,9 @@ from handlers.calendar import calendar_cmd
 from handlers.bank import bank_cmd, loan_cmd, bankmanager_cmd, embezzle_cmd, investigate_cmd, bankrob_cmd
 from handlers.casino import casino_cmd, megaslots_cmd, blackjack_cmd, bj_callback, bar_cmd, coinflip_cmd, casinoleader_cmd, paytax_cmd
 from handlers.places import places_cmd, date_cmd, giftpet_cmd, giftfood_cmd
+from handlers.gacha import roll_cmd, collection_cmd, sellchar_cmd, tradechar_cmd, gacha_callback, trade_callback
+from handlers.clan import clan_cmd
+from handlers.drops import drop_counter, grab_callback
 
 # ---- Logging ----
 logging.basicConfig(
@@ -694,6 +698,24 @@ def main():
     app.add_handler(CommandHandler("advice", advice_cmd))
     app.add_handler(CommandHandler("profile", profile_cmd))
 
+    # Gacha System
+    app.add_handler(CommandHandler("roll", roll_cmd))
+    app.add_handler(CommandHandler("collection", collection_cmd))
+    app.add_handler(CommandHandler("sellchar", sellchar_cmd))
+    app.add_handler(CommandHandler("tradechar", tradechar_cmd))
+    app.add_handler(CallbackQueryHandler(gacha_callback, pattern=r"^gacha_claim:"))
+    app.add_handler(CallbackQueryHandler(trade_callback, pattern=r"^trade_(accept|decline):"))
+
+    # Clan System
+    app.add_handler(CommandHandler("clan", clan_cmd))
+
+    # Bounty System
+    app.add_handler(CommandHandler("bounty", bounty_cmd))
+    app.add_handler(CommandHandler("bounties", bounties_cmd))
+
+    # Random Drops
+    app.add_handler(CallbackQueryHandler(grab_callback, pattern=r"^grab:"))
+
     # Language toggle
     app.add_handler(CommandHandler("lang", lang_cmd))
 
@@ -716,6 +738,9 @@ def main():
 
     # ---- Game callback handler (separate group so it doesn't block other callbacks) ----
     app.add_handler(CallbackQueryHandler(game_callback), group=4)
+
+    # ---- Random Drop counter ----
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, drop_counter), group=5)
 
     # ---- Inline query handler for games ----
     app.add_handler(InlineQueryHandler(game_inline))
