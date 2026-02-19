@@ -29,7 +29,7 @@ from handlers.fun import ship_cmd, lagab_cmd, rizz_cmd, gay_cmd, warn_handler, r
 from handlers.jokes_stories import joke_cmd, story_cmd
 from handlers.news import news_cmd, setnews_cmd, removenews_cmd
 from handlers.ai_chat import ai_cmd
-from handlers.markov_ai import markov_listen, ai2_cmd, ai2stats_cmd, ai2test_cmd
+from handlers.markov_ai import markov_listen
 from handlers.ophelia_ai import ophelia_listen, ai3_cmd, ai3stats_cmd
 from handlers.books import book_cmd
 from handlers.image_gen import imagine_cmd
@@ -557,9 +557,6 @@ def main():
 
     # AI
     app.add_handler(CommandHandler("ai", ai_cmd))
-    app.add_handler(CommandHandler("ai2", ai2_cmd))
-    app.add_handler(CommandHandler("ai2stats", ai2stats_cmd))
-    app.add_handler(CommandHandler("ai2test", ai2test_cmd))
 
     # AI3 (OPHELIA)
     app.add_handler(CommandHandler("ai3", ai3_cmd))

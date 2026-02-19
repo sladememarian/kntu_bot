@@ -55,7 +55,6 @@ STRINGS = {
             "/gift — هدیه دادن 🎁\n\n"
             "🧠 *ابزارها:*\n"
             "/ai — هوش مصنوعی 🧠\n"
-            "/ai2 — هوش مصنوعی خل 🧪\n"
             "/imagine — ساخت تصویر 🎨\n"
             "/music — جستجوی آهنگ 🎵\n"
             "/book — کتاب 📚\n"
@@ -134,8 +133,7 @@ STRINGS = {
             "🎒 /inventory — کوله‌پشتی\n"
             "🎁 /gift \\[آیتم\\] — هدیه (ریپلای)\n\n"
             "🧠 *ابزارها:*\n"
-            "🧠 /ai \\[سوال\\] — هوش مصنوعی\n"
-            "🧪 /ai2 \\[متن\\] — هوش مصنوعی خل (یادگیری از چت)\n"
+            "🧠 /ai \\[سوال\\] — ایجنت هوشمند LangChain\n"
             "🎨 /imagine \\[توضیح\\] — ساخت تصویر\n"
             "🎵 /music \\[نام\\] — جستجو و دانلود آهنگ\n"
             "📚 /book — پیشنهاد کتاب\n"
@@ -331,9 +329,7 @@ STRINGS = {
         "ability_not_owned": "❌ قبلاً *{ability}* رو نخریدی! از /abilities بخر.",
         # Family ring
         "family_need_ring": "💍 برای ازدواج باید حلقه داشته باشی! از /shop rings حلقه بخر.",
-        # Markov AI
-        "ai2_not_ready": "🧪 هنوز مغزم خالیه! باید بیشتر حرف بزنید تا یاد بگیرم. 🧠",
-        "ai2_stats": "🧪 *آمار مغز AI:*\n\nکلیدهای بایگرام: *{keys}*\nانتقال‌ها: *{transitions}*",
+
     },
     "en": {
         "welcome_group": "🎉 Welcome {name}!\nGlad to have you here! Have a great time 🌟",
@@ -355,7 +351,7 @@ STRINGS = {
             "/shop 👕 | /petshop 🐾 | /foodshop 🍽\n"
             "/abilities ⚔️ | /inventory 🎒 | /gift 🎁\n\n"
             "🧠 *Tools:*\n"
-            "/ai 🧠 | /ai2 🧪 | /imagine 🎨 | /music 🎵\n"
+            "/ai 🧠 | /imagine 🎨 | /music 🎵\n"
             "/book 📚 | /anime 🎌 | /movie 🎬 | /game 🎮\n"
             "/news 📰 | /family 👨‍👩‍👧‍👦 | /calendar 📅\n\n"
             "🏦 *Bank & Casino:*\n"
@@ -414,8 +410,7 @@ STRINGS = {
             "🎒 /inventory — Your inventory\n"
             "🎁 /gift \\[item\\] — Gift item (reply)\n\n"
             "🧠 *Tools:*\n"
-            "🧠 /ai \\[question\\] — Ask AI anything\n"
-            "🧪 /ai2 \\[text\\] — Dumb AI (learns from chat)\n"
+            "🧠 /ai \\[question\\] — LangChain AI Agent\n"
             "🎨 /imagine \\[desc\\] — Generate an image\n"
             "🎵 /music \\[name\\] — Search & download music\n"
             "📚 /book — Suggest a book\n"
@@ -597,8 +592,6 @@ STRINGS = {
         "ability_not_owned": "❌ You don't own *{ability}*! Buy it from /abilities.",
         # Family ring
         "family_need_ring": "💍 You need a ring to propose! Buy one from /shop rings.",
-        # Markov AI
-        "ai2_not_ready": "🧪 My brain is empty! Talk more so I can learn. 🧠",
-        "ai2_stats": "🧪 *AI Brain Stats:*\n\nBigram keys: *{keys}*\nTransitions: *{transitions}*",
+
     },
 }
