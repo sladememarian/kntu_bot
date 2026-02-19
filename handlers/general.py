@@ -121,9 +121,7 @@ _HELP_CATEGORIES = {
             "title": "🧠 هوش مصنوعی",
             "text": (
                 "🧠 *هوش مصنوعی*\n\n"
-                "🧠 /ai \\[سوال\\] — ایجنت هوشمند مارکوف\n"
-                "🧪 /ai2 \\[متن\\] — مارکوف (یادگیری از چت)\n"
-                "📊 /ai2stats — آمار مغز مارکوف\n"
+                "🧠 /ai \\[سوال\\] — ایجنت هوشمند LangChain\n"
                 "🦋 /ai3 \\[متن\\] — آفلیا (هوش احساسی)\n"
                 "📊 /ai3stats — آمار مغز آفلیا\n\n"
                 "💡 _آفلیا از مکالمات گروه یاد می‌گیره و_\n"
@@ -257,9 +255,7 @@ _HELP_CATEGORIES = {
             "title": "🧠 AI",
             "text": (
                 "🧠 *Artificial Intelligence*\n\n"
-                "🧠 /ai \\[question\\] — Markov AI Agent\n"
-                "🧪 /ai2 \\[text\\] — Markov AI (learns from chat)\n"
-                "📊 /ai2stats — Markov brain stats\n"
+                "🧠 /ai \\[question\\] — LangChain AI Agent\n"
                 "🦋 /ai3 \\[text\\] — OPHELIA (emotion AI)\n"
                 "📊 /ai3stats — OPHELIA brain stats\n\n"
                 "💡 _OPHELIA learns from group conversations_\n"
