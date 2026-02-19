@@ -5,6 +5,7 @@
 
 import random
 import time
+import os
 from datetime import datetime
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
@@ -79,6 +80,122 @@ CHARACTERS = [
     {"id": "l03", "name_fa": "رع",             "name_en": "Ra",              "rarity": "legendary", "power": 500, "emoji": "☀️"},
 ]
 
+# ═══ RPG PORTRAIT CHARACTERS (local images) ═══
+_RPG_CHARS = [
+    # ─── Common (⚪) ───
+    ("p001", "اسپرایت", "Sprite", "common", 12, "🧚‍♂️", 1),
+    ("p002", "براونی", "Brownie", "common", 9, "🫘", 2),
+    ("p003", "نوم", "Gnome", "common", 15, "🧙", 3),
+    ("p004", "ترول", "Troll", "common", 20, "🧌", 4),
+    ("p005", "لپرکان", "Leprechaun", "common", 11, "🍀", 5),
+    ("p006", "رایث", "Wraith", "common", 18, "👤", 6),
+    ("p007", "شید", "Shade", "common", 8, "🌑", 7),
+    ("p008", "سیلف", "Sylph", "common", 14, "💨", 8),
+    ("p009", "آندین", "Undine", "common", 16, "💧", 9),
+    ("p010", "ساتیر", "Satyr", "common", 10, "🐏", 10),
+    ("p011", "چنجلینگ", "Changeling", "common", 13, "🎭", 11),
+    ("p012", "بوگارت", "Boggart", "common", 11, "👹", 12),
+    ("p013", "غول", "Ghoul", "common", 19, "💀", 13),
+    ("p014", "اسپکتر", "Specter", "common", 9, "🌫️", 14),
+    ("p015", "ویسپ", "Wisp", "common", 8, "🔮", 15),
+    ("p016", "هارپی", "Harpy", "common", 17, "🦅", 16),
+    ("p017", "گرملین", "Gremlin", "common", 10, "😼", 17),
+    ("p018", "کوبلد", "Kobold", "common", 12, "🐉", 18),
+    ("p019", "نایاد", "Naiad", "common", 15, "🌊", 19),
+    ("p020", "کلپی", "Kelpie", "common", 14, "🐴", 20),
+    ("p021", "تنگو", "Tengu", "common", 18, "👺", 21),
+    ("p022", "اونی", "Oni", "common", 21, "👹", 22),
+    ("p023", "دوموووی", "Domovoi", "common", 9, "🏠", 23),
+    ("p024", "لشی", "Leshy", "common", 16, "🌿", 24),
+    ("p025", "روسالکا", "Rusalka", "common", 17, "💦", 25),
+    ("p026", "استریکس", "Strix", "common", 13, "🦉", 26),
+    ("p027", "ریونانت", "Revenant", "common", 20, "⚰️", 27),
+    ("p028", "وایت", "Wight", "common", 11, "💀", 28),
+    ("p029", "فانتوم", "Phantom", "common", 15, "👻", 29),
+    ("p030", "فامیلیار", "Familiar", "common", 10, "🐈‍⬛", 30),
+    ("p031", "نوماد", "Nomad", "common", 14, "🏜️", 31),
+    ("p032", "کاتب", "Scribe", "common", 8, "✍️", 32),
+    ("p033", "سنتینل", "Sentinel", "common", 22, "🛡️", 33),
+    ("p034", "سرگردان", "Wanderer", "common", 12, "🚶", 34),
+    ("p035", "مسافر", "Wayfarer", "common", 11, "🗺️", 35),
+    ("p036", "شاگرد", "Acolyte", "common", 9, "📿", 36),
+    ("p037", "درویش", "Dervish", "common", 19, "🌀", 37),
+    ("p038", "زاهد", "Hermit", "common", 13, "🏔️", 38),
+    ("p039", "شمن", "Shaman", "common", 16, "🪶", 39),
+    ("p040", "نوازنده", "Bard", "common", 14, "🎵", 40),
+    ("p041", "دزدِ دریا", "Corsair", "common", 20, "🏴‍☠️", 41),
+    ("p042", "رنجر", "Ranger", "common", 17, "🏹", 42),
+    ("p043", "راهب", "Monk", "common", 15, "🧘", 43),
+    ("p044", "دروئید", "Druid", "common", 18, "🌲", 44),
+    ("p045", "کیمیاگر", "Alchemist", "common", 21, "⚗️", 45),
+    # ─── Uncommon (🟢) ───
+    ("p046", "مدوسا", "Medusa", "uncommon", 38, "🐍", 46),
+    ("p047", "اسفنکس", "Sphinx", "uncommon", 45, "🦁", 47),
+    ("p048", "اکیدنا", "Echidna", "uncommon", 42, "🐲", 48),
+    ("p049", "موریگان", "Morrigan", "uncommon", 48, "🪶", 49),
+    ("p050", "بریجید", "Brigid", "uncommon", 35, "🔥", 50),
+    ("p051", "سرنونوس", "Cernunnos", "uncommon", 44, "🦌", 51),
+    ("p052", "مائویی", "Maui", "uncommon", 50, "🪝", 52),
+    ("p053", "آنانکه", "Ananke", "uncommon", 36, "⏳", 53),
+    ("p054", "نیکس", "Nyx", "uncommon", 47, "🌑", 54),
+    ("p055", "اروس", "Eros", "uncommon", 33, "💘", 55),
+    ("p056", "ایریس", "Iris", "uncommon", 30, "🌈", 56),
+    ("p057", "پان", "Pan", "uncommon", 40, "🎶", 57),
+    ("p058", "مورفئوس", "Morpheus", "uncommon", 46, "💤", 58),
+    ("p059", "اسکولد", "Skuld", "uncommon", 52, "🔮", 59),
+    ("p060", "وِردَندی", "Verdandi", "uncommon", 49, "⚖️", 60),
+    ("p061", "اورد", "Urd", "uncommon", 43, "📜", 61),
+    ("p062", "انکیدو", "Enkidu", "uncommon", 55, "🦬", 62),
+    ("p063", "ایشتار", "Ishtar", "uncommon", 51, "⭐", 63),
+    ("p064", "ماردوک", "Marduk", "uncommon", 53, "🗡️", 64),
+    ("p065", "کتزال", "Quetzal", "uncommon", 37, "🐦", 65),
+    ("p066", "اینانا", "Inanna", "uncommon", 41, "🌟", 66),
+    ("p067", "تیامات", "Tiamat", "uncommon", 54, "🐉", 67),
+    ("p068", "سخمت", "Sekhmet", "uncommon", 39, "🦁", 68),
+    ("p069", "سوبِک", "Sobek", "uncommon", 43, "🐊", 69),
+    ("p070", "خونسو", "Khonsu", "uncommon", 34, "🌙", 70),
+    # ─── Rare (🔵) ───
+    ("p071", "پوزئیدون", "Poseidon", "rare", 92, "🔱", 71),
+    ("p072", "هادس", "Hades", "rare", 88, "💎", 72),
+    ("p073", "آرِس", "Ares", "rare", 85, "⚔️", 73),
+    ("p074", "هِفائستوس", "Hephaestus", "rare", 78, "🔨", 74),
+    ("p075", "آپولو", "Apollo", "rare", 90, "🎵", 75),
+    ("p076", "تیر", "Tyr", "rare", 82, "⚖️", 76),
+    ("p077", "ویشنو", "Vishnu", "rare", 95, "🪷", 77),
+    ("p078", "شیوا", "Shiva", "rare", 93, "🔥", 78),
+    ("p079", "کالی", "Kali", "rare", 87, "⚡", 79),
+    ("p080", "گانِشا", "Ganesha", "rare", 76, "🐘", 80),
+    ("p081", "کتزالکوتل", "Quetzalcoatl", "rare", 91, "🐍", 81),
+    ("p082", "ایزاناگی", "Izanagi", "rare", 84, "⛩️", 82),
+    ("p083", "کو خولین", "Cu Chulainn", "rare", 89, "🗡️", 83),
+    ("p084", "بئوولف", "Beowulf", "rare", 80, "🐲", 84),
+    ("p085", "زیگفرید", "Siegfried", "rare", 83, "⚔️", 85),
+    ("p086", "آشیل", "Achilles", "rare", 94, "🏛️", 86),
+    ("p087", "آینیاس", "Aeneas", "rare", 77, "🛡️", 87),
+    ("p088", "ادیسئوس", "Odysseus", "rare", 86, "🧭", 88),
+    # ─── Epic (🟣) ───
+    ("p089", "پرومتئوس", "Prometheus", "epic", 165, "🔥", 89),
+    ("p090", "هرکول", "Hercules", "epic", 185, "💪", 90),
+    ("p091", "پرسئوس", "Perseus", "epic", 160, "🛡️", 91),
+    ("p092", "راما", "Rama", "epic", 195, "🏹", 92),
+    ("p093", "هانومان", "Hanuman", "epic", 178, "🐵", 93),
+    ("p094", "سورتر", "Surtr", "epic", 188, "🔥", 94),
+    ("p095", "ایندرا", "Indra", "epic", 172, "⚡", 95),
+    ("p096", "راوانا", "Ravana", "epic", 182, "👑", 96),
+    ("p097", "آرجونا", "Arjuna", "epic", 168, "🏹", 97),
+    # ─── Legendary (🟡) ───
+    ("p098", "برهما", "Brahma", "legendary", 450, "🌸", 98),
+    ("p099", "کرونوس", "Kronos", "legendary", 380, "⏰", 99),
+    ("p100", "ایزانامی", "Izanami", "legendary", 420, "⛩️", 100),
+]
+
+for _id, _fa, _en, _rar, _pow, _emo, _num in _RPG_CHARS:
+    CHARACTERS.append({
+        "id": _id, "name_fa": _fa, "name_en": _en,
+        "rarity": _rar, "power": _pow, "emoji": _emo,
+        "image": f"rpg-character ({_num}).png",
+    })
+
 _CHAR_BY_ID = {c["id"]: c for c in CHARACTERS}
 
 MAX_ROLLS = 5
@@ -91,9 +208,11 @@ _RARITY_STARS = {
 
 
 def _pick_character() -> dict:
-    pool = []
-    for c in CHARACTERS:
-        pool.extend([c] * RARITY_CONFIG[c["rarity"]]["weight"])
+    """Two-step: pick rarity by weight, then random char of that rarity."""
+    rarities = list(RARITY_CONFIG.keys())
+    weights = [RARITY_CONFIG[r]["weight"] for r in rarities]
+    rarity = random.choices(rarities, weights=weights, k=1)[0]
+    pool = [c for c in CHARACTERS if c["rarity"] == rarity]
     return random.choice(pool)
 
 
@@ -104,6 +223,21 @@ def _char_image_url(char: dict) -> str:
     """DiceBear avatar URL — unique per character name."""
     seed = char["name_en"].replace(" ", "")
     return f"{_DICEBEAR_BASE}?seed={seed}&size=256"
+
+
+_IMAGE_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "gatcha_images", "RPG Character Portraits MEGAPACK 1",
+)
+
+
+def _get_char_image(char: dict):
+    """Return local image file path if available, else DiceBear URL."""
+    if "image" in char:
+        path = os.path.join(_IMAGE_DIR, char["image"])
+        if os.path.isfile(path):
+            return path
+    return _char_image_url(char)
 
 
 async def _edit_msg(query, text, **kwargs):
@@ -196,25 +330,29 @@ async def roll_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reset_time = reset_at if reset_at > 0 else (now + ROLL_COOLDOWN)
     set_roll_info(chat.id, user.id, {"count": count, "reset_at": str(reset_time)})
 
-    img_url = _char_image_url(char)
+    img_src = _get_char_image(char)
+    is_local = isinstance(img_src, str) and os.path.isfile(img_src)
+
+    async def _send_photo(**kw):
+        try:
+            if is_local:
+                with open(img_src, "rb") as f:
+                    await update.message.reply_photo(photo=f, **kw)
+            else:
+                await update.message.reply_photo(photo=img_src, **kw)
+        except Exception:
+            await update.message.reply_text(
+                kw.get("caption", ""), parse_mode=kw.get("parse_mode"),
+                reply_markup=kw.get("reply_markup"))
+
     if not is_claimed:
         btn = "🎯 بگیرش!" if lang == "fa" else "🎯 Claim!"
         keyboard = InlineKeyboardMarkup([
             [InlineKeyboardButton(btn, callback_data=f"gacha_claim:{char['id']}")]
         ])
-        try:
-            await update.message.reply_photo(
-                photo=img_url, caption=text,
-                parse_mode="Markdown", reply_markup=keyboard)
-        except Exception:
-            await update.message.reply_text(
-                text, parse_mode="Markdown", reply_markup=keyboard)
+        await _send_photo(caption=text, parse_mode="Markdown", reply_markup=keyboard)
     else:
-        try:
-            await update.message.reply_photo(
-                photo=img_url, caption=text, parse_mode="Markdown")
-        except Exception:
-            await update.message.reply_text(text, parse_mode="Markdown")
+        await _send_photo(caption=text, parse_mode="Markdown")
 
 
 # ═══════════════════════════════════════════════════
