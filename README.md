@@ -1,6 +1,6 @@
 # 🤖 KNTU Bot 25
 
-A feature-packed, bilingual (Persian 🇮🇷 / English 🇬🇧) Telegram group bot — economy, gacha, clans, casino, AI, and 80+ commands to keep your group alive.
+A feature-packed, bilingual (Persian / English 🇬🇧) Telegram group bot — economy, gacha, clans, casino, AI, and 80+ commands to keep your group alive.
 
 ---
 
