@@ -1,0 +1,41 @@
+version: "3.8"
+
+services:
+  bot:
+    build: .
+    container_name: kntu_bot25
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - DATABASE_URL=postgresql://kntu_bot:kntu_pass@db:5432/kntu_bot
+      - PORT=8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./data.json:/app/data.json
+      - bot_data:/app/data
+
+  db:
+    image: postgres:16-alpine
+    container_name: kntu_bot25_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: kntu_bot
+      POSTGRES_PASSWORD: kntu_pass
+      POSTGRES_DB: kntu_bot
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kntu_bot -d kntu_bot"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+  bot_data:

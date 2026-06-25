@@ -201,7 +201,7 @@ pip install -r requirements.txt
 
 ### 4. Run the Bot
 ```bash
-python bot.py
+python app.py
 ```
 
 ### 5. Add to Group
@@ -216,7 +216,7 @@ python bot.py
 
 ```
 telegram_bot/
-├── bot.py                  # Entry point — registers all handlers
+├── app.py                  # Entry point — registers all handlers
 ├── config.py               # Environment config loader
 ├── storage.py              # PostgreSQL + JSON data layer
 ├── strings.py              # Bilingual strings (FA/EN)
