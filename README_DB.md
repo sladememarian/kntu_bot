@@ -1,20 +1,20 @@
 # Database Editing Guide
 
-The bot stores all data in a single PostgreSQL JSONB row (`bot_store` table, `id=1`).
+The bot stores all data in a single MongoDB document (`bot_store` collection, `_id="main"`).
 You can inspect and edit it using the `_edit_db.py` tool.
 
 ## Setup
 
-Set the `DATABASE_URL` environment variable first:
+Set the `DATABASE_URL` environment variable first (MongoDB URI):
 
 ```powershell
 # PowerShell
-$env:DATABASE_URL = "postgresql://postgres:UEHmmnhOmhhDyedURoOeagiriJwKIGre@mainline.proxy.rlwy.net:35268/railway"
+$env:DATABASE_URL = "mongodb://user:pass@host:port/dbname"
 ```
 
 ```bash
 # Linux / macOS
-export DATABASE_URL="postgresql://postgres:UEHmmnhOmhhDyedURoOeagiriJwKIGre@mainline.proxy.rlwy.net:35268/railway"
+export DATABASE_URL="mongodb://user:pass@host:port/dbname"
 ```
 
 ## Commands
@@ -59,7 +59,7 @@ Creates `db_dump.json` with all data.
 ```
 python _edit_db.py load db_dump.json
 ```
-⚠️ This **replaces** the entire database content with the file's contents.
+This **replaces** the entire database content with the file's contents.
 
 ## Workflow: Edit a Specific Value
 

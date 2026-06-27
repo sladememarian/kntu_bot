@@ -1,5 +1,5 @@
 # ==========================================
-# KNTU Bot 25 — Persistent Data Store (PostgreSQL + JSON fallback)
+# KNTU Bot 25 — Persistent Data Store (MongoDB + JSON fallback)
 # ==========================================
 
 import json
@@ -25,107 +25,71 @@ _DEFAULT = {
 }
 
 # ---- Backend selector ----
-_use_pg = False
-_pg_pool = None
+_use_mongo = False
+_mongo_client = None
+_mongo_db = None
 
 
-def _init_pg():
-    """Initialize PostgreSQL connection pool and create tables."""
-    global _use_pg, _pg_pool
+def _init_mongo():
+    """Initialize MongoDB connection."""
+    global _use_mongo, _mongo_client, _mongo_db
     if not DATABASE_URL:
         logger.info("DATABASE_URL not set — using JSON file backend.")
         return
     try:
-        import psycopg2
-        import psycopg2.pool
-        _pg_pool = psycopg2.pool.ThreadedConnectionPool(1, 5, DATABASE_URL)
-        conn = _pg_pool.getconn()
-        try:
-            with conn.cursor() as cur:
-                cur.execute("""
-                    CREATE TABLE IF NOT EXISTS bot_store (
-                        id   INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),
-                        data JSONB NOT NULL DEFAULT '{}'::jsonb
-                    );
-                """)
-                cur.execute("""
-                    CREATE TABLE IF NOT EXISTS markov_chain (
-                        id    INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),
-                        chain JSONB NOT NULL DEFAULT '{}'::jsonb
-                    );
-                """)
-                cur.execute("""
-                    INSERT INTO bot_store (id, data)
-                    VALUES (1, '{}'::jsonb)
-                    ON CONFLICT (id) DO NOTHING;
-                """)
-                cur.execute("""
-                    INSERT INTO markov_chain (id, chain)
-                    VALUES (1, '{}'::jsonb)
-                    ON CONFLICT (id) DO NOTHING;
-                """)
-                conn.commit()
-            _use_pg = True
-            logger.info("PostgreSQL connection established.")
-            _migrate_from_json(conn)
-        finally:
-            _pg_pool.putconn(conn)
+        from pymongo import MongoClient
+        _mongo_client = MongoClient(DATABASE_URL, serverSelectionTimeoutMS=5000)
+        _mongo_client.admin.command("ping")
+        _mongo_db = _mongo_client["kntu_bot"]
+        _use_mongo = True
+        logger.info("MongoDB connection established.")
+        _migrate_from_json()
     except Exception as e:
-        logger.warning("PostgreSQL unavailable, falling back to JSON: %s", e)
-        _use_pg = False
+        logger.warning("MongoDB unavailable, falling back to JSON: %s", e)
+        _use_mongo = False
 
 
-def _migrate_from_json(conn):
+def _migrate_from_json():
     """If DB data is empty and data.json exists, import it."""
     try:
-        with conn.cursor() as cur:
-            cur.execute("SELECT data FROM bot_store WHERE id = 1;")
-            row = cur.fetchone()
-            db_data = row[0] if row else {}
-            if db_data and any(k in db_data for k in
-                               ("wallets", "group_lang", "seen_members", "lagabs")):
+        col = _mongo_db["bot_store"]
+        doc = col.find_one({"_id": "main"})
+        if doc and doc.get("data"):
+            db_data = doc["data"]
+            if any(k in db_data for k in ("wallets", "group_lang", "seen_members", "lagabs")):
                 logger.info("DB already has data — skipping migration.")
                 return
-            if not os.path.exists(DATA_FILE):
-                return
-            with open(DATA_FILE, "r", encoding="utf-8") as f:
-                file_data = json.load(f)
-            if not file_data:
-                return
-            cur.execute(
-                "UPDATE bot_store SET data = %s WHERE id = 1;",
-                (json.dumps(file_data, ensure_ascii=False),)
-            )
-            conn.commit()
-            logger.info("Migrated data.json (%d keys) into PostgreSQL.", len(file_data))
+        if not os.path.exists(DATA_FILE):
+            return
+        with open(DATA_FILE, "r", encoding="utf-8") as f:
+            file_data = json.load(f)
+        if not file_data:
+            return
+        col.update_one(
+            {"_id": "main"},
+            {"$set": {"data": file_data}},
+            upsert=True,
+        )
+        logger.info("Migrated data.json (%d keys) into MongoDB.", len(file_data))
     except Exception as e:
         logger.warning("Migration from data.json failed: %s", e)
 
 
 # ---- Core I/O ----
 
-def _load_pg() -> dict:
-    conn = _pg_pool.getconn()
-    try:
-        with conn.cursor() as cur:
-            cur.execute("SELECT data FROM bot_store WHERE id = 1;")
-            row = cur.fetchone()
-            return row[0] if row else dict(_DEFAULT)
-    finally:
-        _pg_pool.putconn(conn)
+def _load_mongo() -> dict:
+    doc = _mongo_db["bot_store"].find_one({"_id": "main"})
+    if doc and "data" in doc:
+        return doc["data"]
+    return dict(_DEFAULT)
 
 
-def _save_pg(data: dict):
-    conn = _pg_pool.getconn()
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                "UPDATE bot_store SET data = %s WHERE id = 1;",
-                (json.dumps(data, ensure_ascii=False),)
-            )
-            conn.commit()
-    finally:
-        _pg_pool.putconn(conn)
+def _save_mongo(data: dict):
+    _mongo_db["bot_store"].update_one(
+        {"_id": "main"},
+        {"$set": {"data": data}},
+        upsert=True,
+    )
 
 
 def _load_file() -> dict:
@@ -144,12 +108,12 @@ def _save_file(data: dict):
 
 
 def _load() -> dict:
-    return _load_pg() if _use_pg else _load_file()
+    return _load_mongo() if _use_mongo else _load_file()
 
 
 def _save(data: dict):
-    if _use_pg:
-        _save_pg(data)
+    if _use_mongo:
+        _save_mongo(data)
     else:
         _save_file(data)
 
@@ -168,15 +132,11 @@ def save_data(data: dict):
 
 def load_markov() -> dict:
     with _lock:
-        if _use_pg:
-            conn = _pg_pool.getconn()
-            try:
-                with conn.cursor() as cur:
-                    cur.execute("SELECT chain FROM markov_chain WHERE id = 1;")
-                    row = cur.fetchone()
-                    return row[0] if row else {}
-            finally:
-                _pg_pool.putconn(conn)
+        if _use_mongo:
+            doc = _mongo_db["markov_chain"].find_one({"_id": "main"})
+            if doc and "chain" in doc:
+                return doc["chain"]
+            return {}
         else:
             mf = os.path.join(os.path.dirname(DATA_FILE), "markov.json")
             if os.path.exists(mf):
@@ -187,17 +147,12 @@ def load_markov() -> dict:
 
 def save_markov(chain: dict):
     with _lock:
-        if _use_pg:
-            conn = _pg_pool.getconn()
-            try:
-                with conn.cursor() as cur:
-                    cur.execute(
-                        "UPDATE markov_chain SET chain = %s WHERE id = 1;",
-                        (json.dumps(chain, ensure_ascii=False),)
-                    )
-                    conn.commit()
-            finally:
-                _pg_pool.putconn(conn)
+        if _use_mongo:
+            _mongo_db["markov_chain"].update_one(
+                {"_id": "main"},
+                {"$set": {"chain": chain}},
+                upsert=True,
+            )
         else:
             mf = os.path.join(os.path.dirname(DATA_FILE), "markov.json")
             with open(mf, "w", encoding="utf-8") as f:
@@ -205,7 +160,7 @@ def save_markov(chain: dict):
 
 
 # ---- Initialize on import ----
-_init_pg()
+_init_mongo()
 
 
 # ===========================================================

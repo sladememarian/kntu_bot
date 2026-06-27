@@ -196,7 +196,7 @@ pip install -r requirements.txt
 |----------|----------|-------------|
 | `BOT_TOKEN` | ✅ | From [@BotFather](https://t.me/BotFather) |
 | `GOOGLE_API_KEY` | ✅ | Google AI Studio key (for `/ai`, `/imagine`) |
-| `DATABASE_URL` | ⬜ | PostgreSQL URL (falls back to JSON) |
+| `DATABASE_URL` | ⬜ | MongoDB URI (falls back to JSON) |
 | `ADMIN_IDS` | ⬜ | Comma-separated Telegram user IDs |
 
 ### 4. Run the Bot
@@ -218,7 +218,7 @@ python app.py
 telegram_bot/
 ├── app.py                  # Entry point — registers all handlers
 ├── config.py               # Environment config loader
-├── storage.py              # PostgreSQL + JSON data layer
+├── storage.py              # MongoDB + JSON data layer
 ├── strings.py              # Bilingual strings (FA/EN)
 ├── requirements.txt        # Python dependencies
 ├── data.json               # Local JSON fallback store
@@ -262,7 +262,7 @@ telegram_bot/
 ---
 
 ## 🛡️ Notes
-- Data is stored in PostgreSQL (Railway) with automatic JSON fallback
+- Data is stored in MongoDB with automatic JSON fallback
 - The bot works without `GOOGLE_API_KEY` — AI features will show an error
 - Economy uses dynamic supply & demand pricing
 - Random cash drops keep groups engaged (every 80-150 messages)

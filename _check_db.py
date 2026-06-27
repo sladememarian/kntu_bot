@@ -1,2 +1,6 @@
 import os
-print('DB:', 'SET' if os.environ.get('DATABASE_URL') else 'NOT_SET')
+url = os.environ.get("DATABASE_URL", "")
+if url:
+    print(f"DB: SET ({url[:40]}...)")
+else:
+    print("DB: NOT_SET")

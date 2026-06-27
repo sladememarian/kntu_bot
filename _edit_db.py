@@ -1,5 +1,5 @@
 """
-Quick tool to inspect/edit the bot_store table in Railway PostgreSQL.
+Quick tool to inspect/edit the bot_store collection in MongoDB.
 
 Usage:
   python _edit_db.py                     # Show all top-level keys and sizes
@@ -10,8 +10,7 @@ Usage:
   python _edit_db.py raw                 # Dump entire data as JSON file
   python _edit_db.py load <file>         # Replace entire data from JSON file
 
-You MUST set DATABASE_URL env var first:
-  $env:DATABASE_URL = "postgresql://..."
+You MUST set DATABASE_URL env var first (MongoDB URI).
 """
 
 import sys
@@ -26,35 +25,29 @@ except ImportError:
     pass
 
 DB_URL = os.environ.get("DATABASE_URL", "")
-
-# Strip quotes/spaces that may come from .env
 DB_URL = DB_URL.strip().strip('"').strip("'")
 
 if not DB_URL:
     print("ERROR: Set DATABASE_URL first!")
-    print('  PowerShell:  $env:DATABASE_URL = "postgresql://user:pass@host:port/dbname"')
-    print("  Get it from Railway → your PostgreSQL service → Variables → DATABASE_URL")
+    print('  PowerShell:  $env:DATABASE_URL = "mongodb://user:pass@host:port/dbname"')
     sys.exit(1)
 
-import psycopg2
+from pymongo import MongoClient
 
-def get_conn():
-    return psycopg2.connect(DB_URL)
+def get_col():
+    client = MongoClient(DB_URL, serverSelectionTimeoutMS=5000)
+    return client, client["kntu_bot"]["bot_store"]
 
 def load_data():
-    conn = get_conn()
-    with conn.cursor() as cur:
-        cur.execute("SELECT data FROM bot_store WHERE id = 1;")
-        row = cur.fetchone()
-    conn.close()
-    return row[0] if row else {}
+    client, col = get_col()
+    doc = col.find_one({"_id": "main"})
+    client.close()
+    return doc.get("data", {}) if doc else {}
 
 def save_data(data):
-    conn = get_conn()
-    with conn.cursor() as cur:
-        cur.execute("UPDATE bot_store SET data = %s WHERE id = 1;", (json.dumps(data, ensure_ascii=False),))
-        conn.commit()
-    conn.close()
+    client, col = get_col()
+    col.update_one({"_id": "main"}, {"$set": {"data": data}}, upsert=True)
+    client.close()
 
 def show_summary(data):
     print(f"\n{'='*60}")
@@ -127,7 +120,7 @@ def main():
         try:
             val = json.loads(args[2])
         except json.JSONDecodeError:
-            val = args[2]  # Treat as string
+            val = args[2]
         data = load_data()
         data[key] = val
         save_data(data)

@@ -7,7 +7,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 
 from config import ADMIN_IDS
-from storage import get_lang, set_lang, get_debug, set_debug, load_data, _use_pg, save_data
+from storage import get_lang, set_lang, get_debug, set_debug, load_data, _use_mongo, save_data
 from strings import STRINGS
 
 
@@ -497,10 +497,10 @@ async def dbstatus_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         len(items) for items in data.get("inventory", {}).get(str(update.effective_chat.id), {}).values()
     )
 
-    if _use_pg:
-        backend = "✅ PostgreSQL (persistent)"
+    if _use_mongo:
+        backend = "✅ MongoDB (persistent)"
     elif db_url:
-        backend = "⚠️ DATABASE_URL set but PG connection failed — using JSON"
+        backend = "⚠️ DATABASE_URL set but MongoDB connection failed — using JSON"
     else:
         backend = "❌ JSON file (NOT persistent — data resets on deploy!)"
 
@@ -524,7 +524,7 @@ async def syncdata_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     data = load_data()
     save_data(data)
-    backend = "PostgreSQL" if _use_pg else "JSON file"
+    backend = "MongoDB" if _use_mongo else "JSON file"
     await update.message.reply_text(f"✅ Data synced to {backend}! ({len(data)} keys)")
 
 
@@ -560,7 +560,7 @@ async def loaddata_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     save_data(new_data)
-    backend = "PostgreSQL" if _use_pg else "JSON file"
+    backend = "MongoDB" if _use_mongo else "JSON file"
     wallets = len(new_data.get("wallets", {}).get(str(update.effective_chat.id), {}))
     await update.message.reply_text(
         f"✅ Data loaded into {backend}!\n"

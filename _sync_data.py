@@ -1,4 +1,4 @@
-"""Push local data.json into PostgreSQL bot_store table."""
+"""Push local data.json into MongoDB bot_store collection."""
 import os, sys, json
 
 DB_URL = os.environ.get("DATABASE_URL", "")
@@ -11,13 +11,12 @@ raw = sys.stdin.read()
 data = json.loads(raw)
 print(f"Loaded {len(data)} keys from stdin")
 
-import psycopg2
-conn = psycopg2.connect(DB_URL)
-cur = conn.cursor()
-cur.execute("UPDATE bot_store SET data = %s WHERE id = 1;", (json.dumps(data, ensure_ascii=False),))
-conn.commit()
-cur.execute("SELECT length(data::text) FROM bot_store WHERE id = 1;")
-size = cur.fetchone()[0]
-cur.close()
-conn.close()
-print(f"SUCCESS: Wrote {size} chars to PostgreSQL bot_store")
+from pymongo import MongoClient
+client = MongoClient(DB_URL, serverSelectionTimeoutMS=5000)
+db = client["kntu_bot"]
+col = db["bot_store"]
+col.update_one({"_id": "main"}, {"$set": {"data": data}}, upsert=True)
+doc = col.find_one({"_id": "main"})
+size = len(json.dumps(doc.get("data", {})))
+client.close()
+print(f"SUCCESS: Wrote {size} chars to MongoDB bot_store")
