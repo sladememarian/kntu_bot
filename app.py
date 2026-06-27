@@ -424,6 +424,9 @@ def _evaluate_showdown(lobby, active):
 
 async def _start_web_server(app):
     """Start aiohttp web server alongside the bot (for game hosting + API)."""
+    if os.environ.get("DISABLE_AIOHTTP_SERVER", "").lower() == "true":
+        logger.info("🌐 aiohttp server disabled via DISABLE_AIOHTTP_SERVER")
+        return
     web_app = web.Application()
     web_app.router.add_get("/", _serve_casino)
     web_app.router.add_get("/casino", _serve_casino)
@@ -437,11 +440,15 @@ async def _start_web_server(app):
     web_app.router.add_post("/api/poker/action", _api_poker_action)
     runner = web.AppRunner(web_app)
     await runner.setup()
-    port = int(os.environ.get("PORT", 8080))
-    site = web.TCPSite(runner, "0.0.0.0", port)
-    await site.start()
-    app.bot_data["_web_runner"] = runner
-    logger.info("🌐 Web server started on port %d", port)
+    port = int(os.environ.get("PORT") or os.environ.get("WEBSITES_PORT") or os.environ.get("AIOHTTP_PORT") or 8080)
+    try:
+        site = web.TCPSite(runner, "0.0.0.0", port)
+        await site.start()
+        app.bot_data["_web_runner"] = runner
+        logger.info("🌐 Web server started on port %d", port)
+    except OSError as e:
+        logger.warning("🌐 Could not start web server on port %d: %s", port, e)
+        logger.info("🌐 Bot will still work for Telegram commands.")
 
 
 async def _stop_web_server(app):

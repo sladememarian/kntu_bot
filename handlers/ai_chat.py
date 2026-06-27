@@ -1,28 +1,15 @@
 # ==========================================
-# KNTU Bot 25 — AI Agent (LangChain + Gemini)
+# KNTU Bot 25 — AI Agent (Google Gemini + Function Calling)
 #
-# Built following "Building a Simple AI Agent
-# With Python and Langchain" article EXACTLY:
-#
-#   1. tools.py — Tool(name, func, description)
-#      search, scrape, markov_generate, humor, topic
-#   2. System Prompt — ChatPromptTemplate
-#   3. Agent — create_tool_calling_agent
-#   4. AgentExecutor — runs agent with tools
-#   5. Structured Output — PydanticOutputParser
-#
-# LLM: Google Gemini via langchain-google-genai
+# Uses google-genai SDK directly — no langchain.
+# Handles function calling loop manually.
 # ==========================================
 
 import logging
 import random
 
-from pydantic import BaseModel
-
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import PydanticOutputParser
-from langchain.agents import create_tool_calling_agent, AgentExecutor
+from google import genai
+from google.genai import types
 
 from telegram import Update
 from telegram.ext import ContextTypes
@@ -31,10 +18,16 @@ from config import GEMINI_API_KEY
 from storage import get_lang
 from strings import STRINGS
 
-from handlers.tools import all_tools
+from handlers.tools import (
+    search,
+    scrape_website,
+    markov_brain_generate,
+    markov_brain_stats,
+    markov_humor,
+    markov_topic_react,
+)
 from handlers.markov_ai import (
     learn,
-    get_brain_stats,
     _add_context,
     _KNOWLEDGE,
     _detect_gif_trigger,
@@ -43,105 +36,222 @@ from handlers.markov_ai import (
 
 logger = logging.getLogger("kntu_bot25.ai_agent")
 
+# ═══════════════════════════════════════════════════
+# GEMINI CLIENT
+# ═══════════════════════════════════════════════════
+client = genai.Client(api_key=GEMINI_API_KEY)
 
 # ═══════════════════════════════════════════════════
-# STEP 1 — STRUCTURED OUTPUT (Pydantic models)
-# Mirrors the article's LeadResponse / LeadResponseList
+# TOOL DEFINITIONS (for Gemini function calling)
 # ═══════════════════════════════════════════════════
 
-class AIResponse(BaseModel):
-    """Structured output from the AI agent."""
-    answer: str
-    tools_used: list[str]
-    language: str
+TOOL_MAP = {
+    "search": search,
+    "scrape_website": scrape_website,
+    "markov_brain_generate": markov_brain_generate,
+    "markov_brain_stats": markov_brain_stats,
+    "markov_humor": markov_humor,
+    "markov_topic_react": markov_topic_react,
+}
 
-
-# ═══════════════════════════════════════════════════
-# STEP 2 — LLM + PARSER + PROMPT
-# Mirrors the article's main.py setup exactly
-# ═══════════════════════════════════════════════════
-
-# Gemini LLM
-llm = ChatGoogleGenerativeAI(
-    model="gemini-2.0-flash",
-    google_api_key=GEMINI_API_KEY,
-)
-
-# Pydantic output parser
-parser = PydanticOutputParser(pydantic_object=AIResponse)
-
-# System prompt — ChatPromptTemplate exactly like the article
-prompt = ChatPromptTemplate.from_messages(
-    [
-        (
-            "system",
-            """
-            You are KNTU Bot 25, a smart AI assistant in a Telegram group chat.
-            You have access to several tools you can use to answer questions:
-
-            1. Use the 'search' tool to look up current information, facts, news,
-               or anything the user is asking about from the web.
-            2. Use the 'scrape_website' tool if you need detailed content from a
-               specific website URL.
-            3. Use the 'markov_generate' tool to generate creative, fun, and casual
-               responses from the group's learned chat patterns.
-            4. Use the 'markov_stats' tool when the user asks about brain stats,
-               how smart you are, or your learning progress.
-            5. Use the 'markov_humor' tool when the user asks for jokes, humor,
-               or something funny.
-            6. Use the 'markov_topic' tool when the user is talking about a
-               specific topic (food, tech, sports, school, love, money, music, movies)
-               and wants a witty reaction.
-
-            RULES:
-            - If the user speaks Farsi, respond in Farsi. If English, respond in English.
-            - Keep responses concise but helpful (2-4 sentences max).
-            - Be friendly, witty, and entertaining.
-            - If a tool fails, try another approach or use your own knowledge.
-            - You are a fun group chat bot, not a formal assistant.
-            - For factual questions, prefer 'search' tool.
-            - For casual/creative chat, prefer 'markov_generate' or 'markov_humor'.
-
-            Return the output in this format: {format_instructions}
-            """,
+TOOL_DECLARATIONS = [
+    types.FunctionDeclaration(
+        name="search",
+        description="Search the web using DuckDuckGo for current information, facts, news, or answers to questions.",
+        parameters=types.Schema(
+            type=types.Type.OBJECT,
+            properties={
+                "query": types.Schema(
+                    type=types.Type.STRING,
+                    description="The search query",
+                ),
+            },
+            required=["query"],
         ),
-        ("human", "{query}"),
-        ("placeholder", "{agent_scratchpad}"),
+    ),
+    types.FunctionDeclaration(
+        name="scrape_website",
+        description="Scrape the text content of a website URL to get detailed information.",
+        parameters=types.Schema(
+            type=types.Type.OBJECT,
+            properties={
+                "url": types.Schema(
+                    type=types.Type.STRING,
+                    description="The website URL to scrape",
+                ),
+            },
+            required=["url"],
+        ),
+    ),
+    types.FunctionDeclaration(
+        name="markov_brain_generate",
+        description="Generate a creative response using the Markov chain brain trained on group chat messages. Good for casual conversation, creative text, and fun responses.",
+        parameters=types.Schema(
+            type=types.Type.OBJECT,
+            properties={
+                "query": types.Schema(
+                    type=types.Type.STRING,
+                    description="The user's message to generate a response for",
+                ),
+            },
+            required=["query"],
+        ),
+    ),
+    types.FunctionDeclaration(
+        name="markov_brain_stats",
+        description="Get the current statistics of the Markov brain — number of patterns, transitions, and vocabulary size.",
+        parameters=types.Schema(
+            type=types.Type.OBJECT,
+            properties={},
+        ),
+    ),
+    types.FunctionDeclaration(
+        name="markov_humor",
+        description="Generate a joke or absurd fact from the Markov brain vocabulary. Use when the user asks for humor, jokes, or something funny.",
+        parameters=types.Schema(
+            type=types.Type.OBJECT,
+            properties={
+                "query": types.Schema(
+                    type=types.Type.STRING,
+                    description="The user's message requesting humor",
+                ),
+            },
+            required=["query"],
+        ),
+    ),
+    types.FunctionDeclaration(
+        name="markov_topic_react",
+        description="Detect the topic of the user's message (food, tech, sports, school, love, money, music, movies) and give a witty reaction.",
+        parameters=types.Schema(
+            type=types.Type.OBJECT,
+            properties={
+                "query": types.Schema(
+                    type=types.Type.STRING,
+                    description="The user's message to detect topic and react to",
+                ),
+            },
+            required=["query"],
+        ),
+    ),
+]
+
+# ═══════════════════════════════════════════════════
+# SYSTEM PROMPT
+# ═══════════════════════════════════════════════════
+
+SYSTEM_PROMPT = """You are KNTU Bot 25, a smart AI assistant in a Telegram group chat.
+You have access to several tools you can use to answer questions:
+
+1. Use the 'search' tool to look up current information, facts, news,
+   or anything the user is asking about from the web.
+2. Use the 'scrape_website' tool if you need detailed content from a
+   specific website URL.
+3. Use the 'markov_brain_generate' tool to generate creative, fun, and casual
+   responses from the group's learned chat patterns.
+4. Use the 'markov_brain_stats' tool when the user asks about brain stats,
+   how smart you are, or your learning progress.
+5. Use the 'markov_humor' tool when the user asks for jokes, humor,
+   or something funny.
+6. Use the 'markov_topic_react' tool when the user is talking about a
+   specific topic (food, tech, sports, school, love, money, music, movies)
+   and wants a witty reaction.
+
+RULES:
+- If the user speaks Farsi, respond in Farsi. If English, respond in English.
+- Keep responses concise but helpful (2-4 sentences max).
+- Be friendly, witty, and entertaining.
+- If a tool fails, try another approach or use your own knowledge.
+- You are a fun group chat bot, not a formal assistant.
+- For factual questions, prefer 'search' tool.
+- For casual/creative chat, prefer 'markov_brain_generate' or 'markov_humor'.
+"""
+
+# ═══════════════════════════════════════════════════
+# AGENT LOOP
+# ═══════════════════════════════════════════════════
+
+MAX_ITERATIONS = 5
+
+
+def run_agent(query: str) -> str:
+    """Run the Gemini function-calling agent loop."""
+    contents = [
+        types.Content(
+            role="user",
+            parts=[types.Part(text=query)],
+        )
     ]
-).partial(format_instructions=parser.get_format_instructions())
+
+    for _ in range(MAX_ITERATIONS):
+        try:
+            response = client.models.generate_content(
+                model="gemini-2.0-flash",
+                contents=contents,
+                config=types.GenerateContentConfig(
+                    system_instruction=SYSTEM_PROMPT,
+                    tools=[types.Tool(function_declarations=TOOL_DECLARATIONS)],
+                ),
+            )
+        except Exception as e:
+            logger.error("Gemini API error: %s", e)
+            return ""
+
+        candidate = response.candidates[0]
+        if not candidate.content or not candidate.content.parts:
+            return ""
+
+        has_function_calls = False
+
+        for part in candidate.content.parts:
+            if part.function_call:
+                has_function_calls = True
+                fn_name = part.function_call.name
+                fn_args = dict(part.function_call.args) if part.function_call.args else {}
+
+                logger.info("Tool call: %s(%s)", fn_name, fn_args)
+
+                # Execute the tool
+                fn = TOOL_MAP.get(fn_name)
+                if fn:
+                    try:
+                        result = fn(**fn_args)
+                    except Exception as e:
+                        result = f"Tool error: {e}"
+                else:
+                    result = f"Unknown tool: {fn_name}"
+
+                # Append model's function call + function response to conversation
+                contents.append(candidate.content)
+                contents.append(
+                    types.Content(
+                        role="function",
+                        parts=[
+                            types.Part(
+                                function_response=types.FunctionResponse(
+                                    name=fn_name,
+                                    response={"result": str(result)},
+                                )
+                            )
+                        ],
+                    )
+                )
+
+        if not has_function_calls:
+            # Extract final text response
+            text_parts = [
+                p.text for p in candidate.content.parts if p.text
+            ]
+            return "\n".join(text_parts) if text_parts else ""
+
+    return ""
 
 
 # ═══════════════════════════════════════════════════
-# STEP 3 — AGENT + EXECUTOR
-# Mirrors the article: create_tool_calling_agent + AgentExecutor
-# ═══════════════════════════════════════════════════
-
-# List our tools — pulled from handlers/tools.py
-tools = all_tools
-
-# Create the agent with tool-calling abilities
-agent = create_tool_calling_agent(
-    llm=llm,
-    prompt=prompt,
-    tools=tools,
-)
-
-# Wrap the agent in an executor
-agent_executor = AgentExecutor(
-    agent=agent,
-    tools=tools,
-    verbose=False,
-    handle_parsing_errors=True,
-    max_iterations=5,
-)
-
-
-# ═══════════════════════════════════════════════════
-# STEP 4 — /ai TELEGRAM COMMAND
+# /ai TELEGRAM COMMAND
 # ═══════════════════════════════════════════════════
 
 async def ai_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Main /ai command — invokes the LangChain agent."""
+    """Main /ai command — invokes the Gemini agent."""
     chat = update.effective_chat
     lang = get_lang(chat.id)
     s = STRINGS[lang]
@@ -170,17 +280,8 @@ async def ai_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     learn(query)
 
     try:
-        # ── Run AgentExecutor — exactly like the article ──
-        raw_response = agent_executor.invoke({"query": query})
-        output = raw_response.get("output", "")
-
-        # Try to parse structured output
-        try:
-            structured = parser.parse(output)
-            final_text = structured.answer
-        except Exception:
-            # If parsing fails, use raw output
-            final_text = output if output else None
+        # Run the agent
+        final_text = run_agent(query)
 
         if not final_text:
             final_text = random.choice(_KNOWLEDGE.get(lang, _KNOWLEDGE["en"]))
@@ -211,9 +312,8 @@ async def ai_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     except Exception as e:
         logger.error("AI agent error: %s", e)
-        # Fallback to Markov brain if LangChain/Gemini fails
+        # Fallback to Markov brain if Gemini fails
         try:
-            from handlers.tools import markov_brain_generate
             fallback = markov_brain_generate(query)
             try:
                 await thinking_msg.edit_text(

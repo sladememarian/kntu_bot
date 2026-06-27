@@ -1,25 +1,14 @@
 # ==========================================
 # KNTU Bot 25 — AI Agent Tools
 #
-# Following "Building a Simple AI Agent With
-# Python and Langchain" article:
-#   Tool(name, func, description)
-#
-# Tools:
-#   1. search — DuckDuckGo web search
-#   2. scrape — Scrape a website for content
-#   3. markov_generate — Generate text from
-#      the Markov brain trained on chat
-#   4. markov_stats — Get brain statistics
+# Plain functions used by google-genai
+# function calling. No langchain dependency.
 # ==========================================
 
 import re
 import logging
 import requests
 from bs4 import BeautifulSoup
-
-from langchain_community.tools import DuckDuckGoSearchRun
-from langchain_core.tools import Tool
 
 from handlers.markov_ai import (
     generate as markov_generate_text,
@@ -35,12 +24,21 @@ from handlers.markov_ai import (
 logger = logging.getLogger("kntu_bot25.tools")
 
 
-# ═══════════════════════════════════════════════════
-# TOOL FUNCTIONS
-# ═══════════════════════════════════════════════════
+def search(query: str) -> str:
+    """Search the web using DuckDuckGo for current information, facts, news, or answers to questions."""
+    try:
+        from duckduckgo_search import DDGS
+        with DDGS() as ddgs:
+            results = list(ddgs.text(query, max_results=5))
+            if results:
+                return "\n".join([r.get("body", r.get("title", "")) for r in results])
+            return "No search results found."
+    except Exception as e:
+        return f"Search error: {e}"
+
 
 def scrape_website(url: str) -> str:
-    """Scrape raw text from a website URL."""
+    """Scrape the text content of a website URL to get detailed information."""
     try:
         response = requests.get(url, timeout=8)
         response.raise_for_status()
@@ -53,7 +51,7 @@ def scrape_website(url: str) -> str:
 
 
 def markov_brain_generate(query: str) -> str:
-    """Generate a response using the Markov chain brain trained on group messages."""
+    """Generate a creative response using the Markov chain brain trained on group chat messages. Good for casual conversation, creative text, and fun responses."""
     keys, _, vocab = get_brain_stats()
     if keys < 10:
         import random
@@ -70,7 +68,7 @@ def markov_brain_generate(query: str) -> str:
 
 
 def markov_brain_stats(query: str = "") -> str:
-    """Get current Markov brain statistics — keys, transitions, vocabulary size."""
+    """Get the current statistics of the Markov brain — number of patterns, transitions, and vocabulary size."""
     keys, transitions, vocab = get_brain_stats()
     return (
         f"Brain Stats: {keys:,} pattern keys, "
@@ -80,7 +78,7 @@ def markov_brain_stats(query: str = "") -> str:
 
 
 def markov_humor(query: str) -> str:
-    """Generate a joke or absurd fact from the Markov brain vocabulary."""
+    """Generate a joke or absurd fact from the Markov brain vocabulary. Use when the user asks for humor, jokes, or something funny."""
     import random
     lang = "fa" if any('\u0600' <= c <= '\u06FF' for c in query) else "en"
 
@@ -96,7 +94,7 @@ def markov_humor(query: str) -> str:
 
 
 def markov_topic_react(query: str) -> str:
-    """Detect the topic of the query and give a witty reaction."""
+    """Detect the topic of the user's message (food, tech, sports, school, love, money, music, movies) and give a witty reaction."""
     import random
     lang = "fa" if any('\u0600' <= c <= '\u06FF' for c in query) else "en"
     topic = _detect_topic(query)
@@ -105,57 +103,3 @@ def markov_topic_react(query: str) -> str:
         if reaction:
             return reaction
     return markov_brain_generate(query)
-
-
-# ═══════════════════════════════════════════════════
-# LANGCHAIN TOOL DEFINITIONS
-# Exactly like the article: Tool(name, func, description)
-# ═══════════════════════════════════════════════════
-
-search = DuckDuckGoSearchRun()
-
-search_tool = Tool(
-    name="search",
-    func=search.run,
-    description="Search the web using DuckDuckGo for current information, facts, news, or answers to questions.",
-)
-
-scrape_tool = Tool(
-    name="scrape_website",
-    func=scrape_website,
-    description="Scrape the text content of a website URL to get detailed information.",
-)
-
-markov_tool = Tool(
-    name="markov_generate",
-    func=markov_brain_generate,
-    description="Generate a creative response using the Markov chain brain that has been trained on group chat messages. Good for casual conversation, creative text, and fun responses.",
-)
-
-markov_stats_tool = Tool(
-    name="markov_stats",
-    func=markov_brain_stats,
-    description="Get the current statistics of the Markov brain — number of patterns, transitions, and vocabulary size.",
-)
-
-markov_humor_tool = Tool(
-    name="markov_humor",
-    func=markov_humor,
-    description="Generate a joke or absurd fact from the Markov brain vocabulary. Use when the user asks for humor, jokes, or something funny.",
-)
-
-markov_topic_tool = Tool(
-    name="markov_topic",
-    func=markov_topic_react,
-    description="Detect the topic of the user's message (food, tech, sports, school, love, money, music, movies) and give a witty reaction.",
-)
-
-# All tools list — passed to the agent
-all_tools = [
-    search_tool,
-    scrape_tool,
-    markov_tool,
-    markov_stats_tool,
-    markov_humor_tool,
-    markov_topic_tool,
-]
