@@ -516,7 +516,7 @@ async def dbstatus_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def syncdata_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Admin-only: force sync current data to PostgreSQL (or save to file)."""
+    """Admin-only: force sync current data to database (or save to file)."""
     user_id = update.effective_user.id
     if ADMIN_IDS and user_id not in ADMIN_IDS:
         await update.message.reply_text("❌ Admin only.")
