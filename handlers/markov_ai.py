@@ -1245,6 +1245,22 @@ _load_brain()
 # TELEGRAM: Learn from every message + smart auto-reply
 # ═══════════════════════════════════════════════════
 
+async def crisis_listen(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Always-on safety net: reply with support info on suicide/self-harm keywords.
+
+    Runs regardless of AI_ENABLED. Does NOT learn or generate any AI reply.
+    """
+    if not update.message or not update.message.text:
+        return
+    text = update.message.text
+    if text.startswith('/'):
+        return
+    if _SUICIDE_PATTERN.search(text):
+        lang = get_lang(update.effective_chat.id)
+        support = _SUPPORT_MSG_FA if lang == "fa" else _SUPPORT_MSG_EN
+        await update.message.reply_text(support, parse_mode="Markdown")
+
+
 async def markov_listen(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Silently learn + occasionally auto-respond with personality."""
     if not update.message or not update.message.text:
@@ -1255,12 +1271,6 @@ async def markov_listen(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     chat_id = update.effective_chat.id
     lang = get_lang(chat_id)
-
-    # Suicide detection
-    if _SUICIDE_PATTERN.search(text):
-        support = _SUPPORT_MSG_FA if lang == "fa" else _SUPPORT_MSG_EN
-        await update.message.reply_text(support, parse_mode="Markdown")
-        return
 
     # Context + learn
     _add_context(chat_id, text)

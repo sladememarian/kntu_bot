@@ -1,14 +1,42 @@
-version: "3.8"
-
 services:
+  mongo:
+    image: mongo:7
+    container_name: kntu_mongo25
+    restart: unless-stopped
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME:-admin}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD:-kntu_secret_pw}
+    # Host port 27019 avoids 27017/27018 already used by another Mongo in the VM.
+    # Container port stays 27017; the bot reaches it internally as mongo:27017.
+    ports:
+      - "27019:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
   bot:
     build: .
     container_name: kntu_bot25
     restart: unless-stopped
     env_file: .env
-    environment:
-      - PORT=8080
-    ports:
-      - "8080:8080"
+    # Pure polling bot (DISABLE_AIOHTTP_SERVER=true) — no host port needed,
+    # which keeps clear of the occupied 8000/8080/8088/9901 ports.
+    depends_on:
+      mongo:
+        condition: service_healthy
     volumes:
       - ./data.json:/app/data.json
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; socket.create_connection(('mongo', 27017), 5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  mongo_data:

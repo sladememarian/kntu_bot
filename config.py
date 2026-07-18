@@ -10,4 +10,8 @@ NEWS_CHANNELS = [x.strip() for x in os.getenv("NEWS_CHANNELS", "").split(",") if
 DEFAULT_LANG = os.getenv("DEFAULT_LANG", "fa")
 DEBUG = os.getenv("DEBUG", "false").lower() == "true"
 
+# Master switch for all AI features (/ai, /ai3, passive learners/auto-replies).
+# When false, crisis/suicide detection still runs; everything else AI stays off.
+AI_ENABLED = os.getenv("AI_ENABLED", "false").lower() == "true"
+
 BOT_NAME = "kntu_bot25"

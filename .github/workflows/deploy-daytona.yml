@@ -1,0 +1,80 @@
+name: Deploy to Daytona sandbox
+
+# Every push to main redeploys the bot inside the Daytona sandbox via the
+# Daytona REST API (no SSH needed). Inside the sandbox it runs:
+#   cd <PROJECT_DIR> && git pull && docker compose up -d --build
+#
+# Required GitHub secrets (Settings -> Secrets and variables -> Actions -> Secrets):
+#   DAYTONA_API_KEY      - your Daytona API key (Bearer token)
+#   DAYTONA_SANDBOX_ID   - the target sandbox id
+# Optional GitHub variables (same page -> Variables tab):
+#   DAYTONA_API_URL      - defaults to https://app.daytona.io/api
+#   SANDBOX_PROJECT_DIR  - defaults to /home/kntu_bot
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      API_URL: ${{ vars.DAYTONA_API_URL || 'https://app.daytona.io/api' }}
+      SANDBOX_ID: ${{ secrets.DAYTONA_SANDBOX_ID }}
+      API_KEY: ${{ secrets.DAYTONA_API_KEY }}
+      PROJECT_DIR: ${{ vars.SANDBOX_PROJECT_DIR || '/home/kntu_bot' }}
+    steps:
+      - name: Trigger redeploy inside sandbox
+        run: |
+          set -euo pipefail
+
+          if [ -z "${API_KEY}" ] || [ -z "${SANDBOX_ID}" ]; then
+            echo "::error::DAYTONA_API_KEY and DAYTONA_SANDBOX_ID secrets are required."
+            exit 1
+          fi
+
+          # 1) Fetch the sandbox to read its toolbox proxy URL (region-specific).
+          curl -sS -o sandbox.json -w 'sandbox lookup: HTTP %{http_code}\n' \
+            -H "Authorization: Bearer ${API_KEY}" \
+            "${API_URL}/sandbox/${SANDBOX_ID}"
+
+          PROXY=$(jq -r '.toolboxProxyUrl' sandbox.json)
+          if [ -z "$PROXY" ] || [ "$PROXY" = "null" ]; then
+            echo "::error::Could not read toolboxProxyUrl from sandbox response:"
+            cat sandbox.json
+            exit 1
+          fi
+          echo "Toolbox proxy: $PROXY"
+
+          # 2) Command to run inside the sandbox. Rebuilds and restarts the stack.
+          REMOTE_CMD="cd ${PROJECT_DIR} && git pull --ff-only && docker compose up -d --build && docker compose ps"
+          BODY=$(jq -n --arg cmd "$REMOTE_CMD" --arg cwd "$PROJECT_DIR" \
+            '{command: $cmd, cwd: $cwd, timeout: 600}')
+
+          EXEC_URL="${PROXY}/${SANDBOX_ID}/process/execute"
+          echo "Executing deploy in sandbox ${SANDBOX_ID}..."
+
+          HTTP_CODE=$(curl -sS -o resp.json -w '%{http_code}' \
+            -X POST "$EXEC_URL" \
+            -H "Authorization: Bearer ${API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "$BODY")
+
+          echo "exec: HTTP $HTTP_CODE"
+          echo "----- sandbox output -----"
+          jq -r '.result // .' resp.json 2>/dev/null || cat resp.json
+          echo "--------------------------"
+
+          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
+            echo "::error::Deploy request failed (HTTP $HTTP_CODE)."
+            exit 1
+          fi
+
+          EXIT_CODE=$(jq -r '.exitCode // 0' resp.json 2>/dev/null || echo 0)
+          if [ "$EXIT_CODE" != "0" ] && [ "$EXIT_CODE" != "null" ]; then
+            echo "::error::Remote command exited with code $EXIT_CODE."
+            exit 1
+          fi
+
+          echo "Deploy triggered successfully."

@@ -20,7 +20,7 @@ from aiohttp import web
 from telegram import InlineQueryResultGame
 import json as _json
 
-from config import BOT_TOKEN, DEBUG, BOT_NAME
+from config import BOT_TOKEN, DEBUG, BOT_NAME, AI_ENABLED
 from storage import get_balance as _get_balance, add_balance as _add_balance
 
 # Handlers
@@ -29,7 +29,7 @@ from handlers.fun import ship_cmd, lagab_cmd, rizz_cmd, gay_cmd, warn_handler, r
 from handlers.jokes_stories import joke_cmd, story_cmd
 from handlers.news import news_cmd, setnews_cmd, removenews_cmd
 from handlers.ai_chat import ai_cmd
-from handlers.markov_ai import markov_listen
+from handlers.markov_ai import markov_listen, crisis_listen
 from handlers.ophelia_ai import ophelia_listen, ai3_cmd, ai3stats_cmd
 from handlers.books import book_cmd
 from handlers.image_gen import imagine_cmd
@@ -566,12 +566,13 @@ def main():
     app.add_handler(CommandHandler("setnews", setnews_cmd))
     app.add_handler(CommandHandler("removenews", removenews_cmd))
 
-    # AI
-    app.add_handler(CommandHandler("ai", ai_cmd))
+    # AI (disabled unless AI_ENABLED=true — handlers preserved for future use)
+    if AI_ENABLED:
+        app.add_handler(CommandHandler("ai", ai_cmd))
 
-    # AI3 (OPHELIA)
-    app.add_handler(CommandHandler("ai3", ai3_cmd))
-    app.add_handler(CommandHandler("ai3stats", ai3stats_cmd))
+        # AI3 (OPHELIA)
+        app.add_handler(CommandHandler("ai3", ai3_cmd))
+        app.add_handler(CommandHandler("ai3stats", ai3stats_cmd))
 
     # Books
     app.add_handler(CommandHandler("book", book_cmd))
@@ -737,11 +738,15 @@ def main():
     # ---- Track members for /ship ----
     app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, track_message_members), group=1)
 
-    # ---- Markov AI: learn from all text messages ----
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, markov_listen), group=2)
+    # ---- Crisis/suicide detection: always on, even when AI is disabled ----
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, crisis_listen), group=6)
 
-    # ---- OPHELIA AI: learn from all text messages ----
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, ophelia_listen), group=3)
+    # ---- Markov AI: learn from all text messages (AI only) ----
+    if AI_ENABLED:
+        app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, markov_listen), group=2)
+
+        # ---- OPHELIA AI: learn from all text messages (AI only) ----
+        app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, ophelia_listen), group=3)
 
     # ---- Game callback handler (separate group so it doesn't block other callbacks) ----
     app.add_handler(CallbackQueryHandler(game_callback), group=4)
