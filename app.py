@@ -31,6 +31,7 @@ from handlers.news import news_cmd, setnews_cmd, removenews_cmd
 from handlers.ai_chat import ai_cmd
 from handlers.markov_ai import markov_listen, crisis_listen
 from handlers.ophelia_ai import ophelia_listen, ai3_cmd, ai3stats_cmd
+from handlers.bob_ai import bob_cmd, bobstats_cmd, bob_listen
 from handlers.books import book_cmd
 from handlers.image_gen import imagine_cmd
 from handlers.welcome import greet_new_member, greet_via_message, track_message_members
@@ -574,6 +575,10 @@ def main():
         app.add_handler(CommandHandler("ai3", ai3_cmd))
         app.add_handler(CommandHandler("ai3stats", ai3stats_cmd))
 
+    # BOB — son of Markov & Ophelia (always on, replaces the old AIs)
+    app.add_handler(CommandHandler("bob", bob_cmd))
+    app.add_handler(CommandHandler("bobstats", bobstats_cmd))
+
     # Books
     app.add_handler(CommandHandler("book", book_cmd))
 
@@ -740,6 +745,9 @@ def main():
 
     # ---- Crisis/suicide detection: always on, even when AI is disabled ----
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, crisis_listen), group=6)
+
+    # ---- BOB: always learns from chat; speaks max 2-3x/day unprompted ----
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, bob_listen), group=7)
 
     # ---- Markov AI: learn from all text messages (AI only) ----
     if AI_ENABLED:

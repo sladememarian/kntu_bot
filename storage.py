@@ -159,6 +159,41 @@ def save_markov(chain: dict):
                 json.dump(chain, f, ensure_ascii=False)
 
 
+# ---- Bob brain storage ----
+
+def load_bob() -> dict:
+    """Load Bob's brain (own Mongo collection, JSON-file fallback)."""
+    with _lock:
+        if _use_mongo:
+            doc = _mongo_db["bob_brain"].find_one({"_id": "main"})
+            if doc and "brain" in doc:
+                return doc["brain"]
+            return {}
+        else:
+            bf = os.path.join(os.path.dirname(DATA_FILE), "bob_brain.json")
+            if os.path.exists(bf):
+                with open(bf, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            return {}
+
+
+def save_bob(brain: dict):
+    """Persist Bob's brain."""
+    with _lock:
+        if _use_mongo:
+            _mongo_db["bob_brain"].update_one(
+                {"_id": "main"},
+                {"$set": {"brain": brain}},
+                upsert=True,
+            )
+        else:
+            parent_dir = os.path.dirname(DATA_FILE)
+            if parent_dir:
+                os.makedirs(parent_dir, exist_ok=True)
+            bf = os.path.join(parent_dir, "bob_brain.json")
+            with open(bf, "w", encoding="utf-8") as f:
+                json.dump(brain, f, ensure_ascii=False)
+
 # ---- Initialize on import ----
 _init_mongo()
 

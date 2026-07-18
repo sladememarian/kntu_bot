@@ -157,11 +157,11 @@ _HELP_CATEGORIES = {
             "title": "🧠 هوش مصنوعی",
             "text": (
                 "🧠 *هوش مصنوعی*\n\n"
-                "🧠 /ai \\[سوال\\] — ایجنت هوشمند LangChain\n"
-                "🦋 /ai3 \\[متن\\] — آفلیا (هوش احساسی)\n"
-                "📊 /ai3stats — آمار مغز آفلیا\n\n"
-                "💡 _آفلیا از مکالمات گروه یاد می‌گیره و_\n"
-                "_بر اساس احساسات جواب می‌ده!_"
+                "🤖 /bob \\[متن\\] — باب! پسر مارکوف و اوفلیا\n"
+                "📊 /bobstats — مغز و حالِ باب\n\n"
+                "💡 _باب از حرفای واقعی گروه یاد می‌گیره،_\n"
+                "_جواب‌هاش رو می‌سنجه و حس داره!_\n"
+                "_روزی ۲-۳ بار هم خودش حرف می‌زنه_ 😄"
             ),
         },
         "tools": {
@@ -327,11 +327,11 @@ _HELP_CATEGORIES = {
             "title": "🧠 AI",
             "text": (
                 "🧠 *Artificial Intelligence*\n\n"
-                "🧠 /ai \\[question\\] — LangChain AI Agent\n"
-                "🦋 /ai3 \\[text\\] — OPHELIA (emotion AI)\n"
-                "📊 /ai3stats — OPHELIA brain stats\n\n"
-                "💡 _OPHELIA learns from group conversations_\n"
-                "_and responds based on emotions!_"
+                "🤖 /bob \\[text\\] — Bob! son of Markov & Ophelia\n"
+                "📊 /bobstats — Bob's brain & feelings\n\n"
+                "💡 _Bob learns from real group chat,_\n"
+                "_judges his own replies, and has moods!_\n"
+                "_He also speaks up on his own 2-3x a day_ 😄"
             ),
         },
         "tools": {
