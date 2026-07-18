@@ -1,4 +1,5 @@
 .env
+DEPLOY_DAYTONA.md
 __pycache__/
 *.pyc
 data.json
