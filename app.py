@@ -74,11 +74,14 @@ logging.basicConfig(
 )
 logger = logging.getLogger(BOT_NAME)
 
-# ═══════════════════════════════════════════════════
+# ═══════════════════════════════════════════════════════════════════════════
 # WEB SERVER for HTML5 Games (served via aiohttp)
-# ═══════════════════════════════════════════════════
+# ═══════════════════════════════════════════════════════════════════════════
 GAME_SHORT_NAME = os.environ.get("GAME_SHORT_NAME", "casino")
 _STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+
+# Daytona preview default (port 8091). Override with WEB_URL / RAILWAY_* env.
+_DEFAULT_GAME_HOST = "8091-26f0e993-32b4-45f2-af64-a392bee6cc43.daytonaproxy01.eu"
 
 
 async def _serve_casino(request):
@@ -89,7 +92,7 @@ async def _serve_casino(request):
     return web.Response(text="Game not found", status=404)
 
 
-# ── Wallet API for HTML5 game ──────────────────────
+# ── Wallet API for HTML5 game ─────────────────────────────────────────────
 async def _api_get_balance(request):
     """GET /api/balance?chat_id=X&user_id=Y → returns wallet balance."""
     try:
@@ -104,34 +107,99 @@ async def _api_get_balance(request):
 
 
 async def _api_update_balance(request):
-    """POST /api/balance {chat_id, user_id, delta} → add/subtract from wallet."""
+    """POST /api/balance {chat_id, user_id, delta} → add/subtract from wallet.
+
+    Validates delta, clamps losses so balance never goes negative, and reports
+    the actual applied delta (so the client can resync exactly).
+    """
     try:
         body = await request.json()
         chat_id = int(body.get("chat_id", 0))
         user_id = int(body.get("user_id", 0))
-        delta = int(body.get("delta", 0))
+        try:
+            delta = int(body.get("delta", 0))
+        except (TypeError, ValueError):
+            return web.json_response({"error": "delta must be int"}, status=400)
         if not chat_id or not user_id:
             return web.json_response({"error": "missing chat_id or user_id"}, status=400)
+        # Sanity clamp on magnitude (anti-cheat / fat-finger)
+        if abs(delta) > 1_000_000:
+            return web.json_response({"error": "delta out of range"}, status=400)
         if delta == 0:
             bal = _get_balance(chat_id, user_id)
-            return web.json_response({"balance": bal})
-        new_bal = _add_balance(chat_id, user_id, delta)
-        # If it was a loss, also process casino leader cut
-        if delta < 0:
+            return web.json_response({"balance": bal, "applied_delta": 0})
+
+        bal_before = _get_balance(chat_id, user_id)
+        if delta < 0 and bal_before <= 0:
+            return web.json_response(
+                {"error": "insufficient balance", "balance": bal_before, "applied_delta": 0},
+                status=400,
+            )
+        # Clamp loss to current balance so wallet never goes negative mid-flight
+        applied = delta
+        if delta < 0 and abs(delta) > bal_before:
+            applied = -bal_before
+
+        new_bal = _add_balance(chat_id, user_id, applied)
+        if applied < 0:
             try:
                 from handlers.casino import _process_casino_loss
-                _process_casino_loss(chat_id, abs(delta))
+                _process_casino_loss(chat_id, abs(applied))
             except Exception:
                 pass
-        return web.json_response({"balance": new_bal})
+        return web.json_response({
+            "balance": new_bal,
+            "applied_delta": applied,
+            "requested_delta": delta,
+        })
     except Exception as e:
         return web.json_response({"error": str(e)}, status=500)
 
 
-# ── Poker lobby API ────────────────────────────────
+# ── Poker lobby API ───────────────────────────────────────────────────────
 import asyncio
-_poker_lobbies = {}  # chat_id -> {players: [{user_id, name}], state, deck, ...}
+_poker_lobbies = {}  # chat_id -> lobby dict
 _poker_lock = asyncio.Lock()
+
+
+def _poker_active_players(lobby):
+    folded = set(lobby.get("folded") or [])
+    return [p for p in lobby["players"] if p["user_id"] not in folded]
+
+
+def _poker_turn_user_id(lobby):
+    active = _poker_active_players(lobby)
+    if not active:
+        return None
+    turn = int(lobby.get("turn", 0)) % len(active)
+    return active[turn]["user_id"]
+
+
+def _poker_public_state(lobby, user_id=""):
+    active = _poker_active_players(lobby)
+    resp = {
+        "state": lobby["state"],
+        "players": lobby["players"],
+        "count": len(lobby["players"]),
+        "pot": lobby.get("pot", 0),
+        "bet": lobby.get("bet", 50),
+        "turn": lobby.get("turn", 0),
+        "turn_user_id": _poker_turn_user_id(lobby) if lobby["state"] not in ("waiting", "finished", "no_lobby") else None,
+        "round": lobby.get("round", 0),
+        "community": lobby.get("community", []),
+        "folded": lobby.get("folded", []),
+        "active_count": len(active),
+    }
+    if user_id and user_id in lobby.get("hands", {}):
+        resp["hand"] = lobby["hands"][user_id]
+    if lobby.get("state") == "finished":
+        if lobby.get("winner"):
+            resp["winner"] = lobby["winner"]
+        if lobby.get("all_hands"):
+            resp["all_hands"] = lobby["all_hands"]
+        if lobby.get("reason"):
+            resp["reason"] = lobby["reason"]
+    return resp
 
 
 async def _api_poker_join(request):
@@ -144,41 +212,44 @@ async def _api_poker_join(request):
         bet = int(body.get("bet", 50))
         if not chat_id or not user_id:
             return web.json_response({"error": "missing params"}, status=400)
+        if bet < 1:
+            return web.json_response({"error": "invalid bet"}, status=400)
 
         async with _poker_lock:
             lobby = _poker_lobbies.setdefault(chat_id, {
                 "players": [], "state": "waiting", "bet": bet,
                 "deck": [], "hands": {}, "community": [],
                 "pot": 0, "turn": 0, "round": 0, "folded": [],
+                "winner": None, "all_hands": {}, "reason": None,
             })
-            # Reset if game was finished
             if lobby["state"] == "finished":
-                lobby.update({"players": [], "state": "waiting", "bet": bet,
-                              "deck": [], "hands": {}, "community": [],
-                              "pot": 0, "turn": 0, "round": 0, "folded": []})
-
-            # Check if already in lobby
-            if any(p["user_id"] == user_id for p in lobby["players"]):
-                return web.json_response({
-                    "status": "already_joined",
-                    "players": lobby["players"],
-                    "state": lobby["state"],
-                    "count": len(lobby["players"]),
+                lobby.update({
+                    "players": [], "state": "waiting", "bet": bet,
+                    "deck": [], "hands": {}, "community": [],
+                    "pot": 0, "turn": 0, "round": 0, "folded": [],
+                    "winner": None, "all_hands": {}, "reason": None,
                 })
 
-            # Check balance
+            if any(p["user_id"] == user_id for p in lobby["players"]):
+                resp = _poker_public_state(lobby, user_id)
+                resp["status"] = "already_joined"
+                return web.json_response(resp)
+
+            if lobby["state"] != "waiting":
+                return web.json_response({"error": "game already started"}, status=400)
+
             bal = _get_balance(int(chat_id), int(user_id))
             if bal < bet:
                 return web.json_response({"error": "not enough kollars"}, status=400)
 
-            lobby["players"].append({"user_id": user_id, "name": name})
+            # First joiner sets the table bet
+            if not lobby["players"]:
+                lobby["bet"] = bet
 
-            return web.json_response({
-                "status": "joined",
-                "players": lobby["players"],
-                "state": lobby["state"],
-                "count": len(lobby["players"]),
-            })
+            lobby["players"].append({"user_id": user_id, "name": name})
+            resp = _poker_public_state(lobby, user_id)
+            resp["status"] = "joined"
+            return web.json_response(resp)
     except Exception as e:
         return web.json_response({"error": str(e)}, status=500)
 
@@ -191,23 +262,11 @@ async def _api_poker_status(request):
         async with _poker_lock:
             lobby = _poker_lobbies.get(chat_id)
             if not lobby:
-                return web.json_response({"state": "no_lobby", "players": [], "count": 0})
-
-            resp = {
-                "state": lobby["state"],
-                "players": lobby["players"],
-                "count": len(lobby["players"]),
-                "pot": lobby.get("pot", 0),
-                "bet": lobby.get("bet", 50),
-                "turn": lobby.get("turn", 0),
-                "round": lobby.get("round", 0),
-                "community": lobby.get("community", []),
-                "folded": lobby.get("folded", []),
-            }
-            # Send player's own hand
-            if user_id and user_id in lobby.get("hands", {}):
-                resp["hand"] = lobby["hands"][user_id]
-            return web.json_response(resp)
+                return web.json_response({
+                    "state": "no_lobby", "players": [], "count": 0,
+                    "turn_user_id": None, "pot": 0, "folded": [],
+                })
+            return web.json_response(_poker_public_state(lobby, user_id))
     except Exception as e:
         return web.json_response({"error": str(e)}, status=500)
 
@@ -236,12 +295,14 @@ async def _api_poker_start(request):
                 return web.json_response({"error": "game already started"}, status=400)
 
             bet = lobby["bet"]
-            # Deduct bet from all players
+            # Deduct bet from all players (clamped)
             for p in lobby["players"]:
-                _add_balance(int(chat_id), int(p["user_id"]), -bet)
+                uid = int(p["user_id"])
+                bal = _get_balance(int(chat_id), uid)
+                applied = -min(bet, bal)
+                _add_balance(int(chat_id), uid, applied)
             lobby["pot"] = bet * len(lobby["players"])
 
-            # Deal cards  
             deck = _make_deck()
             lobby["deck"] = deck
             lobby["hands"] = {}
@@ -252,14 +313,13 @@ async def _api_poker_start(request):
             lobby["turn"] = 0
             lobby["round"] = 0
             lobby["folded"] = []
+            lobby["winner"] = None
+            lobby["all_hands"] = {}
+            lobby["reason"] = None
 
-            return web.json_response({
-                "status": "started",
-                "state": lobby["state"],
-                "pot": lobby["pot"],
-                "players": lobby["players"],
-                "count": len(lobby["players"]),
-            })
+            resp = _poker_public_state(lobby)
+            resp["status"] = "started"
+            return web.json_response(resp)
     except Exception as e:
         return web.json_response({"error": str(e)}, status=500)
 
@@ -271,52 +331,77 @@ async def _api_poker_action(request):
         chat_id = str(body.get("chat_id", ""))
         user_id = str(body.get("user_id", ""))
         action = body.get("action", "check")  # fold, check, raise
-        raise_amt = int(body.get("raise_amount", 0))
+        raise_amt = int(body.get("raise_amount", 0) or 0)
 
         async with _poker_lock:
             lobby = _poker_lobbies.get(chat_id)
             if not lobby or lobby["state"] in ("waiting", "finished"):
                 return web.json_response({"error": "no active game"}, status=400)
 
-            active = [p for p in lobby["players"] if p["user_id"] not in lobby["folded"]]
+            active = _poker_active_players(lobby)
             if not active:
                 return web.json_response({"error": "no active players"}, status=400)
 
-            current_player = active[lobby["turn"] % len(active)]
+            # turn index is always over *current* active list
+            turn_idx = int(lobby.get("turn", 0)) % len(active)
+            current_player = active[turn_idx]
             if current_player["user_id"] != user_id:
-                return web.json_response({"error": "not your turn"}, status=400)
+                return web.json_response({
+                    "error": "not your turn",
+                    "turn_user_id": current_player["user_id"],
+                }, status=400)
 
             if action == "fold":
                 lobby["folded"].append(user_id)
-                active = [p for p in lobby["players"] if p["user_id"] not in lobby["folded"]]
+                active = _poker_active_players(lobby)
                 if len(active) == 1:
-                    # Winner by fold
                     winner = active[0]
                     _add_balance(int(chat_id), int(winner["user_id"]), lobby["pot"])
                     lobby["state"] = "finished"
                     lobby["winner"] = winner
+                    lobby["reason"] = "all_folded"
+                    lobby["all_hands"] = {
+                        p["user_id"]: lobby["hands"].get(p["user_id"], [])
+                        for p in lobby["players"]
+                    }
                     return web.json_response({
                         "status": "game_over",
                         "winner": winner,
                         "pot": lobby["pot"],
                         "reason": "all_folded",
+                        "all_hands": lobby["all_hands"],
+                        "community": lobby.get("community", []),
+                        "state": "finished",
+                        "turn_user_id": None,
                     })
+                # After fold: keep turn index pointing at the next survivor.
+                # The player who occupied turn_idx left, so the next player
+                # slides into that same index — do NOT increment.
+                if active:
+                    lobby["turn"] = turn_idx % len(active)
             elif action == "raise" and raise_amt > 0:
                 bal = _get_balance(int(chat_id), int(user_id))
-                if bal >= raise_amt:
-                    _add_balance(int(chat_id), int(user_id), -raise_amt)
-                    lobby["pot"] += raise_amt
+                applied = min(raise_amt, bal)
+                if applied > 0:
+                    _add_balance(int(chat_id), int(user_id), -applied)
+                    lobby["pot"] += applied
+                # advance turn after raise
+                active = _poker_active_players(lobby)
+                lobby["turn"] = (turn_idx + 1) % max(1, len(active))
+            else:
+                # check / call — advance turn
+                active = _poker_active_players(lobby)
+                lobby["turn"] = (turn_idx + 1) % max(1, len(active))
 
-            # Advance turn
-            lobby["turn"] += 1
-            active = [p for p in lobby["players"] if p["user_id"] not in lobby["folded"]]
+            active = _poker_active_players(lobby)
 
-            # Check if round is complete (everyone acted)
-            if lobby["turn"] >= len(active):
+            # Round complete when we've wrapped and everyone has acted once.
+            # Track acts_this_round.
+            lobby["acts"] = lobby.get("acts", 0) + 1
+            if lobby["acts"] >= len(active) and lobby["state"] != "finished":
+                lobby["acts"] = 0
                 lobby["turn"] = 0
-                lobby["round"] += 1
-
-                # Advance community cards
+                lobby["round"] = lobby.get("round", 0) + 1
                 deck = lobby["deck"]
                 if lobby["state"] == "preflop":
                     lobby["community"] = [deck.pop(), deck.pop(), deck.pop()]
@@ -328,14 +413,17 @@ async def _api_poker_action(request):
                     lobby["community"].append(deck.pop())
                     lobby["state"] = "river"
                 elif lobby["state"] == "river":
-                    # Showdown — evaluate hands
                     lobby["state"] = "showdown"
                     winner = _evaluate_showdown(lobby, active)
                     _add_balance(int(chat_id), int(winner["user_id"]), lobby["pot"])
                     lobby["state"] = "finished"
                     lobby["winner"] = winner
-                    # Reveal all hands
-                    all_hands = {p["user_id"]: lobby["hands"].get(p["user_id"], []) for p in active}
+                    lobby["reason"] = "showdown"
+                    all_hands = {
+                        p["user_id"]: lobby["hands"].get(p["user_id"], [])
+                        for p in active
+                    }
+                    lobby["all_hands"] = all_hands
                     return web.json_response({
                         "status": "game_over",
                         "winner": winner,
@@ -343,17 +431,13 @@ async def _api_poker_action(request):
                         "reason": "showdown",
                         "all_hands": all_hands,
                         "community": lobby["community"],
+                        "state": "finished",
+                        "turn_user_id": None,
                     })
 
-            return web.json_response({
-                "status": "ok",
-                "state": lobby["state"],
-                "pot": lobby["pot"],
-                "turn": lobby["turn"],
-                "community": lobby["community"],
-                "active_count": len(active),
-                "folded": lobby["folded"],
-            })
+            resp = _poker_public_state(lobby, user_id)
+            resp["status"] = "ok"
+            return web.json_response(resp)
     except Exception as e:
         return web.json_response({"error": str(e)}, status=500)
 
@@ -361,8 +445,10 @@ async def _api_poker_action(request):
 def _hand_rank(cards):
     """Evaluate a 5-7 card poker hand and return (rank, tiebreaker)."""
     import itertools
+
     def rank_val(r):
-        vals = {"2":2,"3":3,"4":4,"5":5,"6":6,"7":7,"8":8,"9":9,"10":10,"J":11,"Q":12,"K":13,"A":14}
+        vals = {"2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9,
+                "10": 10, "J": 11, "Q": 12, "K": 13, "A": 14}
         return vals.get(r, 0)
 
     best = (0, [])
@@ -371,7 +457,6 @@ def _hand_rank(cards):
         suits = [c["suit"] for c in combo]
         is_flush = len(set(suits)) == 1
         is_straight = (ranks[0] - ranks[4] == 4 and len(set(ranks)) == 5)
-        # Ace-low straight
         if set(ranks) == {14, 2, 3, 4, 5}:
             is_straight = True
             ranks = [5, 4, 3, 2, 1]
@@ -383,23 +468,23 @@ def _hand_rank(cards):
         pattern = tuple(g[1] for g in groups)
 
         if is_flush and is_straight and ranks[0] == 14:
-            score = (9, ranks)  # Royal flush
+            score = (9, ranks)
         elif is_flush and is_straight:
-            score = (8, ranks)  # Straight flush
+            score = (8, ranks)
         elif pattern[:1] == (4,):
-            score = (7, ranks)
+            score = (7, [groups[0][0]] + ranks)
         elif pattern[:2] == (3, 2):
-            score = (6, ranks)
+            score = (6, [groups[0][0], groups[1][0]])
         elif is_flush:
             score = (5, ranks)
         elif is_straight:
             score = (4, ranks)
         elif pattern[:1] == (3,):
-            score = (3, ranks)
+            score = (3, [groups[0][0]] + ranks)
         elif pattern[:2] == (2, 2):
-            score = (2, ranks)
+            score = (2, [groups[0][0], groups[1][0]] + ranks)
         elif pattern[:1] == (2,):
-            score = (1, ranks)
+            score = (1, [groups[0][0]] + ranks)
         else:
             score = (0, ranks)
 
@@ -423,25 +508,34 @@ def _evaluate_showdown(lobby, active):
     return winner
 
 
+def create_web_app() -> web.Application:
+    """Build the aiohttp app (testable factory)."""
+    web_app = web.Application()
+    web_app.router.add_get("/", _serve_casino)
+    web_app.router.add_get("/casino", _serve_casino)
+    web_app.router.add_get("/api/balance", _api_get_balance)
+    web_app.router.add_post("/api/balance", _api_update_balance)
+    web_app.router.add_post("/api/poker/join", _api_poker_join)
+    web_app.router.add_get("/api/poker/status", _api_poker_status)
+    web_app.router.add_post("/api/poker/start", _api_poker_start)
+    web_app.router.add_post("/api/poker/action", _api_poker_action)
+    return web_app
+
+
 async def _start_web_server(app):
     """Start aiohttp web server alongside the bot (for game hosting + API)."""
     if os.environ.get("DISABLE_AIOHTTP_SERVER", "").lower() == "true":
         logger.info("🌐 aiohttp server disabled via DISABLE_AIOHTTP_SERVER")
         return
-    web_app = web.Application()
-    web_app.router.add_get("/", _serve_casino)
-    web_app.router.add_get("/casino", _serve_casino)
-    # Wallet API
-    web_app.router.add_get("/api/balance", _api_get_balance)
-    web_app.router.add_post("/api/balance", _api_update_balance)
-    # Poker lobby API
-    web_app.router.add_post("/api/poker/join", _api_poker_join)
-    web_app.router.add_get("/api/poker/status", _api_poker_status)
-    web_app.router.add_post("/api/poker/start", _api_poker_start)
-    web_app.router.add_post("/api/poker/action", _api_poker_action)
+    web_app = create_web_app()
     runner = web.AppRunner(web_app)
     await runner.setup()
-    port = int(os.environ.get("PORT") or os.environ.get("WEBSITES_PORT") or os.environ.get("AIOHTTP_PORT") or 8080)
+    port = int(
+        os.environ.get("PORT")
+        or os.environ.get("WEBSITES_PORT")
+        or os.environ.get("AIOHTTP_PORT")
+        or 8091
+    )
     try:
         site = web.TCPSite(runner, "0.0.0.0", port)
         await site.start()
@@ -480,12 +574,20 @@ async def casinogame_cmd(update: Update, context):
 
 
 def _get_game_url():
+    """Public base URL for the HTML5 casino (no trailing path)."""
+    # Prefer explicit WEB_URL (may be full URL with or without scheme)
+    web_url = (os.environ.get("WEB_URL") or "").strip().rstrip("/")
+    if web_url:
+        if web_url.startswith("http://") or web_url.startswith("https://"):
+            return f"{web_url}/casino"
+        return f"https://{web_url}/casino"
+
     domain = (
         os.environ.get("RAILWAY_PUBLIC_DOMAIN")
         or os.environ.get("RAILWAY_STATIC_URL", "").replace("https://", "").replace("http://", "")
-        or os.environ.get("WEB_URL", "").replace("https://", "").replace("http://", "")
-        or "kntubot-production.up.railway.app"
+        or _DEFAULT_GAME_HOST
     )
+    domain = domain.replace("https://", "").replace("http://", "").strip().strip("/")
     return f"https://{domain}/casino"
 
 
@@ -494,15 +596,14 @@ async def game_callback(update: Update, context):
     query = update.callback_query
     if not query:
         return
-    # Only handle game callbacks (not regular button callbacks)
     if not query.game_short_name:
         return
     base_url = _get_game_url()
-    # Pass chat_id and user_id so the game can sync wallet
     chat_id = query.message.chat.id if query.message else 0
     user_id = query.from_user.id
     user_name = query.from_user.first_name or "Player"
-    url = f"{base_url}?chat_id={chat_id}&user_id={user_id}&name={user_name}"
+    from urllib.parse import quote
+    url = f"{base_url}?chat_id={chat_id}&user_id={user_id}&name={quote(user_name)}"
     logger.info("Game callback from %s: sending URL %s", user_id, url)
     try:
         await query.answer(url=url)

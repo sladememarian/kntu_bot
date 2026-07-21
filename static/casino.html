@@ -3,864 +3,959 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-<title>Casino Royale — Kollars</title>
+<title>KNTU Casino Royale — Kollars</title>
 <style>
-/* ══════ RESET & BASE ══════ */
 *{margin:0;padding:0;box-sizing:border-box}
-@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
-@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
-@keyframes glow{0%,100%{box-shadow:0 0 8px rgba(245,197,24,.3)}50%{box-shadow:0 0 20px rgba(245,197,24,.7)}}
-@keyframes coinSpin{0%{transform:rotateY(0)}100%{transform:rotateY(360deg)}}
-@keyframes cardDeal{from{opacity:0;transform:translateY(-40px) rotateZ(-8deg)}to{opacity:1;transform:translateY(0) rotateZ(0)}}
-@keyframes slotSpin{0%{transform:translateY(-100%)}100%{transform:translateY(0)}}
-@keyframes winFlash{0%,100%{color:#f5c518}50%{color:#fff}}
-@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
-@keyframes confetti{0%{opacity:1;transform:translateY(0) rotate(0)}100%{opacity:0;transform:translateY(300px) rotate(720deg)}}
-
 :root{
-  --bg:#0b0e1a;--surface:#131729;--card:#1a1f38;--accent:#e94560;
-  --gold:#f5c518;--green:#2ecc71;--red:#e74c3c;--blue:#3498db;
-  --text:#e8e8f0;--muted:#7a7a9a;--border:#2a2f50;
-  --grad1:linear-gradient(135deg,#0b0e1a 0%,#1a1f38 100%);
-  --grad-gold:linear-gradient(135deg,#f5c518,#d4a017,#f5c518);
-  --grad-accent:linear-gradient(135deg,#e94560,#c73652);
-  --grad-green:linear-gradient(135deg,#2ecc71,#27ae60);
+  --bg:#070a12;--bg2:#0d1220;--surface:#12182b;--card:#1a2140;--card2:#222b4d;
+  --accent:#ff3d6e;--accent2:#ff6b9d;--gold:#f5c518;--gold2:#ffe08a;
+  --green:#2ce69b;--red:#ff4d4d;--blue:#4da3ff;--purple:#a78bfa;
+  --text:#eef0ff;--muted:#8b93b8;--border:rgba(255,255,255,.08);
+  --shadow:0 12px 40px rgba(0,0,0,.45);--radius:18px;
 }
-
+html,body{min-height:100%;}
 body{
-  background:var(--bg);color:var(--text);
-  font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
-  min-height:100vh;overflow-x:hidden;
-  background-image:radial-gradient(ellipse at 20% 50%,rgba(233,69,96,.04) 0%,transparent 60%),
-                    radial-gradient(ellipse at 80% 20%,rgba(245,197,24,.03) 0%,transparent 60%);
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  color:var(--text);background:var(--bg);
+  background-image:
+    radial-gradient(1200px 600px at 10% -10%,rgba(255,61,110,.16),transparent 55%),
+    radial-gradient(900px 500px at 100% 0%,rgba(245,197,24,.10),transparent 50%),
+    radial-gradient(800px 500px at 50% 100%,rgba(77,163,255,.08),transparent 50%);
+  overflow-x:hidden;
 }
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+@keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(245,197,24,.35)}50%{box-shadow:0 0 24px 2px rgba(245,197,24,.55)}}
+@keyframes spinY{to{transform:rotateY(360deg)}}
+@keyframes deal{from{opacity:0;transform:translateY(-28px) rotate(-6deg)}to{opacity:1;transform:none}}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+@keyframes winFlash{0%,100%{color:var(--gold)}50%{color:#fff}}
+@keyframes confetti{0%{opacity:1;transform:translateY(0) rotate(0)}100%{opacity:0;transform:translateY(320px) rotate(720deg)}}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+@keyframes reelBlur{0%{filter:blur(0)}50%{filter:blur(2px)}100%{filter:blur(0)}}
 
-/* ══════ HEADER ══════ */
+.app{max-width:560px;margin:0 auto;min-height:100vh;padding-bottom:28px}
 .header{
-  background:linear-gradient(180deg,#131729 0%,rgba(19,23,41,.95) 100%);
-  backdrop-filter:blur(12px);
-  padding:16px 20px 12px;text-align:center;
-  position:sticky;top:0;z-index:100;
+  position:sticky;top:0;z-index:50;
+  backdrop-filter:blur(16px) saturate(1.2);
+  background:linear-gradient(180deg,rgba(7,10,18,.92),rgba(7,10,18,.72));
   border-bottom:1px solid var(--border);
+  padding:14px 16px 12px;
 }
-.header h1{
-  font-size:1.5em;letter-spacing:1px;
-  background:linear-gradient(90deg,var(--accent),var(--gold));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-  background-clip:text;
+.brand{display:flex;align-items:center;justify-content:center;gap:10px}
+.brand-badge{
+  width:36px;height:36px;border-radius:12px;display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--accent),#7c3aed);font-weight:900;font-size:14px;
+  box-shadow:0 8px 20px rgba(255,61,110,.35);
+}
+.brand h1{
+  font-size:1.25rem;letter-spacing:.08em;text-transform:uppercase;
+  background:linear-gradient(90deg,var(--accent2),var(--gold),var(--blue));
+  -webkit-background-clip:text;background-clip:text;color:transparent;font-weight:800;
 }
 .balance-bar{
-  display:flex;align-items:center;justify-content:center;
-  gap:10px;margin-top:10px;font-size:1.3em;font-weight:700;
-  color:var(--gold);
+  margin-top:12px;display:flex;align-items:center;justify-content:center;gap:10px;
+  padding:10px 14px;border-radius:999px;width:fit-content;margin-inline:auto;
+  background:linear-gradient(135deg,rgba(245,197,24,.12),rgba(255,61,110,.08));
+  border:1px solid rgba(245,197,24,.25);box-shadow:var(--shadow);
 }
 .kollar-coin{
-  display:inline-flex;align-items:center;justify-content:center;
-  width:32px;height:32px;border-radius:50%;
-  background:var(--grad-gold);
-  color:#0b0e1a;font-weight:900;font-size:15px;
-  box-shadow:0 0 12px rgba(245,197,24,.5);
-  animation:glow 3s infinite;
+  width:30px;height:30px;border-radius:50%;display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--gold),#d4a017);color:#1a1200;font-weight:900;
+  animation:glow 2.8s infinite;
 }
-.sync-dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-left:4px;transition:.3s}
-.sync-dot.online{background:var(--green);box-shadow:0 0 8px var(--green)}
-.sync-dot.offline{background:var(--red);box-shadow:0 0 8px var(--red)}
+.balance-bar .amt{font-size:1.2rem;font-weight:800;color:var(--gold2);font-variant-numeric:tabular-nums}
+.balance-bar .lbl{color:var(--muted);font-size:.78rem;font-weight:600;letter-spacing:.04em}
+.sync-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.sync-dot.online{background:var(--green);box-shadow:0 0 10px var(--green)}
+.sync-dot.offline{background:var(--red);box-shadow:0 0 10px var(--red)}
+.sync-dot.syncing{background:var(--blue);box-shadow:0 0 10px var(--blue);animation:pulse 1s infinite}
 
-/* ══════ NAVIGATION ══════ */
+.offline-banner{
+  display:none;margin:10px 16px 0;padding:10px 12px;border-radius:12px;
+  background:rgba(255,77,77,.12);border:1px solid rgba(255,77,77,.35);color:#ffb4b4;
+  font-size:.85rem;text-align:center;font-weight:600;
+}
+.offline-banner.show{display:block;animation:fadeUp .3s ease}
+
 .nav{
-  display:flex;gap:6px;justify-content:center;
-  padding:10px 12px;background:var(--surface);
-  border-bottom:1px solid var(--border);
-  overflow-x:auto;-webkit-overflow-scrolling:touch;
+  display:flex;gap:8px;padding:12px 12px 4px;overflow-x:auto;
+  scrollbar-width:none;-webkit-overflow-scrolling:touch;
 }
+.nav::-webkit-scrollbar{display:none}
 .nav button{
-  background:var(--card);border:1px solid var(--border);
-  color:var(--muted);padding:10px 16px;border-radius:12px;
-  cursor:pointer;font-size:.85em;font-weight:600;
-  transition:all .25s;white-space:nowrap;
-  letter-spacing:.3px;
+  appearance:none;border:1px solid var(--border);background:rgba(255,255,255,.03);
+  color:var(--muted);padding:10px 14px;border-radius:999px;cursor:pointer;
+  font-weight:700;font-size:.82rem;white-space:nowrap;transition:.2s ease;
 }
-.nav button:hover{border-color:var(--accent);color:var(--text)}
+.nav button:hover{color:var(--text);border-color:rgba(255,255,255,.18)}
 .nav button.active{
-  background:var(--grad-accent);border-color:var(--accent);
-  color:#fff;box-shadow:0 4px 15px rgba(233,69,96,.3);
+  color:#fff;border-color:transparent;
+  background:linear-gradient(135deg,var(--accent),#7c3aed);
+  box-shadow:0 8px 22px rgba(255,61,110,.35);
 }
+.nav button:disabled{opacity:.4;cursor:not-allowed}
 
-/* ══════ GAME AREA ══════ */
 .game-area{
-  max-width:520px;margin:16px auto;padding:20px;
-  background:var(--surface);border-radius:16px;
-  border:1px solid var(--border);min-height:360px;
-  animation:fadeIn .4s ease-out;
-  box-shadow:0 8px 32px rgba(0,0,0,.3);
+  margin:14px 12px 0;padding:18px 16px 20px;border-radius:var(--radius);
+  background:linear-gradient(180deg,rgba(26,33,64,.9),rgba(18,24,43,.95));
+  border:1px solid var(--border);box-shadow:var(--shadow);min-height:380px;
+  animation:fadeUp .35s ease;
 }
-.game-area h2{
-  text-align:center;margin-bottom:16px;font-size:1.3em;
-  letter-spacing:.5px;
-  background:linear-gradient(90deg,var(--accent),var(--gold));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-  background-clip:text;
-}
+.game-area h2{text-align:center;font-size:1.15rem;margin-bottom:6px;letter-spacing:.04em}
+.game-sub{text-align:center;color:var(--muted);font-size:.8rem;margin-bottom:16px}
 
-/* ══════ RESULT BOX ══════ */
-.result{
-  background:var(--card);padding:14px;border-radius:12px;
-  text-align:center;margin:12px 0;font-size:1.1em;
-  min-height:44px;border:1px solid var(--border);
-  transition:all .3s;
+.panel{
+  background:rgba(0,0,0,.18);border:1px solid var(--border);border-radius:14px;padding:14px;
 }
-.result.win{border-color:var(--green);color:var(--green);animation:pulse .5s}
-.result.lose{border-color:var(--red);color:var(--red);animation:shake .4s}
+.reels{display:flex;justify-content:center;gap:10px;margin:8px 0 16px}
+.slot-reel,.mega-reel{
+  width:72px;height:84px;border-radius:14px;display:grid;place-items:center;
+  font-size:2rem;background:linear-gradient(180deg,#1e2748,#12182b);
+  border:1px solid rgba(245,197,24,.25);box-shadow:inset 0 0 20px rgba(0,0,0,.35);
+}
+.slot-reel.spinning,.mega-reel.spinning{animation:reelBlur .15s linear infinite}
+.mega-reels .mega-reel{width:56px;height:70px;font-size:1.55rem}
 
-/* ══════ SLOT REELS ══════ */
-.slot-machine{
-  background:linear-gradient(135deg,#1e2340,#0f1225);
-  border-radius:16px;padding:16px;margin:12px 0;
-  border:2px solid var(--border);position:relative;
-  box-shadow:inset 0 2px 10px rgba(0,0,0,.5);
+.input-row{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin:10px 0}
+.input-row label{color:var(--muted);font-size:.8rem;font-weight:600}
+.input-row input[type=number]{
+  width:100px;padding:10px 12px;border-radius:12px;border:1px solid var(--border);
+  background:#0b1020;color:var(--text);font-weight:700;font-size:1rem;text-align:center;
 }
-.slot-display{
-  display:flex;justify-content:center;gap:8px;
-  padding:12px 0;
+.chips{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:8px 0 12px}
+.chip{
+  border:1px solid rgba(245,197,24,.3);background:rgba(245,197,24,.08);color:var(--gold);
+  border-radius:999px;padding:7px 12px;font-weight:700;font-size:.78rem;cursor:pointer;
 }
-.slot-reel{
-  width:64px;height:72px;
-  background:#0a0d1a;border-radius:10px;
-  display:flex;align-items:center;justify-content:center;
-  font-size:2em;
-  border:1px solid var(--border);
-  box-shadow:inset 0 2px 8px rgba(0,0,0,.6);
-  transition:all .3s;overflow:hidden;
-}
-.slot-reel.spinning{animation:pulse .15s infinite}
-.slot-lights{
-  display:flex;justify-content:center;gap:6px;margin-bottom:8px;
-}
-.slot-light{
-  width:8px;height:8px;border-radius:50%;
-  animation:glow 1.5s infinite;
-}
-.slot-light:nth-child(odd){background:var(--accent)}
-.slot-light:nth-child(even){background:var(--gold)}
+.chip:hover{background:rgba(245,197,24,.16)}
+.actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:8px}
 
-/* ══════ BUTTONS ══════ */
 .btn{
-  background:var(--grad-accent);border:none;color:#fff;
-  padding:12px 28px;border-radius:12px;cursor:pointer;
-  font-size:1em;font-weight:700;margin:5px;
-  transition:all .2s;letter-spacing:.3px;
-  box-shadow:0 4px 15px rgba(233,69,96,.25);
+  appearance:none;border:none;cursor:pointer;font-weight:800;letter-spacing:.03em;
+  border-radius:14px;padding:12px 18px;font-size:.92rem;color:#fff;
+  background:linear-gradient(135deg,#3a446e,#2a3358);transition:.15s ease;
+  box-shadow:0 6px 16px rgba(0,0,0,.25);
 }
-.btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(233,69,96,.4)}
-.btn:active{transform:translateY(0)}
-.btn:disabled{background:#333;cursor:not-allowed;box-shadow:none}
-.btn.gold{
-  background:var(--grad-gold);color:#0b0e1a;
-  box-shadow:0 4px 15px rgba(245,197,24,.25);
-}
-.btn.gold:hover{box-shadow:0 6px 20px rgba(245,197,24,.4)}
-.btn.green{
-  background:var(--grad-green);
-  box-shadow:0 4px 15px rgba(46,204,113,.25);
-}
+.btn:hover{transform:translateY(-1px);filter:brightness(1.06)}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none;filter:none}
+.btn.gold{background:linear-gradient(135deg,var(--gold),#d4a017);color:#1a1200}
+.btn.accent{background:linear-gradient(135deg,var(--accent),#c0265a)}
+.btn.green{background:linear-gradient(135deg,#2ce69b,#109e6a);color:#04160f}
+.btn.red{background:linear-gradient(135deg,var(--red),#b91c1c)}
+.btn.ghost{background:transparent;border:1px solid var(--border);color:var(--muted);box-shadow:none}
 
-/* ══════ INPUTS ══════ */
-.input-row{
-  display:flex;gap:10px;align-items:center;
-  justify-content:center;margin:14px 0;flex-wrap:wrap;
+.result{
+  min-height:28px;text-align:center;margin-top:14px;font-weight:800;font-size:.98rem;
 }
-.input-row label{color:var(--muted);font-size:.9em;font-weight:600}
-.input-row input,.input-row select{
-  background:var(--card);border:1px solid var(--border);
-  color:var(--text);padding:10px 14px;border-radius:10px;
-  width:110px;text-align:center;font-size:.95em;
-  transition:border-color .2s;outline:none;
-}
-.input-row input:focus,.input-row select:focus{border-color:var(--accent)}
+.result.win{color:var(--gold);animation:winFlash 1s ease}
+.result.lose{color:#ff8e8e}
+.result.info{color:var(--blue)}
+.result.err{color:var(--red);animation:shake .3s ease}
 
-/* ══════ QUICK BET BUTTONS ══════ */
-.quick-bets{display:flex;gap:6px;justify-content:center;margin:8px 0;flex-wrap:wrap}
-.quick-bet{
-  background:var(--card);border:1px solid var(--border);
-  color:var(--gold);padding:6px 14px;border-radius:8px;
-  cursor:pointer;font-size:.8em;font-weight:600;transition:.2s;
+.cards{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;min-height:88px}
+.card-ui{
+  width:58px;height:82px;border-radius:10px;background:#f7f7ff;color:#111;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-weight:800;box-shadow:0 8px 18px rgba(0,0,0,.35);animation:deal .28s ease;
+  border:1px solid rgba(0,0,0,.08);
 }
-.quick-bet:hover{border-color:var(--gold);background:#1e2340}
+.card-ui .r{font-size:1.1rem;line-height:1}
+.card-ui .s{font-size:1.2rem}
+.card-ui.red{color:#d11}
+.card-ui.back{
+  background:linear-gradient(135deg,#1e3a8a,#312e81);color:transparent;
+  background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.08) 0 6px,transparent 6px 12px),
+    linear-gradient(135deg,#1e3a8a,#312e81);
+}
+.hand-label{text-align:center;color:var(--muted);font-size:.78rem;margin:10px 0 6px;font-weight:700}
+.bj-score{display:inline-block;margin-left:6px;padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.06);color:var(--text)}
 
-/* ══════ CARDS (Blackjack) ══════ */
-.cards{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:12px 0;perspective:600px}
-.card{
-  background:linear-gradient(135deg,#fff,#f0f0f0);
-  color:#1a1a2e;width:60px;height:84px;border-radius:8px;
-  display:flex;align-items:center;justify-content:center;
-  font-size:1.05em;font-weight:bold;
-  box-shadow:0 4px 12px rgba(0,0,0,.3);
-  position:relative;overflow:hidden;
-  animation:cardDeal .4s ease-out;
-  border:2px solid #ddd;
-}
-.card::before{
-  content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);
-  transition:left .5s;
-}
-.card:hover::before{left:140%}
-.card.red{color:#c0392b}
-.card.hidden-card{
-  background:linear-gradient(135deg,#e94560,#c73652);
-  color:transparent;border-color:var(--accent);
-}
-.card.hidden-card::after{
-  content:'?';position:absolute;color:rgba(255,255,255,.4);
-  font-size:2em;
-}
-.card-label{font-size:.65em;position:absolute;top:4px;left:5px;opacity:.6}
-
-/* ══════ ROULETTE ══════ */
+.roulette-wrap{display:grid;gap:14px}
 .roulette-wheel{
-  width:160px;height:160px;border-radius:50%;margin:16px auto;
-  background:conic-gradient(
-    #c0392b 0deg, #2c3e50 10deg, #c0392b 20deg, #2c3e50 30deg,
-    #c0392b 40deg, #27ae60 50deg, #2c3e50 60deg, #c0392b 70deg,
-    #2c3e50 80deg, #c0392b 90deg, #2c3e50 100deg, #c0392b 110deg,
-    #2c3e50 120deg, #c0392b 130deg, #2c3e50 140deg, #c0392b 150deg,
-    #2c3e50 160deg, #c0392b 170deg, #2c3e50 180deg, #c0392b 190deg,
-    #2c3e50 200deg, #c0392b 210deg, #2c3e50 220deg, #c0392b 230deg,
-    #2c3e50 240deg, #c0392b 250deg, #2c3e50 260deg, #c0392b 270deg,
-    #2c3e50 280deg, #c0392b 290deg, #2c3e50 300deg, #c0392b 310deg,
-    #2c3e50 320deg, #c0392b 330deg, #2c3e50 340deg, #c0392b 350deg, #2c3e50 360deg
-  );
-  border:6px solid var(--gold);
-  box-shadow:0 0 30px rgba(245,197,24,.2),inset 0 0 20px rgba(0,0,0,.5);
-  transition:transform 3s cubic-bezier(0.17,0.67,0.12,0.99);
-  position:relative;
+  width:160px;height:160px;margin:0 auto;border-radius:50%;
+  background:
+    conic-gradient(#1a1a1a 0 10deg, #c0392b 0 20deg, #1a1a1a 0 30deg, #c0392b 0 40deg,
+      #1a1a1a 0 50deg, #c0392b 0 60deg, #1a1a1a 0 70deg, #c0392b 0 80deg,
+      #1a1a1a 0 90deg, #c0392b 0 100deg, #1a1a1a 0 110deg, #c0392b 0 120deg,
+      #1a1a1a 0 130deg, #c0392b 0 140deg, #1a1a1a 0 150deg, #c0392b 0 160deg,
+      #1a1a1a 0 170deg, #c0392b 0 180deg, #1a1a1a 0 190deg, #c0392b 0 200deg,
+      #1a1a1a 0 210deg, #c0392b 0 220deg, #1a1a1a 0 230deg, #c0392b 0 240deg,
+      #1a1a1a 0 250deg, #c0392b 0 260deg, #1a1a1a 0 270deg, #c0392b 0 280deg,
+      #1a1a1a 0 290deg, #c0392b 0 300deg, #1a1a1a 0 310deg, #c0392b 0 320deg,
+      #1a1a1a 0 330deg, #c0392b 0 340deg, #1a1a1a 0 350deg, #0a0 0 360deg);
+  border:6px solid var(--gold);box-shadow:0 0 0 4px rgba(245,197,24,.15), var(--shadow);
+  position:relative;transition:transform 3s cubic-bezier(.15,.8,.2,1);
 }
 .roulette-wheel::after{
-  content:'';position:absolute;top:50%;left:50%;
-  transform:translate(-50%,-50%);
-  width:40px;height:40px;border-radius:50%;
-  background:var(--grad-gold);
-  box-shadow:0 0 12px rgba(245,197,24,.6);
+  content:"◆";position:absolute;top:-14px;left:50%;transform:translateX(-50%);
+  color:var(--gold);font-size:18px;text-shadow:0 2px 8px #000;
 }
-.roulette-pointer{
-  width:0;height:0;margin:0 auto;
-  border-left:12px solid transparent;border-right:12px solid transparent;
-  border-top:20px solid var(--gold);
-  filter:drop-shadow(0 2px 4px rgba(0,0,0,.5));
+.roulette-center{
+  position:absolute;inset:48px;border-radius:50%;background:#0b1020;border:2px solid rgba(245,197,24,.4);
+  display:grid;place-items:center;font-weight:900;font-size:1.4rem;color:var(--gold);
 }
-.roulette-grid{
-  display:grid;grid-template-columns:repeat(3,1fr);
-  gap:6px;margin:14px 0;
+.bet-choices{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.bet-choices button{
+  min-width:72px;padding:10px 12px;border-radius:12px;border:1px solid var(--border);
+  background:rgba(255,255,255,.04);color:var(--text);font-weight:800;cursor:pointer;
 }
-.roulette-chip{
-  padding:8px;border-radius:8px;text-align:center;
-  cursor:pointer;font-size:.85em;font-weight:600;
-  transition:.2s;border:2px solid transparent;
+.bet-choices button.active{outline:2px solid var(--gold);background:rgba(245,197,24,.12)}
+.bet-choices button.red-btn{background:rgba(255,77,77,.15);border-color:rgba(255,77,77,.35)}
+.bet-choices button.black-btn{background:rgba(255,255,255,.06)}
+.bet-choices button.green-btn{background:rgba(44,230,155,.12);border-color:rgba(44,230,155,.35)}
+.num-grid{
+  display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:8px;
 }
-.roulette-chip:hover{transform:scale(1.05)}
-.roulette-chip.active{border-color:var(--gold);box-shadow:0 0 10px rgba(245,197,24,.3)}
-.chip-red{background:#c0392b;color:#fff}
-.chip-black{background:#2c3e50;color:#fff}
-.chip-green{background:#27ae60;color:#fff}
-.chip-odd{background:var(--card);color:var(--text);border:1px solid var(--border)}
-.chip-even{background:var(--card);color:var(--text);border:1px solid var(--border)}
-.chip-num{background:var(--card);color:var(--gold);border:1px solid var(--border)}
+.num-grid button{
+  aspect-ratio:1;border-radius:10px;border:1px solid var(--border);cursor:pointer;
+  font-weight:800;font-size:.78rem;color:#fff;background:#1a1a1a;
+}
+.num-grid button.r{background:#8b1e2d}
+.num-grid button.g{background:#0f6b3c}
+.num-grid button.selected{outline:2px solid var(--gold);transform:scale(1.05)}
 
-/* ══════ POKER ══════ */
-.poker-section{
-  margin:12px 0;padding:14px;background:var(--card);
-  border-radius:12px;border:1px solid var(--border);
+.poker-players{display:grid;gap:8px;margin:10px 0}
+.poker-player{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid var(--border);
 }
-.poker-section h3{
-  color:var(--gold);margin-bottom:10px;
-  text-align:center;font-size:1.05em;
+.poker-player.turn{border-color:var(--gold);box-shadow:0 0 0 1px rgba(245,197,24,.3)}
+.poker-player.folded{opacity:.45}
+.poker-winner{
+  text-align:center;padding:14px;border-radius:14px;margin-top:12px;
+  background:linear-gradient(135deg,rgba(245,197,24,.18),rgba(255,61,110,.12));
+  border:1px solid rgba(245,197,24,.35);font-weight:900;color:var(--gold);
 }
-.player-list{list-style:none;padding:0}
-.player-list li{
-  padding:8px 12px;border-bottom:1px solid var(--border);
-  display:flex;align-items:center;gap:8px;
-  font-size:.9em;
-}
-.player-list li:last-child{border-bottom:none}
-.player-list li.you{color:var(--gold);font-weight:bold}
-.player-list li::before{content:'👤';font-size:.8em}
-.player-list li.you::before{content:'⭐'}
-.poker-actions{
-  display:flex;gap:8px;justify-content:center;
-  margin-top:12px;flex-wrap:wrap;
-}
-.community-cards{display:flex;gap:8px;justify-content:center;margin:12px 0}
-.status-msg{text-align:center;color:var(--muted);font-style:italic;margin:8px 0}
-.hidden{display:none}
+.hidden{display:none!important}
+.footer-note{text-align:center;color:var(--muted);font-size:.72rem;margin:16px 12px;opacity:.8}
+.confetti-piece{position:fixed;width:8px;height:8px;z-index:999;pointer-events:none;animation:confetti 1.6s ease forwards}
 
-/* ══════ CONFETTI ══════ */
-.confetti-piece{
-  position:fixed;width:8px;height:8px;
-  animation:confetti 1.5s forwards;
-  pointer-events:none;z-index:999;
-}
-
-/* ══════ RESPONSIVE ══════ */
-@media(max-width:400px){
-  .game-area{margin:10px 8px;padding:14px}
-  .slot-reel{width:52px;height:60px;font-size:1.6em}
-  .card{width:50px;height:70px;font-size:.9em}
-  .btn{padding:10px 20px;font-size:.9em}
-  .roulette-wheel{width:130px;height:130px}
+@media (max-width:420px){
+  .slot-reel{width:64px;height:76px}
+  .mega-reels .mega-reel{width:48px;height:62px;font-size:1.35rem}
+  .card-ui{width:50px;height:72px}
 }
 </style>
 </head>
 <body>
+<div class="app">
+  <header class="header">
+    <div class="brand">
+      <div class="brand-badge">K</div>
+      <h1>Casino Royale</h1>
+    </div>
+    <div class="balance-bar" data-testid="balance-bar">
+      <div class="kollar-coin" id="coinEl" data-testid="coin">K</div>
+      <div>
+        <div class="amt"><span id="balanceDisplay" data-testid="balance">0</span></div>
+        <div class="lbl">KOLLAR WALLET</div>
+      </div>
+      <span id="syncDot" class="sync-dot offline" data-testid="sync-dot" title="Sync status"></span>
+    </div>
+  </header>
 
-<!-- ══════ HEADER ══════ -->
-<div class="header">
-  <h1>🎰 CASINO ROYALE</h1>
-  <div class="balance-bar">
-    <div class="kollar-coin" id="coinEl">K</div>
-    <span id="balanceDisplay">0</span> Kollars
-    <span id="syncDot" class="sync-dot offline" title="Sync status"></span>
+  <div id="offlineBanner" class="offline-banner" data-testid="offline-banner">
+    ⚠ Offline — wallet locked. Reconnect to play.
   </div>
-</div>
 
-<!-- ══════ NAV ══════ -->
-<div class="nav" id="navBar">
-  <button onclick="showGame('slots')" class="active" data-game="slots">🎰 Slots</button>
-  <button onclick="showGame('blackjack')" data-game="blackjack">🃏 Blackjack</button>
-  <button onclick="showGame('roulette')" data-game="roulette">🎡 Roulette</button>
-  <button onclick="showGame('megaslots')" data-game="megaslots">💎 Mega</button>
-  <button onclick="showGame('poker')" data-game="poker">♠️ Poker</button>
-</div>
+  <nav class="nav" id="navBar" data-testid="nav">
+    <button data-game="slots" data-testid="nav-slots" class="active" onclick="showGame('slots')">🎰 Slots</button>
+    <button data-game="blackjack" data-testid="nav-blackjack" onclick="showGame('blackjack')">🃏 Blackjack</button>
+    <button data-game="roulette" data-testid="nav-roulette" onclick="showGame('roulette')">🎡 Roulette</button>
+    <button data-game="mega" data-testid="nav-mega" onclick="showGame('mega')">💎 Mega</button>
+    <button data-game="poker" data-testid="nav-poker" onclick="showGame('poker')">♠️ Poker</button>
+  </nav>
 
-<!-- ══════ GAME AREA ══════ -->
-<div class="game-area" id="gameArea"></div>
+  <main class="game-area" id="gameArea" data-testid="game-area"></main>
+  <p class="footer-note">Synced with Telegram /wallet · Fair RNG · Have fun</p>
+</div>
 
 <script>
-// ── Params & State ──
+/* ============================================================
+   KNTU Casino Royale — client
+   Wallet state machine: online | syncing | offline
+   Offline => lock bets. Server is source of truth.
+   ============================================================ */
 const params = new URLSearchParams(window.location.search);
 const CHAT_ID = params.get('chat_id') || '0';
 const USER_ID = params.get('user_id') || '0';
 const USER_NAME = decodeURIComponent(params.get('name') || 'Player');
-let balance = 0;
-let synced = false;
 const API = window.location.origin;
 
-// ── Balance sync (more frequent — every 10s) ──
-async function fetchBalance() {
-  try {
-    const r = await fetch(`${API}/api/balance?chat_id=${CHAT_ID}&user_id=${USER_ID}`);
-    const d = await r.json();
-    if (d.balance !== undefined) { balance = d.balance; synced = true; }
-  } catch(e) { synced = false; }
-  updateUI();
-}
+let balance = 0;
+let walletState = 'offline'; // online | syncing | offline
+let currentGame = 'slots';
+let busy = false;
+let pokerPoll = null;
 
-async function syncDelta(delta) {
-  balance += delta;
-  updateUI();
-  if (!synced) return;
-  try {
-    const r = await fetch(`${API}/api/balance`, {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({chat_id:parseInt(CHAT_ID), user_id:parseInt(USER_ID), delta})
-    });
-    const d = await r.json();
-    if (d.balance !== undefined) balance = d.balance;
-  } catch(e) {}
-  updateUI();
+// ---------- UI helpers ----------
+function $(id){ return document.getElementById(id); }
+function setWalletUI(){
+  const el = $('balanceDisplay');
+  if (el) el.textContent = Number(balance||0).toLocaleString();
+  const dot = $('syncDot');
+  if (dot){
+    dot.className = 'sync-dot ' + (walletState === 'online' ? 'online' : walletState === 'syncing' ? 'syncing' : 'offline');
+  }
+  const ban = $('offlineBanner');
+  if (ban) ban.classList.toggle('show', walletState === 'offline');
+  document.querySelectorAll('[data-need-online]').forEach(b=>{
+    b.disabled = walletState !== 'online' || busy;
+  });
 }
-
-function updateUI() {
-  document.getElementById('balanceDisplay').textContent = balance.toLocaleString();
-  const dot = document.getElementById('syncDot');
-  dot.className = 'sync-dot ' + (synced ? 'online' : 'offline');
-}
-
-// ── Helpers ──
-function sound(type) {
-  // Placeholder for future audio
-}
-
-function confetti() {
-  const colors = ['#e94560','#f5c518','#2ecc71','#3498db','#9b59b6','#e67e22'];
-  for (let i = 0; i < 30; i++) {
+function confetti(){
+  const colors = ['#ff3d6e','#f5c518','#2ce69b','#4da3ff','#a78bfa','#e67e22'];
+  for (let i=0;i<28;i++){
     const el = document.createElement('div');
     el.className = 'confetti-piece';
     el.style.left = Math.random()*100 + 'vw';
-    el.style.top = '-10px';
-    el.style.background = colors[Math.floor(Math.random()*colors.length)];
+    el.style.top = '-8px';
+    el.style.background = colors[i%colors.length];
     el.style.borderRadius = Math.random()>.5?'50%':'2px';
-    el.style.animationDuration = (1 + Math.random()) + 's';
-    el.style.animationDelay = Math.random()*0.5 + 's';
+    el.style.animationDuration = (1+Math.random())+'s';
     document.body.appendChild(el);
-    setTimeout(() => el.remove(), 2500);
+    setTimeout(()=>el.remove(), 2200);
+  }
+}
+function setResult(id, text, type){
+  const el = $(id);
+  if (!el) return;
+  el.textContent = text||'';
+  el.className = 'result ' + (type||'');
+}
+function setBet(inputId, val){
+  const el = $(inputId);
+  if (el) el.value = val;
+}
+function readBet(inputId){
+  const el = $(inputId);
+  const v = parseInt(el && el.value, 10);
+  return Number.isFinite(v) ? Math.max(1, v) : 1;
+}
+function cardHTML(card, faceDown){
+  if (faceDown) return '<div class="card-ui back" data-testid="card-back"></div>';
+  const red = (card.suit === '♥' || card.suit === '♦');
+  return `<div class="card-ui ${red?'red':''}" data-testid="card"><div class="r">${card.rank}</div><div class="s">${card.suit}</div></div>`;
+}
+
+// ---------- Wallet ----------
+async function fetchBalance(){
+  if (!CHAT_ID || CHAT_ID==='0' || !USER_ID || USER_ID==='0'){
+    // local demo mode
+    if (walletState === 'offline' && balance === 0) balance = 1000;
+    walletState = 'online';
+    setWalletUI();
+    return balance;
+  }
+  walletState = walletState === 'offline' ? 'syncing' : walletState;
+  setWalletUI();
+  try{
+    const r = await fetch(`${API}/api/balance?chat_id=${CHAT_ID}&user_id=${USER_ID}`, {cache:'no-store'});
+    if (!r.ok) throw new Error('http '+r.status);
+    const d = await r.json();
+    if (typeof d.balance === 'number'){
+      balance = d.balance;
+      walletState = 'online';
+    } else throw new Error('bad payload');
+  }catch(e){
+    walletState = 'offline';
+  }
+  setWalletUI();
+  return balance;
+}
+
+/** Apply delta via server. Returns {ok, balance, error}. Never allows local-only spend when online required. */
+async function applyDelta(delta){
+  if (walletState === 'offline'){
+    return {ok:false, balance, error:'offline'};
+  }
+  // optimistic lock: refuse local negative beyond balance
+  if (delta < 0 && balance + delta < 0){
+    return {ok:false, balance, error:'insufficient'};
+  }
+  if (!CHAT_ID || CHAT_ID==='0'){
+    balance = Math.max(0, balance + delta);
+    setWalletUI();
+    return {ok:true, balance, applied_delta:delta};
+  }
+  walletState = 'syncing'; setWalletUI();
+  try{
+    const r = await fetch(`${API}/api/balance`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({chat_id:parseInt(CHAT_ID,10), user_id:parseInt(USER_ID,10), delta})
+    });
+    const d = await r.json().catch(()=>({}));
+    if (!r.ok){
+      walletState = 'online';
+      if (typeof d.balance === 'number') balance = d.balance;
+      setWalletUI();
+      return {ok:false, balance, error:d.error||('http '+r.status)};
+    }
+    if (typeof d.balance === 'number') balance = d.balance;
+    walletState = 'online';
+    setWalletUI();
+    return {ok:true, balance, applied_delta:d.applied_delta, requested_delta:d.requested_delta};
+  }catch(e){
+    walletState = 'offline';
+    setWalletUI();
+    return {ok:false, balance, error:'offline'};
   }
 }
 
-function setResult(id, text, type) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.textContent = text;
-  el.className = 'result ' + (type||'');
+function requireOnline(resultId){
+  if (walletState !== 'online'){
+    if (resultId) setResult(resultId, '⚠ Offline — wallet locked', 'err');
+    return false;
+  }
+  return true;
 }
 
-function setBetValue(inputId, val) {
-  const el = document.getElementById(inputId);
-  if (el) el.value = val;
-}
-
-// ── Navigation ──
-let currentGame = 'slots';
-function showGame(name) {
+// ---------- Nav ----------
+function showGame(name){
   currentGame = name;
-  document.querySelectorAll('.nav button').forEach(b => {
+  document.querySelectorAll('.nav button').forEach(b=>{
     b.classList.toggle('active', b.dataset.game === name);
   });
-  if (pokerPoll) { clearInterval(pokerPoll); pokerPoll = null; }
+  if (pokerPoll){ clearInterval(pokerPoll); pokerPoll = null; }
   renderGame();
 }
-
-function renderGame() {
-  const area = document.getElementById('gameArea');
-  area.style.animation = 'none';
-  area.offsetHeight; // reflow
-  area.style.animation = 'fadeIn .4s ease-out';
-  switch(currentGame) {
+function renderGame(){
+  const area = $('gameArea');
+  area.style.animation = 'none'; area.offsetHeight; area.style.animation = 'fadeUp .35s ease';
+  switch(currentGame){
     case 'slots': renderSlots(area); break;
     case 'blackjack': renderBlackjack(area); break;
     case 'roulette': renderRoulette(area); break;
-    case 'megaslots': renderMegaSlots(area); break;
+    case 'mega': renderMega(area); break;
     case 'poker': renderPoker(area); break;
   }
+  setWalletUI();
 }
 
-// ═══ SLOTS ═══
-const SLOT_SYMBOLS = ['🍒','🍋','🔔','⭐','💎','7️⃣','🍇','🍊'];
-function renderSlots(el) {
-  el.innerHTML = `<h2>🎰 Slot Machine</h2>
-    <div class="slot-machine">
-      <div class="slot-lights">${'<div class="slot-light"></div>'.repeat(12)}</div>
-      <div class="slot-display">
-        <div class="slot-reel" id="r1">❓</div>
-        <div class="slot-reel" id="r2">❓</div>
-        <div class="slot-reel" id="r3">❓</div>
+// ---------- SLOTS ----------
+const SLOT_SYMS = ['🍒','🍋','🔔','⭐','💎','7️⃣'];
+const SLOT_PAY = {'7️⃣':20,'💎':12,'⭐':8,'🔔':5,'🍋':3,'🍒':2};
+function renderSlots(el){
+  el.innerHTML = `
+    <h2 data-testid="slots-title">🎰 Neon Slots</h2>
+    <p class="game-sub">3 reels · match 3 to win</p>
+    <div class="panel">
+      <div class="reels" data-testid="slots-reels">
+        <div class="slot-reel" id="r1" data-testid="slots-r1">❓</div>
+        <div class="slot-reel" id="r2" data-testid="slots-r2">❓</div>
+        <div class="slot-reel" id="r3" data-testid="slots-r3">❓</div>
       </div>
-    </div>
-    <div class="input-row">
-      <label>Bet:</label>
-      <input type="number" id="slotBet" value="10" min="1">
-    </div>
-    <div class="quick-bets">
-      <span class="quick-bet" onclick="setBetValue('slotBet',10)">10</span>
-      <span class="quick-bet" onclick="setBetValue('slotBet',50)">50</span>
-      <span class="quick-bet" onclick="setBetValue('slotBet',100)">100</span>
-      <span class="quick-bet" onclick="setBetValue('slotBet',500)">500</span>
-      <span class="quick-bet" onclick="setBetValue('slotBet',1000)">1K</span>
-    </div>
-    <div style="text-align:center"><button class="btn gold" onclick="spinSlots()" id="slotBtn">🎰 SPIN</button></div>
-    <div class="result" id="slotResult"></div>`;
+      <div class="input-row">
+        <label>Bet</label>
+        <input type="number" id="slotBet" data-testid="slots-bet" value="10" min="1"/>
+      </div>
+      <div class="chips">
+        <button class="chip" data-testid="slots-chip-10" onclick="setBet('slotBet',10)">10</button>
+        <button class="chip" data-testid="slots-chip-25" onclick="setBet('slotBet',25)">25</button>
+        <button class="chip" data-testid="slots-chip-50" onclick="setBet('slotBet',50)">50</button>
+        <button class="chip" data-testid="slots-chip-100" onclick="setBet('slotBet',100)">100</button>
+      </div>
+      <div class="actions">
+        <button class="btn gold" id="slotBtn" data-testid="slots-spin" data-need-online onclick="spinSlots()">SPIN</button>
+      </div>
+      <div class="result" id="slotResult" data-testid="slots-result"></div>
+    </div>`;
 }
-
-async function spinSlots() {
-  const bet = Math.max(1, parseInt(document.getElementById('slotBet').value) || 10);
-  if (bet > balance) { setResult('slotResult','❌ Not enough Kollars!','lose'); return; }
-  const btn = document.getElementById('slotBtn');
-  btn.disabled = true;
-  // Spinning animation
-  const reels = ['r1','r2','r3'];
-  reels.forEach(id => {
-    document.getElementById(id).classList.add('spinning');
-  });
-  // Stop one by one
-  const results = SLOT_SYMBOLS.map(() => SLOT_SYMBOLS[Math.floor(Math.random()*SLOT_SYMBOLS.length)]);
-  const r = [results[0], results[1], results[2]].map(() => SLOT_SYMBOLS[Math.floor(Math.random()*SLOT_SYMBOLS.length)]);
-  for (let i = 0; i < 3; i++) {
-    await new Promise(res => setTimeout(res, 300 + i*250));
-    const reel = document.getElementById(reels[i]);
-    reel.classList.remove('spinning');
-    reel.textContent = r[i];
-    reel.style.animation = 'none';
-    reel.offsetHeight;
-    reel.style.animation = 'slotSpin .2s ease-out';
+async function spinSlots(){
+  if (busy || !requireOnline('slotResult')) return;
+  const bet = readBet('slotBet');
+  if (bet > balance){ setResult('slotResult', 'Not enough kollars', 'err'); return; }
+  busy = true; setWalletUI();
+  const btn = $('slotBtn'); if (btn) btn.disabled = true;
+  // escrow bet first
+  const pay = await applyDelta(-bet);
+  if (!pay.ok){
+    setResult('slotResult', pay.error==='offline'?'⚠ Offline':'Bet failed', 'err');
+    busy=false; setWalletUI(); return;
   }
+  const reels = [$('r1'),$('r2'),$('r3')];
+  reels.forEach(r=>r.classList.add('spinning'));
+  let ticks=0;
+  const iv = setInterval(()=>{
+    reels.forEach(r=>r.textContent = SLOT_SYMS[Math.floor(Math.random()*SLOT_SYMS.length)]);
+    ticks++;
+    if (ticks>12){
+      clearInterval(iv);
+      reels.forEach(r=>r.classList.remove('spinning'));
+      const a = SLOT_SYMS[Math.floor(Math.random()*SLOT_SYMS.length)];
+      const b = SLOT_SYMS[Math.floor(Math.random()*SLOT_SYMS.length)];
+      const c = SLOT_SYMS[Math.floor(Math.random()*SLOT_SYMS.length)];
+      reels[0].textContent=a; reels[1].textContent=b; reels[2].textContent=c;
+      finishSlots(a,b,c,bet);
+    }
+  }, 70);
+}
+async function finishSlots(a,b,c,bet){
   let win = 0;
-  if (r[0]===r[1] && r[1]===r[2]) { win = r[0]==='7️⃣'?bet*20 : r[0]==='💎'?bet*15 : bet*8; }
-  else if (r[0]===r[1] || r[1]===r[2] || r[0]===r[2]) { win = bet*2; }
-  const delta = win > 0 ? win : -bet;
-  await syncDelta(delta);
-  if (win > 0) {
-    setResult('slotResult', `🎉 WIN! +${win.toLocaleString()}K`, 'win');
-    if (win >= bet*8) confetti();
+  if (a===b && b===c) win = bet * (SLOT_PAY[a]||5);
+  else if (a===b || b===c || a===c) win = Math.floor(bet * 1.5);
+  if (win>0){
+    await applyDelta(win);
+    setResult('slotResult', `WIN +${win} 🎉`, 'win');
+    confetti();
   } else {
-    setResult('slotResult', `😢 Lost ${bet.toLocaleString()}K`, 'lose');
+    setResult('slotResult', `Lose −${bet}`, 'lose');
   }
-  btn.disabled = false;
+  busy=false; setWalletUI();
 }
 
-// ═══ BLACKJACK ═══
-let bjDeck, bjPlayer, bjDealer, bjBet, bjDone;
-function renderBlackjack(el) {
-  el.innerHTML = `<h2>🃏 Blackjack</h2>
-    <div class="input-row">
-      <label>Bet:</label>
-      <input type="number" id="bjBetIn" value="20" min="1">
-    </div>
-    <div class="quick-bets">
-      <span class="quick-bet" onclick="setBetValue('bjBetIn',20)">20</span>
-      <span class="quick-bet" onclick="setBetValue('bjBetIn',50)">50</span>
-      <span class="quick-bet" onclick="setBetValue('bjBetIn',100)">100</span>
-      <span class="quick-bet" onclick="setBetValue('bjBetIn',500)">500</span>
-    </div>
-    <div style="text-align:center"><button class="btn gold" onclick="bjStart()">🃏 Deal</button></div>
-    <div id="bjArea"></div>`;
-}
-function bjNewDeck() {
-  const s=['♠','♥','♦','♣'], r=['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
-  let d=[]; s.forEach(su=>r.forEach(ra=>d.push({r:ra,s:su})));
-  for(let i=d.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]];}
+// ---------- BLACKJACK ----------
+let bj = null; // {player, dealer, bet, escrowed, done}
+function newDeck(){
+  const suits=['♠','♥','♦','♣'], ranks=['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+  const d=[];
+  for (const s of suits) for (const r of ranks) d.push({rank:r,suit:s});
+  for (let i=d.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [d[i],d[j]]=[d[j],d[i]]; }
   return d;
 }
-function bjVal(hand) {
-  let v=0,a=0;
-  hand.forEach(c=>{if(c.r==='A'){a++;v+=11}else if(['K','Q','J'].includes(c.r))v+=10;else v+=parseInt(c.r)});
-  while(v>21&&a>0){v-=10;a--}return v;
-}
-function bjCardHtml(c,delay) {
-  const red = c.s==='♥'||c.s==='♦';
-  const d = delay ? `animation-delay:${delay}ms` : '';
-  return `<div class="card${red?' red':''}" style="${d}"><span class="card-label">${c.s}</span>${c.r}${c.s}</div>`;
-}
-function bjHiddenCard() {
-  return `<div class="card hidden-card"></div>`;
-}
-function bjStart() {
-  bjBet=Math.max(1,parseInt(document.getElementById('bjBetIn').value)||20);
-  if(bjBet>balance){document.getElementById('bjArea').innerHTML='<div class="result lose">❌ Not enough Kollars!</div>';return}
-  bjDeck=bjNewDeck();bjPlayer=[bjDeck.pop(),bjDeck.pop()];bjDealer=[bjDeck.pop(),bjDeck.pop()];bjDone=false;
-  bjRender();
-  if(bjVal(bjPlayer)===21){bjStand();}
-}
-function bjRender() {
-  const a=document.getElementById('bjArea');
-  let dCards = bjDone
-    ? bjDealer.map((c,i) => bjCardHtml(c, i*100)).join('')
-    : bjCardHtml(bjDealer[0],0) + bjHiddenCard();
-  const pCards = bjPlayer.map((c,i) => bjCardHtml(c, i*100)).join('');
-  a.innerHTML=`
-    <div style="text-align:center;margin:12px 0">
-      <span style="color:var(--muted);font-size:.85em">DEALER ${bjDone?'('+bjVal(bjDealer)+')':'(?)'}</span>
-    </div>
-    <div class="cards">${dCards}</div>
-    <div style="text-align:center;margin:12px 0">
-      <span style="color:var(--gold);font-weight:bold">YOU (${bjVal(bjPlayer)})</span>
-      <span style="color:var(--muted);font-size:.8em;margin-left:8px">Bet: ${bjBet}K</span>
-    </div>
-    <div class="cards">${pCards}</div>
-    ${bjDone?'':'<div style="text-align:center;margin-top:14px"><button class="btn" onclick="bjHit()">🃏 Hit</button><button class="btn green" onclick="bjStand()">🛑 Stand</button></div>'}
-    <div class="result" id="bjResult"></div>`;
-}
-function bjHit(){
-  if(bjDone)return;
-  bjPlayer.push(bjDeck.pop());
-  if(bjVal(bjPlayer)>21){bjDone=true;bjRender();syncDelta(-bjBet);setResult('bjResult',`💥 Bust! Lost ${bjBet}K`,'lose')}
-  else bjRender()
-}
-function bjStand(){
-  if(bjDone)return;bjDone=true;
-  while(bjVal(bjDealer)<17)bjDealer.push(bjDeck.pop());
-  bjRender();
-  const pv=bjVal(bjPlayer),dv=bjVal(bjDealer);
-  if(dv>21||pv>dv){
-    syncDelta(bjBet);setResult('bjResult',`🎉 You win! +${bjBet}K`,'win');
-    if(pv===21)confetti();
-  } else if(pv===dv){
-    setResult('bjResult','🤝 Push!','');
-  } else {
-    syncDelta(-bjBet);setResult('bjResult',`😢 Dealer wins. Lost ${bjBet}K`,'lose');
+function handValue(cards){
+  let t=0, aces=0;
+  for (const c of cards){
+    if (c.rank==='A'){ aces++; t+=11; }
+    else if ('JQK'.includes(c.rank)) t+=10;
+    else t+=parseInt(c.rank,10);
   }
+  while(t>21 && aces){ t-=10; aces--; }
+  return t;
 }
-
-// ═══ ROULETTE ═══
-let rouletteChoice = 'red';
-function renderRoulette(el) {
-  el.innerHTML = `<h2>🎡 Roulette</h2>
-    <div class="roulette-pointer"></div>
-    <div class="roulette-wheel" id="rouletteWheel"></div>
-    <div class="input-row">
-      <label>Bet:</label>
-      <input type="number" id="rBet" value="15" min="1">
-    </div>
-    <div class="quick-bets">
-      <span class="quick-bet" onclick="setBetValue('rBet',10)">10</span>
-      <span class="quick-bet" onclick="setBetValue('rBet',50)">50</span>
-      <span class="quick-bet" onclick="setBetValue('rBet',100)">100</span>
-      <span class="quick-bet" onclick="setBetValue('rBet',500)">500</span>
-    </div>
-    <div class="roulette-grid">
-      <div class="roulette-chip chip-red active" onclick="pickRouletteChoice('red',this)" data-choice="red">🔴 Red</div>
-      <div class="roulette-chip chip-black" onclick="pickRouletteChoice('black',this)" data-choice="black">⚫ Black</div>
-      <div class="roulette-chip chip-green" onclick="pickRouletteChoice('green',this)" data-choice="green">🟢 Green</div>
-      <div class="roulette-chip chip-odd" onclick="pickRouletteChoice('odd',this)" data-choice="odd">Odd</div>
-      <div class="roulette-chip chip-even" onclick="pickRouletteChoice('even',this)" data-choice="even">Even</div>
-      <div class="roulette-chip chip-num" onclick="pickRouletteNum()" data-choice="num">🔢 Number</div>
-    </div>
-    <div style="text-align:center"><button class="btn" onclick="spinRoulette()" id="rouletteBtn">🎡 SPIN</button></div>
-    <div class="result" id="rResult"></div>`;
-}
-function pickRouletteChoice(c, el) {
-  rouletteChoice = c;
-  document.querySelectorAll('.roulette-chip').forEach(e => e.classList.remove('active'));
-  if (el) el.classList.add('active');
-}
-function pickRouletteNum() {
-  const n = prompt('Pick a number (0-36):','17');
-  if (n !== null && parseInt(n) >= 0 && parseInt(n) <= 36) {
-    rouletteChoice = parseInt(n).toString();
-    document.querySelectorAll('.roulette-chip').forEach(e => e.classList.remove('active'));
-    document.querySelector('[data-choice="num"]').classList.add('active');
-    document.querySelector('[data-choice="num"]').textContent = '🔢 #' + n;
-  }
-}
-async function spinRoulette() {
-  const bet=Math.max(1,parseInt(document.getElementById('rBet').value)||15);
-  if(bet>balance){setResult('rResult','❌ Not enough Kollars!','lose');return}
-  const btn = document.getElementById('rouletteBtn');
-  btn.disabled = true;
-  const wheel = document.getElementById('rouletteWheel');
-  const spins = 1440 + Math.random()*720;
-  wheel.style.transform = `rotate(${spins}deg)`;
-  await new Promise(res=>setTimeout(res,3200));
-  const num=Math.floor(Math.random()*37);
-  const reds=[1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36];
-  const color=num===0?'green':reds.includes(num)?'red':'black';
-  const parity=num===0?'green':num%2===0?'even':'odd';
-  let win=0;
-  const choice = rouletteChoice;
-  if(choice==='green'&&color==='green')win=bet*35;
-  else if(choice===color)win=bet*2;
-  else if(choice===parity)win=bet*2;
-  else if(!isNaN(parseInt(choice))&&parseInt(choice)===num)win=bet*36;
-  const delta=win>0?win:-bet;
-  await syncDelta(delta);
-  const colorEmoji = color==='red'?'🔴':color==='green'?'🟢':'⚫';
-  if(win>0){
-    setResult('rResult',`${colorEmoji} ${num} — 🎉 +${win.toLocaleString()}K`,'win');
-    if(win>=bet*10) confetti();
-  } else {
-    setResult('rResult',`${colorEmoji} ${num} — 😢 -${bet.toLocaleString()}K`,'lose');
-  }
-  btn.disabled = false;
-}
-
-// ═══ MEGA SLOTS ═══
-const MEGA_SYM=['💎','👑','🌟','🔥','💰','🎪','🦄','🏆'];
-function renderMegaSlots(el) {
-  el.innerHTML=`<h2>💎 Mega Slots</h2>
-    <div class="slot-machine">
-      <div class="slot-lights">${'<div class="slot-light"></div>'.repeat(14)}</div>
-      <div class="slot-display">
-        <div class="slot-reel" id="m1">❓</div>
-        <div class="slot-reel" id="m2">❓</div>
-        <div class="slot-reel" id="m3">❓</div>
-        <div class="slot-reel" id="m4">❓</div>
-        <div class="slot-reel" id="m5">❓</div>
+function renderBlackjack(el){
+  el.innerHTML = `
+    <h2 data-testid="bj-title">🃏 Blackjack</h2>
+    <p class="game-sub">Dealer stands on all 17 · Blackjack pays 3:2</p>
+    <div class="panel" id="bjPanel">
+      <div class="input-row" id="bjBetRow">
+        <label>Bet</label>
+        <input type="number" id="bjBetIn" data-testid="bj-bet" value="20" min="1"/>
       </div>
-    </div>
-    <div class="input-row">
-      <label>Bet:</label>
-      <input type="number" id="megaBet" value="50" min="10">
-    </div>
-    <div class="quick-bets">
-      <span class="quick-bet" onclick="setBetValue('megaBet',50)">50</span>
-      <span class="quick-bet" onclick="setBetValue('megaBet',100)">100</span>
-      <span class="quick-bet" onclick="setBetValue('megaBet',500)">500</span>
-      <span class="quick-bet" onclick="setBetValue('megaBet',1000)">1K</span>
-    </div>
-    <div style="text-align:center"><button class="btn gold" onclick="spinMega()" id="megaBtn">💎 MEGA SPIN</button></div>
-    <div class="result" id="megaResult"></div>`;
+      <div class="chips" id="bjChips">
+        <button class="chip" onclick="setBet('bjBetIn',20)">20</button>
+        <button class="chip" onclick="setBet('bjBetIn',50)">50</button>
+        <button class="chip" onclick="setBet('bjBetIn',100)">100</button>
+      </div>
+      <div class="actions" id="bjDealRow">
+        <button class="btn gold" id="bjDealBtn" data-testid="bj-deal" data-need-online onclick="bjDeal()">DEAL</button>
+      </div>
+      <div id="bjArea" data-testid="bj-area"></div>
+      <div class="result" id="bjResult" data-testid="bj-result"></div>
+    </div>`;
+  if (bj && !bj.done) paintBJ();
+}
+function paintBJ(){
+  const area = $('bjArea'); if (!area || !bj) return;
+  const hideDealer = !bj.done && bj.playerStanding!==true && !bj.showDealer;
+  const dv = bj.showDealer || bj.done ? handValue(bj.dealer) : (bj.dealer[0]?handValue([bj.dealer[0]]):0);
+  area.innerHTML = `
+    <div class="hand-label">Dealer <span class="bj-score" data-testid="bj-dealer-score">${bj.done||bj.showDealer?handValue(bj.dealer):(bj.dealer[0]?bj.dealer[0].rank:'?')}</span></div>
+    <div class="cards" data-testid="bj-dealer">${bj.dealer.map((c,i)=>cardHTML(c, hideDealer && i===1)).join('')}</div>
+    <div class="hand-label">You <span class="bj-score" data-testid="bj-player-score">${handValue(bj.player)}</span></div>
+    <div class="cards" data-testid="bj-player">${bj.player.map(c=>cardHTML(c)).join('')}</div>
+    <div class="actions" id="bjActions" style="margin-top:14px"></div>`;
+  const actions = $('bjActions');
+  if (!bj.done){
+    actions.innerHTML = `
+      <button class="btn" data-testid="bj-hit" data-need-online onclick="bjHit()">HIT</button>
+      <button class="btn green" data-testid="bj-stand" data-need-online onclick="bjStand()">STAND</button>
+      <button class="btn accent" data-testid="bj-double" data-need-online onclick="bjDouble()" ${bj.player.length!==2?'disabled':''}>DOUBLE</button>`;
+  } else {
+    actions.innerHTML = `<button class="btn gold" data-testid="bj-again" data-need-online onclick="bjReset()">AGAIN</button>`;
+  }
+  setWalletUI();
+}
+async function bjDeal(){
+  if (busy || !requireOnline('bjResult')) return;
+  const bet = readBet('bjBetIn');
+  if (bet > balance){ setResult('bjResult','Not enough kollars','err'); return; }
+  busy = true; setWalletUI();
+  const pay = await applyDelta(-bet);
+  if (!pay.ok){ setResult('bjResult', pay.error==='offline'?'⚠ Offline':'Bet failed','err'); busy=false; setWalletUI(); return; }
+  const deck = newDeck();
+  bj = {
+    deck, player:[deck.pop(), deck.pop()], dealer:[deck.pop(), deck.pop()],
+    bet, escrowed: bet, done:false, showDealer:false, playerStanding:false
+  };
+  $('bjBetRow')?.classList.add('hidden');
+  $('bjChips')?.classList.add('hidden');
+  $('bjDealRow')?.classList.add('hidden');
+  setResult('bjResult','','');
+  // natural blackjack?
+  const pv = handValue(bj.player), dv = handValue(bj.dealer);
+  if (pv === 21){
+    bj.showDealer = true; bj.done = true;
+    if (dv === 21){
+      await applyDelta(bj.escrowed); // push
+      setResult('bjResult', `Push — bet returned`, 'info');
+    } else {
+      const win = bj.escrowed + Math.floor(bj.escrowed * 1.5); // stake + 3:2
+      await applyDelta(win);
+      setResult('bjResult', `Blackjack! +${Math.floor(bj.escrowed*1.5)}`, 'win');
+      confetti();
+    }
+  }
+  paintBJ();
+  busy=false; setWalletUI();
+}
+async function bjHit(){
+  if (!bj || bj.done || busy || !requireOnline('bjResult')) return;
+  bj.player.push(bj.deck.pop());
+  if (handValue(bj.player) > 21){
+    bj.done = true; bj.showDealer = true;
+    setResult('bjResult', `Bust −${bj.escrowed}`, 'lose');
+  }
+  paintBJ();
+}
+async function bjDouble(){
+  if (!bj || bj.done || bj.player.length!==2 || busy || !requireOnline('bjResult')) return;
+  if (balance < bj.bet){ setResult('bjResult','Not enough to double','err'); return; }
+  busy=true; setWalletUI();
+  const pay = await applyDelta(-bj.bet);
+  if (!pay.ok){ setResult('bjResult','Double failed','err'); busy=false; setWalletUI(); return; }
+  bj.escrowed += bj.bet;
+  bj.player.push(bj.deck.pop());
+  if (handValue(bj.player) > 21){
+    bj.done=true; bj.showDealer=true;
+    setResult('bjResult', `Bust −${bj.escrowed}`,'lose');
+    paintBJ(); busy=false; setWalletUI(); return;
+  }
+  busy=false;
+  await bjStand();
+}
+async function bjStand(){
+  if (!bj || bj.done || busy || !requireOnline('bjResult')) return;
+  busy=true; setWalletUI();
+  bj.playerStanding = true; bj.showDealer = true;
+  while (handValue(bj.dealer) < 17){
+    bj.dealer.push(bj.deck.pop());
+  }
+  const pv = handValue(bj.player), dv = handValue(bj.dealer);
+  bj.done = true;
+  if (dv > 21 || pv > dv){
+    const win = bj.escrowed * 2; // return stake + 1x
+    await applyDelta(win);
+    setResult('bjResult', `You win +${bj.escrowed}`, 'win');
+    confetti();
+  } else if (pv === dv){
+    await applyDelta(bj.escrowed);
+    setResult('bjResult', 'Push — bet returned', 'info');
+  } else {
+    setResult('bjResult', `Dealer wins −${bj.escrowed}`, 'lose');
+  }
+  paintBJ();
+  busy=false; setWalletUI();
+}
+function bjReset(){
+  bj=null;
+  renderBlackjack($('gameArea'));
+}
+
+// ---------- ROULETTE ----------
+const REDS = new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
+let rouletteChoice = 'red'; // red|black|even|odd|number
+let rouletteNumber = 0;
+function colorOf(n){ if(n===0) return 'green'; return REDS.has(n)?'red':'black'; }
+function renderRoulette(el){
+  el.innerHTML = `
+    <h2 data-testid="roul-title">🎡 Roulette</h2>
+    <p class="game-sub">Even money 1:1 · Straight up 35:1 · 0 is green</p>
+    <div class="panel roulette-wrap">
+      <div class="roulette-wheel" id="rouletteWheel" data-testid="roul-wheel">
+        <div class="roulette-center" id="roulCenter" data-testid="roul-center">?</div>
+      </div>
+      <div class="input-row">
+        <label>Bet</label>
+        <input type="number" id="rBet" data-testid="roul-bet" value="15" min="1"/>
+      </div>
+      <div class="bet-choices" data-testid="roul-choices">
+        <button class="red-btn active" data-testid="roul-red" onclick="pickRoul('red',this)">RED</button>
+        <button class="black-btn" data-testid="roul-black" onclick="pickRoul('black',this)">BLACK</button>
+        <button data-testid="roul-even" onclick="pickRoul('even',this)">EVEN</button>
+        <button data-testid="roul-odd" onclick="pickRoul('odd',this)">ODD</button>
+        <button class="green-btn" data-testid="roul-zero" onclick="pickRoul('number',this,0)">0 ×35</button>
+      </div>
+      <div class="num-grid" id="roulGrid" data-testid="roul-grid"></div>
+      <div class="actions">
+        <button class="btn gold" id="rouletteBtn" data-testid="roul-spin" data-need-online onclick="spinRoulette()">SPIN</button>
+      </div>
+      <div class="result" id="rResult" data-testid="roul-result"></div>
+    </div>`;
+  const grid = $('roulGrid');
+  let html = '';
+  for (let n=0;n<=36;n++){
+    const col = n===0?'g':(REDS.has(n)?'r':'');
+    html += `<button class="${col}" data-testid="roul-num-${n}" onclick="pickRoul('number',this,${n})">${n}</button>`;
+  }
+  grid.innerHTML = html;
+}
+function pickRoul(choice, el, num){
+  rouletteChoice = choice;
+  if (choice==='number') rouletteNumber = (num===undefined?rouletteNumber:num);
+  document.querySelectorAll('.bet-choices button, .num-grid button').forEach(b=>b.classList.remove('active','selected'));
+  if (el){
+    el.classList.add(el.closest('.num-grid')?'selected':'active');
+  }
+  if (choice==='number'){
+    const nb = document.querySelector(`[data-testid="roul-num-${rouletteNumber}"]`);
+    if (nb) nb.classList.add('selected');
+  }
+}
+async function spinRoulette(){
+  if (busy || !requireOnline('rResult')) return;
+  const bet = readBet('rBet');
+  if (bet > balance){ setResult('rResult','Not enough kollars','err'); return; }
+  busy=true; setWalletUI();
+  const pay = await applyDelta(-bet);
+  if (!pay.ok){ setResult('rResult', pay.error==='offline'?'⚠ Offline':'Bet failed','err'); busy=false; setWalletUI(); return; }
+  const num = Math.floor(Math.random()*37); // 0..36
+  const wheel = $('rouletteWheel');
+  const rot = 1800 + num * (360/37);
+  if (wheel){ wheel.style.transform = `rotate(${rot}deg)`; }
+  await new Promise(r=>setTimeout(r, 3000));
+  const center = $('roulCenter');
+  if (center){
+    center.textContent = num;
+    center.style.color = colorOf(num)==='red'?'#ff6b6b':colorOf(num)==='green'?'#2ce69b':'#fff';
+  }
+  const col = colorOf(num);
+  let win = 0;
+  if (rouletteChoice==='red' && col==='red') win = bet*2;
+  else if (rouletteChoice==='black' && col==='black') win = bet*2;
+  else if (rouletteChoice==='even' && num!==0 && num%2===0) win = bet*2;
+  else if (rouletteChoice==='odd' && num%2===1) win = bet*2;
+  else if (rouletteChoice==='number' && num===rouletteNumber) win = bet*36; // 35:1 + stake
+  if (win>0){
+    await applyDelta(win);
+    const profit = win - bet;
+    setResult('rResult', `${num} ${col.toUpperCase()} · WIN +${profit}`, 'win');
+    confetti();
+  } else {
+    setResult('rResult', `${num} ${col.toUpperCase()} · Lose −${bet}`, 'lose');
+  }
+  busy=false; setWalletUI();
+}
+
+// ---------- MEGA SLOTS ----------
+const MEGA_SYMS = ['🍒','🍋','🔔','⭐','💎','7️⃣','👑'];
+const MEGA_PAY = {'👑':50,'7️⃣':25,'💎':15,'⭐':10,'🔔':6,'🍋':4,'🍒':3};
+function renderMega(el){
+  el.innerHTML = `
+    <h2 data-testid="mega-title">💎 Mega Slots</h2>
+    <p class="game-sub">5 reels · bigger risk, bigger glory</p>
+    <div class="panel">
+      <div class="reels mega-reels" data-testid="mega-reels">
+        <div class="mega-reel" id="m1" data-testid="mega-r1">❓</div>
+        <div class="mega-reel" id="m2" data-testid="mega-r2">❓</div>
+        <div class="mega-reel" id="m3" data-testid="mega-r3">❓</div>
+        <div class="mega-reel" id="m4" data-testid="mega-r4">❓</div>
+        <div class="mega-reel" id="m5" data-testid="mega-r5">❓</div>
+      </div>
+      <div class="input-row">
+        <label>Bet</label>
+        <input type="number" id="megaBet" data-testid="mega-bet" value="50" min="10"/>
+      </div>
+      <div class="actions">
+        <button class="btn gold" id="megaBtn" data-testid="mega-spin" data-need-online onclick="spinMega()">MEGA SPIN</button>
+      </div>
+      <div class="result" id="megaResult" data-testid="mega-result"></div>
+    </div>`;
 }
 async function spinMega(){
-  const bet=Math.max(10,parseInt(document.getElementById('megaBet').value)||50);
-  if(bet>balance){setResult('megaResult','❌ Not enough Kollars!','lose');return}
-  const btn=document.getElementById('megaBtn');
-  btn.disabled=true;
-  const reelIds=['m1','m2','m3','m4','m5'];
-  reelIds.forEach(id=>document.getElementById(id).classList.add('spinning'));
-  const r=Array.from({length:5},()=>MEGA_SYM[Math.floor(Math.random()*MEGA_SYM.length)]);
-  for(let i=0;i<5;i++){
-    await new Promise(res=>setTimeout(res,250+i*200));
-    const reel=document.getElementById(reelIds[i]);
-    reel.classList.remove('spinning');
-    reel.textContent=r[i];
-    reel.style.animation='none';reel.offsetHeight;
-    reel.style.animation='slotSpin .2s ease-out';
+  if (busy || !requireOnline('megaResult')) return;
+  const bet = Math.max(10, readBet('megaBet'));
+  if (bet > balance){ setResult('megaResult','Not enough kollars','err'); return; }
+  busy=true; setWalletUI();
+  const pay = await applyDelta(-bet);
+  if (!pay.ok){ setResult('megaResult', pay.error==='offline'?'⚠ Offline':'Bet failed','err'); busy=false; setWalletUI(); return; }
+  const ids=['m1','m2','m3','m4','m5'];
+  ids.forEach(id=>$(id)?.classList.add('spinning'));
+  let ticks=0;
+  const iv=setInterval(()=>{
+    ids.forEach(id=>{ const el=$(id); if(el) el.textContent=MEGA_SYMS[Math.floor(Math.random()*MEGA_SYMS.length)]; });
+    ticks++;
+    if(ticks>14){
+      clearInterval(iv);
+      const res = ids.map(id=>{
+        const el=$(id); el.classList.remove('spinning');
+        const s=MEGA_SYMS[Math.floor(Math.random()*MEGA_SYMS.length)];
+        el.textContent=s; return s;
+      });
+      finishMega(res, bet);
+    }
+  },70);
+}
+async function finishMega(res, bet){
+  const counts={};
+  res.forEach(s=>counts[s]=(counts[s]||0)+1);
+  let best=0, sym=null;
+  for (const [s,c] of Object.entries(counts)){
+    if (c>=3 && (MEGA_PAY[s]||0)*c > best){ best=(MEGA_PAY[s]||0)*(c===5?3:c===4?2:1); sym=s; }
   }
-  const counts={};r.forEach(s=>counts[s]=(counts[s]||0)+1);
-  const mx=Math.max(...Object.values(counts));
+  // 5 of a kind uses higher mult already; 3-of = 1x table, 4=2x, 5=3x of table rate * bet
   let win=0;
-  if(mx===5)win=bet*50;else if(mx===4)win=bet*15;else if(mx===3)win=bet*4;
-  const delta=win>0?win:-bet;
-  await syncDelta(delta);
-  if(win>0){
-    setResult('megaResult',`🎉 ${mx}-match! +${win.toLocaleString()}K`,'win');
-    if(mx>=4)confetti();
-  } else {
-    setResult('megaResult',`😢 Lost ${bet.toLocaleString()}K`,'lose');
+  if (sym){
+    const c=counts[sym];
+    const mult = c>=5?3:c===4?2:1;
+    win = bet * (MEGA_PAY[sym]||3) * mult / (c>=3?1:1);
+    // simplify: 3 kind = pay*bet, 4=2*pay*bet, 5=5*pay*bet
+    if (c===3) win = bet * MEGA_PAY[sym];
+    if (c===4) win = bet * MEGA_PAY[sym] * 2;
+    if (c>=5) win = bet * MEGA_PAY[sym] * 5;
   }
-  btn.disabled=false;
+  if (win>0){
+    await applyDelta(win);
+    setResult('megaResult', `${counts[sym]}×${sym} · WIN +${win}`, 'win');
+    confetti();
+  } else setResult('megaResult', `Lose −${bet}`, 'lose');
+  busy=false; setWalletUI();
 }
 
-// ═══ MULTIPLAYER POKER ═══
-let pokerPoll = null;
-let pokerState = null;
-
-function renderPoker(el) {
-  el.innerHTML = `<h2>♠️ Texas Hold'em Poker</h2>
-    <div class="poker-section">
-      <div class="input-row"><label>Buy-in:</label><input type="number" id="pokerBet" value="50" min="10"></div>
-      <div style="text-align:center"><button class="btn gold" onclick="joinPoker()">🚪 Join Lobby</button></div>
-      <div id="pokerLobby"></div>
-    </div>
-    <div id="pokerGame" class="hidden"></div>`;
+// ---------- POKER ----------
+function renderPoker(el){
+  el.innerHTML = `
+    <h2 data-testid="poker-title">♠️ Texas Hold'em</h2>
+    <p class="game-sub">4+ players · shared table in this chat</p>
+    <div class="panel">
+      <div class="input-row" id="pokerJoinRow">
+        <label>Buy-in</label>
+        <input type="number" id="pokerBet" data-testid="poker-bet" value="50" min="10"/>
+        <button class="btn gold" id="pokerJoinBtn" data-testid="poker-join" data-need-online onclick="joinPoker()">JOIN</button>
+      </div>
+      <div id="pokerLobby" data-testid="poker-lobby"></div>
+      <div id="pokerGame" class="hidden" data-testid="poker-game"></div>
+      <div class="result" id="pokerResult" data-testid="poker-result"></div>
+    </div>`;
   pollPokerStatus();
+  if (pokerPoll) clearInterval(pokerPoll);
+  pokerPoll = setInterval(pollPokerStatus, 1500);
 }
-
-async function joinPoker() {
-  const bet = Math.max(10, parseInt(document.getElementById('pokerBet').value) || 50);
-  try {
+async function joinPoker(){
+  if (!requireOnline('pokerResult')) return;
+  const bet = Math.max(10, readBet('pokerBet'));
+  try{
     const r = await fetch(`${API}/api/poker/join`, {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({chat_id: CHAT_ID, user_id: USER_ID, name: USER_NAME, bet})
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({chat_id:CHAT_ID, user_id:USER_ID, name:USER_NAME, bet})
     });
     const d = await r.json();
-    if (d.error) { alert(d.error); return; }
-    pollPokerStatus();
-    if (!pokerPoll) pokerPoll = setInterval(pollPokerStatus, 2000);
-  } catch(e) { alert('Connection error'); }
+    if (!r.ok){ setResult('pokerResult', d.error||'Join failed','err'); return; }
+    setResult('pokerResult', d.status==='joined'?'Joined table':'Already seated','info');
+    await pollPokerStatus();
+    await fetchBalance();
+  }catch(e){ setResult('pokerResult','⚠ Offline','err'); walletState='offline'; setWalletUI(); }
 }
-
-async function pollPokerStatus() {
-  try {
-    const r = await fetch(`${API}/api/poker/status?chat_id=${CHAT_ID}&user_id=${USER_ID}`);
-    pokerState = await r.json();
-    renderPokerState();
-  } catch(e) {}
+async function pollPokerStatus(){
+  try{
+    const r = await fetch(`${API}/api/poker/status?chat_id=${CHAT_idSafe()}&user_id=${USER_ID}`, {cache:'no-store'});
+    const d = await r.json();
+    paintPoker(d);
+  }catch(e){ /* silent */ }
 }
-
-function renderPokerState() {
-  if (!pokerState) return;
-  const lobby = document.getElementById('pokerLobby');
-  const gameDiv = document.getElementById('pokerGame');
-  if (!lobby || !gameDiv) return;
-  const s = pokerState;
-
-  if (s.state === 'waiting' || s.state === 'no_lobby') {
-    gameDiv.classList.add('hidden');
-    const players = (s.players || []).map(p =>
-      `<li class="${p.user_id===USER_ID?'you':''}">${p.name}${p.user_id===USER_ID?' (you)':''}</li>`
-    ).join('');
-    const canStart = (s.count || 0) >= 4;
-    lobby.innerHTML = `<h3 style="margin-top:12px;color:var(--gold)">Lobby — ${s.count||0}/4+ players</h3>
-      <ul class="player-list">${players||'<li style="color:var(--muted)">No players yet</li>'}</ul>
-      ${canStart ? '<div style="text-align:center;margin-top:10px"><button class="btn green" onclick="startPoker()">🚀 Start Game</button></div>' : '<p class="status-msg">Waiting for 4+ players...</p>'}`;
-    if (!pokerPoll && s.count > 0) pokerPoll = setInterval(pollPokerStatus, 2000);
+function CHAT_idSafe(){ return encodeURIComponent(CHAT_ID); }
+function paintPoker(d){
+  const lobby = $('pokerLobby');
+  const game = $('pokerGame');
+  if (!lobby || !game) return;
+  if (!d || d.state==='no_lobby' || d.state==='waiting'){
+    game.classList.add('hidden');
+    const players = (d && d.players) || [];
+    lobby.innerHTML = `
+      <div class="hand-label">Lobby · ${players.length}/4+ · bet ${d&&d.bet?d.bet:50}</div>
+      <div class="poker-players" data-testid="poker-players">
+        ${players.map(p=>`<div class="poker-player" data-testid="poker-player-${p.user_id}"><span>${escapeHtml(p.name)}</span><span>#${p.user_id}</span></div>`).join('') || '<div class="game-sub">No players yet</div>'}
+      </div>
+      ${(d && d.state==='waiting' && players.length>=4) ? `<div class="actions"><button class="btn accent" data-testid="poker-start" data-need-online onclick="startPoker()">START</button></div>`:''}
+    `;
+    setWalletUI();
     return;
   }
-
-  lobby.innerHTML = '';
-  gameDiv.classList.remove('hidden');
-
-  const community = (s.community||[]).map(c => pokerCardHtml(c)).join('');
-  const hand = (s.hand||[]).map(c => pokerCardHtml(c)).join('');
-  const active = s.players.filter(p => !(s.folded||[]).includes(p.user_id));
-  const isMyTurn = active.length > 0 && active[(s.turn||0) % active.length]?.user_id === USER_ID;
-  const isFolded = (s.folded||[]).includes(USER_ID);
-
-  if (s.state === 'finished') {
-    if (pokerPoll) { clearInterval(pokerPoll); pokerPoll = null; }
-    const w = s.winner;
-    fetchBalance();
-    let handsHtml = '';
-    if (s.all_hands) {
-      handsHtml = '<h3 style="margin-top:10px;color:var(--muted)">All Hands</h3>';
-      for (const [uid, cards] of Object.entries(s.all_hands)) {
-        const pname = s.players.find(p=>p.user_id===uid)?.name || uid;
-        handsHtml += `<p style="margin:4px 0">${pname}: ${cards.map(c=>pokerCardHtml(c)).join(' ')}</p>`;
-      }
-    }
-    gameDiv.innerHTML = `<div class="poker-section">
-      <h3>🏆 Game Over!</h3>
-      <p style="text-align:center;font-size:1.2em;color:var(--gold);margin:10px 0">${w?.name||'?'} wins ${(s.pot||0).toLocaleString()}K!</p>
-      ${community?'<div class="community-cards">'+community+'</div>':''}
-      ${handsHtml}
-      <div style="text-align:center;margin-top:14px"><button class="btn" onclick="renderPoker(document.getElementById('gameArea'))">🔄 New Game</button></div>
-    </div>`;
-    confetti();
-    return;
-  }
-
-  const turnName = active[(s.turn||0) % active.length]?.name || '?';
-  gameDiv.innerHTML = `<div class="poker-section">
-    <h3>Pot: ${(s.pot||0).toLocaleString()}K — ${s.state.toUpperCase()}</h3>
-    <p class="status-msg" style="${isMyTurn?'color:var(--green);font-weight:bold':''}">${isMyTurn?'🟢 YOUR TURN':'⏳ '+turnName+"'s turn"}</p>
-    ${community?'<p style="text-align:center;color:var(--muted);font-size:.85em;margin-top:8px">Community</p><div class="community-cards">'+community+'</div>':''}
-    ${hand?'<p style="text-align:center;color:var(--gold);font-size:.85em;margin-top:8px">Your Hand</p><div class="cards">'+hand+'</div>':''}
-    ${isFolded?'<p class="status-msg">You folded</p>':
-      (isMyTurn?`<div class="poker-actions">
-        <button class="btn" style="background:#c0392b" onclick="pokerAction('fold')">🏳️ Fold</button>
-        <button class="btn green" onclick="pokerAction('check')">✅ Check</button>
-        <button class="btn gold" onclick="pokerRaise()">💰 Raise</button>
-      </div>`:'')}
-    <h3 style="margin-top:14px;font-size:.9em;color:var(--muted)">Players</h3>
-    <ul class="player-list">${s.players.map(p=>{
-      const f=(s.folded||[]).includes(p.user_id);
-      return `<li class="${p.user_id===USER_ID?'you':''}">${p.name}${f?' (folded)':''}${p.user_id===USER_ID?' ← you':''}</li>`;
-    }).join('')}</ul>
-  </div>`;
+  lobby.innerHTML='';
+  game.classList.remove('hidden');
+  const folded = new Set(d.folded||[]);
+  const myTurn = String(d.turn_user_id) === String(USER_ID);
+  const finished = d.state==='finished';
+  game.innerHTML = `
+    <div class="hand-label">Pot <strong data-testid="poker-pot">${d.pot||0}</strong> · ${d.state} · round ${d.round||0}</div>
+    <div class="hand-label">Community</div>
+    <div class="cards" data-testid="poker-community">${(d.community||[]).map(c=>cardHTML(c)).join('')||'<span class="game-sub">—</span>'}</div>
+    <div class="hand-label">Your hand</div>
+    <div class="cards" data-testid="poker-hand">${(d.hand||[]).map(c=>cardHTML(c)).join('')||'<span class="game-sub">—</span>'}</div>
+    <div class="poker-players" data-testid="poker-players">
+      ${(d.players||[]).map(p=>{
+        const isFold = folded.has(p.user_id);
+        const isTurn = String(d.turn_user_id)===String(p.user_id);
+        return `<div class="poker-player ${isFold?'folded':''} ${isTurn?'turn':''}" data-testid="poker-player-${p.user_id}">
+          <span>${escapeHtml(p.name)}${String(p.user_id)===String(USER_ID)?' (you)':''}</span>
+          <span>${isFold?'FOLDED':(isTurn?'TURN':'in')}</span>
+        </div>`;
+      }).join('')}
+    </div>
+    ${!finished && myTurn ? `<div class="actions" data-testid="poker-actions">
+        <button class="btn red" data-testid="poker-fold" onclick="pokerAction('fold')">FOLD</button>
+        <button class="btn" data-testid="poker-check" onclick="pokerAction('check')">CHECK</button>
+        <button class="btn gold" data-testid="poker-raise" onclick="pokerAction('raise', 20)">RAISE +20</button>
+      </div>` : (!finished ? `<p class="game-sub" data-testid="poker-wait">Waiting for turn…</p>`:'')}
+    ${finished ? `<div class="poker-winner" data-testid="poker-winner">🏆 Winner: ${escapeHtml((d.winner&&d.winner.name)||'—')} · pot ${d.pot||0}</div>
+      <div class="hand-label">Hands</div>
+      <div data-testid="poker-all-hands">${d.all_hands ? Object.entries(d.all_hands).map(([uid,hand])=>{
+        const name=((d.players||[]).find(p=>p.user_id==uid)||{}).name||uid;
+        return `<div class="hand-label">${escapeHtml(name)}</div><div class="cards">${(hand||[]).map(c=>cardHTML(c)).join('')}</div>`;
+      }).join('') : ''}</div>
+      <div class="actions"><button class="btn ghost" data-testid="poker-refresh" onclick="pollPokerStatus()">REFRESH</button></div>` : ''}
+  `;
+  if (finished) fetchBalance();
+  setWalletUI();
 }
-
-function pokerCardHtml(c) {
-  if (!c) return '';
-  const red = c.suit==='♥'||c.suit==='♦';
-  return `<div class="card${red?' red':''}" style="width:52px;height:72px;font-size:.9em"><span class="card-label">${c.suit}</span>${c.rank}${c.suit}</div>`;
+function escapeHtml(s){
+  return String(s||'').replace(/[&<>"']/g, c => {
+    if (c === '&') return '&' + 'amp;';
+    if (c === '<') return '&' + 'lt;';
+    if (c === '>') return '&' + 'gt;';
+    if (c === '"') return '&' + 'quot;';
+    if (c === "'") return '&#39;';
+    return c;
+  });
 }
-
-async function startPoker() {
-  try {
+async function startPoker(){
+  if (!requireOnline('pokerResult')) return;
+  try{
     const r = await fetch(`${API}/api/poker/start`, {
-      method:'POST',headers:{'Content-Type':'application/json'},
+      method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({chat_id:CHAT_ID})
     });
     const d = await r.json();
-    if(d.error) alert(d.error);
-    else { pollPokerStatus(); fetchBalance(); }
-  } catch(e) { alert('Error starting game'); }
+    if (!r.ok){ setResult('pokerResult', d.error||'Start failed','err'); return; }
+    await fetchBalance();
+    await pollPokerStatus();
+  }catch(e){ setResult('pokerResult','⚠ Offline','err'); }
 }
-
-async function pokerAction(action, raiseAmt) {
-  try {
-    const body = {chat_id:CHAT_ID, user_id:USER_ID, action};
-    if (raiseAmt) body.raise_amount = raiseAmt;
+async function pokerAction(action, raiseAmt){
+  if (!requireOnline('pokerResult')) return;
+  try{
     const r = await fetch(`${API}/api/poker/action`, {
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(body)
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({chat_id:CHAT_ID, user_id:USER_ID, action, raise_amount:raiseAmt||0})
     });
     const d = await r.json();
-    if (d.error) alert(d.error);
-    pollPokerStatus();
-    if (d.status === 'game_over') fetchBalance();
-  } catch(e) {}
+    if (!r.ok){ setResult('pokerResult', d.error||'Action failed','err'); return; }
+    if (d.status==='game_over'){
+      setResult('pokerResult', `Winner: ${(d.winner&&d.winner.name)||'?'}`, 'win');
+      confetti();
+      await fetchBalance();
+    }
+    await pollPokerStatus();
+  }catch(e){ setResult('pokerResult','⚠ Offline','err'); }
 }
 
-function pokerRaise() {
-  const amt = prompt('Raise amount (Kollars):', '50');
-  if (amt && parseInt(amt) > 0) pokerAction('raise', parseInt(amt));
-}
-
-// ── Init ──
-fetchBalance();
+// ---------- boot ----------
 renderGame();
-setInterval(fetchBalance, 10000); // Sync every 10 seconds
+fetchBalance();
+setInterval(fetchBalance, 10000);
 </script>
 </body>
 </html>

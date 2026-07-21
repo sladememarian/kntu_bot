@@ -24,8 +24,8 @@ services:
     container_name: kntu_bot25
     restart: unless-stopped
     env_file: .env
-    # Pure polling bot (DISABLE_AIOHTTP_SERVER=true) — no host port needed,
-    # which keeps clear of the occupied 8000/8080/8088/9901 ports.
+    ports:
+      - "8091:8091"
     depends_on:
       mongo:
         condition: service_healthy

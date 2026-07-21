@@ -158,7 +158,8 @@ _HELP_CATEGORIES = {
             "text": (
                 "🧠 *هوش مصنوعی*\n\n"
                 "🤖 /bob \\[متن\\] — باب! پسر مارکوف و اوفلیا\n"
-                "📊 /bobstats — مغز و حالِ باب\n\n"
+                "📊 /bobstats — مغز و حالِ باب\n"
+                "🧠 ادمین (پی‌وی): /bob learn سوال = جواب\n\n"
                 "💡 _باب از حرفای واقعی گروه یاد می‌گیره،_\n"
                 "_جواب‌هاش رو می‌سنجه و حس داره!_\n"
                 "_روزی ۲-۳ بار هم خودش حرف می‌زنه_ 😄"
@@ -328,7 +329,8 @@ _HELP_CATEGORIES = {
             "text": (
                 "🧠 *Artificial Intelligence*\n\n"
                 "🤖 /bob \\[text\\] — Bob! son of Markov & Ophelia\n"
-                "📊 /bobstats — Bob's brain & feelings\n\n"
+                "📊 /bobstats — Bob's brain & feelings\n"
+                "🧠 Admin PV: /bob learn question = answer\n\n"
                 "💡 _Bob learns from real group chat,_\n"
                 "_judges his own replies, and has moods!_\n"
                 "_He also speaks up on his own 2-3x a day_ 😄"
