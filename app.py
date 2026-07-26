@@ -577,10 +577,19 @@ def _get_game_url():
     """Public base URL for the HTML5 casino (no trailing path).
 
     Priority:
-      1) CASINO_SIGNED_URL / WEB_URL_SIGNED  (Daytona signed preview — no auth headers)
-      2) WEB_URL
-      3) RAILWAY_* / default Daytona host
+      1) CASINO_PROXY_URL  (Cloudflare Worker — skips Daytona warning page)
+      2) CASINO_SIGNED_URL / WEB_URL_SIGNED  (Daytona signed preview — no auth headers)
+      3) WEB_URL
+      4) RAILWAY_* / default Daytona host
     """
+    proxy = (os.environ.get("CASINO_PROXY_URL") or "").strip().rstrip("/")
+    if proxy:
+        if not proxy.startswith("http"):
+            proxy = "https://" + proxy
+        if proxy.endswith("/casino"):
+            return proxy
+        return proxy + "/casino"
+
     signed = (
         os.environ.get("CASINO_SIGNED_URL")
         or os.environ.get("WEB_URL_SIGNED")
@@ -680,9 +689,17 @@ async def game_callback(update: Update, context):
     if not query.game_short_name:
         return
 
-    base_url = await _mint_signed_casino_url()
-    if not base_url:
-        base_url = _get_game_url()
+    # Priority: proxy (skips warning) > signed URL > static fallback
+    base_url = (os.environ.get("CASINO_PROXY_URL") or "").strip().rstrip("/")
+    if base_url:
+        if not base_url.startswith("http"):
+            base_url = "https://" + base_url
+        if not base_url.endswith("/casino"):
+            base_url = base_url + "/casino"
+    else:
+        base_url = await _mint_signed_casino_url()
+        if not base_url:
+            base_url = _get_game_url()
 
     chat_id = query.message.chat.id if query.message else 0
     user_id = query.from_user.id

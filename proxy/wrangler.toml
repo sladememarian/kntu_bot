@@ -1,0 +1,7 @@
+name = "kntu-casino-proxy"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+# Deploy with: npx wrangler deploy
+# After deploy, set CASINO_PROXY_URL in your bot's .env to the worker URL,
+# e.g. CASINO_PROXY_URL=https://kntu-casino-proxy.<your-username>.workers.dev
