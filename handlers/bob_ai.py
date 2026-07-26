@@ -1,11 +1,11 @@
 # ==========================================
 # KNTU Bot 25 — BOB 🤖 (/bob)
-# Public name: Bob  |  Brain: Hermes-style agent
+# Public name: Bob  |  Brain: REAL Hermes Agent (NousResearch)
 #
-# Commands (unchanged for users):
-#   /bob [text]   — talk to Bob (Hermes brain)
-#   /bobstats     — brain / provider / session report
-# Passive listen        — optional light auto-replies when mentioned
+#   /bob [text]   — talk to Bob
+#   /bobstats     — Hermes engine / provider / session report
+#   /bob reset    — clear this chat's memory
+#   /bob ping     — admin: live Hermes ping
 # ==========================================
 
 from __future__ import annotations
@@ -32,7 +32,7 @@ from handlers.hermes_brain import (
     chat as hermes_chat,
     clear_history,
     get_stats as hermes_stats,
-    load_soul,
+    hermes_available,
     ping_providers,
     session_count,
 )
@@ -48,7 +48,6 @@ BOB_MAX_AUTO_REPLIES_PER_DAY = int(os.environ.get("BOB_MAX_AUTO_REPLIES_PER_DAY"
 _AUTO_REPLY_MENTION_CHANCE = float(os.environ.get("BOB_AUTO_MENTION_CHANCE") or "0.35")
 _AUTO_REPLY_BASE_CHANCE = float(os.environ.get("BOB_AUTO_BASE_CHANCE") or "0.0")
 
-# in-RAM auto-reply counters: chat_id -> {date, count}
 _auto_log: dict[str, dict] = {}
 _meta_lock = __import__("threading").Lock()
 
@@ -74,7 +73,6 @@ def _is_admin(uid: int | None) -> bool:
 
 
 def _legacy_brain_snapshot() -> dict:
-    """Keep optional legacy bob_brain stats for continuity in /bobstats."""
     try:
         brain = load_bob() or {}
     except Exception:
@@ -83,7 +81,6 @@ def _legacy_brain_snapshot() -> dict:
     return {
         "legacy_seen": stats.get("seen", 0),
         "legacy_replies": stats.get("replies", 0),
-        "legacy_born": stats.get("born"),
         "legacy_pairs": sum(len(v) for v in (brain.get("pairs") or {}).values())
         if isinstance(brain.get("pairs"), dict)
         else 0,
@@ -97,7 +94,7 @@ def _bump_legacy_reply():
         st["replies"] = int(st.get("replies") or 0) + 1
         if "born" not in st:
             st["born"] = time.time()
-        brain.setdefault("engine", "hermes")
+        brain["engine"] = "hermes_native"
         save_bob(brain)
     except Exception as e:
         logger.debug("legacy reply bump failed: %s", e)
@@ -124,26 +121,25 @@ async def _run_hermes(
     )
 
 
-def _admin_help(lang: str) -> str:
+def _help(lang: str) -> str:
     if lang == "fa":
         return (
-            "🤖 *باب — مغز هرمس*\n"
+            "🤖 *باب — مغز Hermes (واقعی)*\n"
             "`/bob <متن>` — حرف بزن\n"
             "`/bob reset` — پاک کردن حافظهٔ این چت\n"
-            "`/bobstats` — وضعیت مغز و پروایدرها\n"
-            "ادمین: `/bob ping` تست اتصال API"
+            "`/bobstats` — وضعیت موتور هرمس\n"
+            "ادمین: `/bob ping`"
         )
     return (
-        "🤖 *Bob — Hermes brain*\n"
+        "🤖 *Bob — real Hermes Agent brain*\n"
         "`/bob <text>` — chat\n"
         "`/bob reset` — clear this chat memory\n"
-        "`/bobstats` — brain & provider status\n"
-        "Admin: `/bob ping` API connectivity"
+        "`/bobstats` — Hermes engine status\n"
+        "Admin: `/bob ping`"
     )
 
 
 async def bob_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """/bob [message] — talk to Bob (Hermes brain)."""
     if not update.message:
         return
     chat = update.effective_chat
@@ -157,30 +153,34 @@ async def bob_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         raw = update.message.reply_to_message.text
 
     if not raw:
-        await update.message.reply_text(_admin_help(lang), parse_mode="Markdown")
+        await update.message.reply_text(_help(lang), parse_mode="Markdown")
         return
 
     low = raw.strip().lower()
     if low in {"reset", "clear", "پاک", "ریست"}:
         ok = clear_history(chat_id, user.id if user else 0)
-        msg = "🧠 memory wiped." if ok else "🧠 nothing stored yet."
-        if lang == "fa":
-            msg = "🧠 حافظه پاک شد." if ok else "🧠 چیزی ذخیره نشده بود."
+        msg = (
+            ("🧠 حافظه پاک شد." if ok else "🧠 چیزی ذخیره نشده بود.")
+            if lang == "fa"
+            else ("🧠 memory wiped." if ok else "🧠 nothing stored yet.")
+        )
         await update.message.reply_text(msg)
         return
 
     if low in {"ping", "health"} and _is_admin(user.id if user else None):
-        await update.message.reply_text("⏳ probing providers…")
+        await update.message.reply_text("⏳ probing real Hermes AIAgent…")
         loop = asyncio.get_running_loop()
         results = await loop.run_in_executor(_executor, ping_providers)
         lines = []
         for r in results:
             mark = "✅" if r.get("ok") else "❌"
-            lines.append(f"{mark} {r.get('provider')} / {r.get('model')}: {r.get('sample') or r.get('error')}")
-        await update.message.reply_text("\n".join(lines) or "no providers configured")
+            lines.append(
+                f"{mark} {r.get('provider')} / {r.get('model')}: "
+                f"{r.get('sample') or r.get('error')}"
+            )
+        await update.message.reply_text("\n".join(lines) or "no result")
         return
 
-    # typing indicator
     try:
         await context.bot.send_chat_action(chat_id=chat_id, action="typing")
     except Exception:
@@ -201,16 +201,12 @@ async def bob_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         meta = {}
 
     _bump_legacy_reply()
-
-    # Telegram hard limit safety
     if len(reply) > 4000:
         reply = reply[:3990] + "…"
-
     await update.message.reply_text(reply)
 
 
 async def bobstats_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """/bobstats — Bob brain report (Hermes engine)."""
     if not update.message:
         return
     chat_id = update.effective_chat.id
@@ -219,50 +215,55 @@ async def bobstats_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     hs = hermes_stats()
     legacy = _legacy_brain_snapshot()
     providers = hs.get("providers") or []
-    prov_lines = []
-    for p in providers:
-        prov_lines.append(f"• *{p['name']}* — models: `{', '.join(p['models'][:4])}` (keys:{p['keys']})")
-    if not prov_lines:
-        prov_lines = ["• _no providers configured — set OPENCODE_API_KEYS / NVIDIA_API_KEY_"]
+    prov_lines = [
+        f"• *{p['name']}* — `{', '.join(p['models'][:4])}` (keys:{p['keys']})"
+        for p in providers
+    ] or ["• _no providers — set OPENCODE_API_KEYS_"]
 
+    import_ok = "✅" if hs.get("hermes_import_ok") else "❌ NOT LOADED"
     soul_ok = "✅" if hs.get("soul_loaded") else "⚠️ missing"
     age = hs.get("age_days", 0.0)
+    tools = hs.get("toolsets")
+    tools_s = "none" if tools == [] else (",".join(tools or []) or "default")
 
     if lang == "fa":
         msg = (
-            "🤖 *باب — مغز هرمس (Hermes-style)*\n\n"
-            f"🧠 موتور: *hermes*\n"
-            f"📡 آخرین پروایدر: *{hs.get('provider_last') or '—'}*\n"
-            f"🧩 آخرین مدل: `{hs.get('model_last') or '—'}`\n"
-            f"💬 تماس‌ها: *{hs.get('calls', 0)}* · خطاها: *{hs.get('errors', 0)}*\n"
-            f"🗂 سشن‌های فعال: *{hs.get('sessions', session_count())}*\n"
+            "🤖 *باب — موتور Hermes واقعی (NousResearch)*\n\n"
+            f"🧠 AIAgent import: {import_ok}\n"
+            f"📡 آخرین موتور: *{hs.get('provider_last') or '—'}*\n"
+            f"🧩 مدل: `{hs.get('model_last') or hs.get('model') or '—'}`\n"
+            f"🔗 base: `{hs.get('base_url') or '—'}`\n"
+            f"🛠 tools: `{tools_s}`\n"
+            f"💬 calls: *{hs.get('calls', 0)}* · errors: *{hs.get('errors', 0)}*\n"
+            f"🗂 sessions: *{hs.get('sessions', session_count())}*\n"
             f"📜 SOUL.md: {soul_ok}\n"
-            f"🎂 سن پروسه: *{age:.1f}* روز\n\n"
-            f"*پروایدرها:*\n" + "\n".join(prov_lines) + "\n\n"
-            f"_legacy markov brain (آرشیو): seen={legacy['legacy_seen']}, "
-            f"replies={legacy['legacy_replies']}, pairs={legacy['legacy_pairs']}_\n"
-            f"HERMES_HOME: `{hs.get('hermes_home') or '—'}`"
+            f"🎂 age: *{age:.1f}*d\n"
+            f"📁 HERMES_HOME: `{hs.get('hermes_home') or '—'}`\n"
+            f"📦 HERMES_AGENT_DIR: `{hs.get('hermes_agent_dir') or '—'}`\n\n"
+            f"*Providers:*\n" + "\n".join(prov_lines) + "\n\n"
+            f"_legacy archive: seen={legacy['legacy_seen']}, replies={legacy['legacy_replies']}_"
         )
     else:
         msg = (
-            "🤖 *Bob — Hermes-style brain*\n\n"
-            f"🧠 Engine: *hermes*\n"
-            f"📡 Last provider: *{hs.get('provider_last') or '—'}*\n"
-            f"🧩 Last model: `{hs.get('model_last') or '—'}`\n"
-            f"💬 Calls: *{hs.get('calls', 0)}* · errors: *{hs.get('errors', 0)}*\n"
-            f"🗂 Sessions: *{hs.get('sessions', session_count())}*\n"
+            "🤖 *Bob — real Hermes Agent (NousResearch)*\n\n"
+            f"🧠 AIAgent import: {import_ok}\n"
+            f"📡 Last engine: *{hs.get('provider_last') or '—'}*\n"
+            f"🧩 Model: `{hs.get('model_last') or hs.get('model') or '—'}`\n"
+            f"🔗 base: `{hs.get('base_url') or '—'}`\n"
+            f"🛠 tools: `{tools_s}`\n"
+            f"💬 calls: *{hs.get('calls', 0)}* · errors: *{hs.get('errors', 0)}*\n"
+            f"🗂 sessions: *{hs.get('sessions', session_count())}*\n"
             f"📜 SOUL.md: {soul_ok}\n"
-            f"🎂 Process age: *{age:.1f}* days\n\n"
+            f"🎂 age: *{age:.1f}*d\n"
+            f"📁 HERMES_HOME: `{hs.get('hermes_home') or '—'}`\n"
+            f"📦 HERMES_AGENT_DIR: `{hs.get('hermes_agent_dir') or '—'}`\n\n"
             f"*Providers:*\n" + "\n".join(prov_lines) + "\n\n"
-            f"_legacy markov archive: seen={legacy['legacy_seen']}, "
-            f"replies={legacy['legacy_replies']}, pairs={legacy['legacy_pairs']}_\n"
-            f"HERMES_HOME: `{hs.get('hermes_home') or '—'}`"
+            f"_legacy archive: seen={legacy['legacy_seen']}, replies={legacy['legacy_replies']}_"
         )
     await update.message.reply_text(msg, parse_mode="Markdown")
 
 
 async def bob_listen(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Optional mention auto-reply via Hermes (rate-limited)."""
     if not update.message or not update.message.text:
         return
     user = update.effective_user
@@ -271,7 +272,6 @@ async def bob_listen(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     if text.startswith("/"):
         return
-
     chat = update.effective_chat
     if chat.type not in ("group", "supergroup"):
         return
