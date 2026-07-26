@@ -5,3 +5,7 @@ __pycache__/
 data.json
 live_data.json
 live_data_raw.json
+data/bob_sessions/
+bob_brain.json
+.pytest_cache/
+hermes-agent/
