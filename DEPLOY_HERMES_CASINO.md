@@ -1,62 +1,66 @@
-# Bob Hermes + Casino deploy notes
+# Bob = real Hermes Agent + Casino
 
-## What changed
-- `/bob` now uses a **Hermes-style brain** (`handlers/hermes_brain.py` + `hermes/SOUL.md`)
-- `/bobstats` kept — shows providers, model, sessions
-- Casino aiohttp server enabled on **port 8091**
-- Telegram Play button can mint **Daytona signed preview URLs** when `DAYTONA_API_KEY` is set
+## What Bob runs
+Bob (`/bob`) uses the **real** [NousResearch Hermes Agent](https://github.com/NousResearch/hermes-agent)
+`AIAgent` class from `run_agent.py` (installed into the Docker image at `/opt/hermes-agent`).
 
-## Sandbox `.env` (not in git)
-On the Daytona VM after pull, ensure `/home/kntu_bot/.env` includes:
+Not a reimplementation — the same library Hermes documents here:
+https://hermes-agent.nousresearch.com/docs/guides/python-library
 
+## Daytona `.env` (gitignored)
 ```bash
+nano /home/kntu_bot/.env
+```
+
+```env
 DISABLE_AIOHTTP_SERVER=false
 PORT=8091
-WEB_URL=https://8091-<sandboxId>.daytonaproxy01.eu
+WEB_URL=https://8091-26f0e993-32b4-45f2-af64-a392bee6cc43.daytonaproxy01.eu
 
-# Bob / Hermes providers
-OPENCODE_API_KEY=...
-OPENCODE_API_KEYS=key1,key2,key3
+# OpenCode — comma-separated, ONE line (first key → Hermes OPENCODE_ZEN_API_KEY)
+OPENCODE_API_KEYS=sk-key1,sk-key2,sk-key3
+OPENCODE_API_KEY=sk-key1
 OPENCODE_BASE_URL=https://opencode.ai/zen/v1
 OPENCODE_MODELS=north-mini-code-free,big-pickle
 
-# Optional
-NVIDIA_API_KEY=...
-GEMINI_API_KEY=...
-
-# Optional signed preview minting (recommended for Telegram WebView)
-DAYTONA_API_KEY=dtn_...
-DAYTONA_SANDBOX_ID=<sandbox id>
-DAYTONA_SIGNED_EXPIRES=3600
-```
-
-Then:
-```bash
-cd /home/kntu_bot && git pull --ff-only && docker compose up -d --build && docker compose ps
-docker compose logs --tail=50 bot
-```
-
-## Daytona "I Understand, Continue" warning
-Per Daytona docs (https://www.daytona.io/docs/en/preview/):
-- Browser interstitial is **by design** on preview hosts
-- Fully skip only via:
-  1. Header `X-Daytona-Skip-Preview-Warning: true` (not injectable by Telegram WebView)
-  2. Org **Tier 3**
-  3. **Custom preview proxy** on your own domain
-- Signed preview URLs remove **auth** friction (Continue often looks broken when auth token is missing)
-- Also set sandbox `public=true` in Daytona so previews don't require tokens
-
-## Native full Hermes agent (optional later)
-```bash
-git clone https://github.com/NousResearch/hermes-agent.git /opt/hermes-agent
-cd /opt/hermes-agent && curl -LsSf https://astral.sh/uv/install.sh | sh && uv sync
-# in .env:
-HERMES_HOME=/opt/hermes-agent
+# Hermes
 HERMES_MODEL=north-mini-code-free
-HERMES_BASE_URL=https://opencode.ai/zen/v1
+HERMES_TOOLSETS=none
+HERMES_MAX_ITERATIONS=12
+
+# Optional NVIDIA (working inference key)
+NVIDIA_API_KEY=nvapi-...
+NVIDIA_BASE_URL=https://integrate.api.nvidia.com/v1
 ```
 
-## Verify
-- Telegram: `/bob who are you?` → Bob / Markov & Ophelia
-- `/bobstats` → opencode provider listed
-- `/casinogame` → Play opens game; wallet matches `/wallet`
+Then either wait for CI, or manually:
+```bash
+cd /home/kntu_bot
+git pull --ff-only
+docker rm -f kntu_bot25 2>/dev/null || true
+docker compose down --remove-orphans
+docker compose up -d --build --force-recreate
+docker compose logs -f bot
+```
+
+Look for:
+```
+[entrypoint] real Hermes AIAgent: OK
+```
+
+Telegram:
+- `/bobstats` → AIAgent import ✅
+- `/bob who are you?` → Bob / Markov & Ophelia
+
+## CI container-name conflict
+Fixed: deploy workflow now `docker rm -f` stale names and `compose down` before recreate.
+Compose no longer uses a fixed `container_name` for the bot.
+
+## NVIDIA curl "nothing happened"
+Always print status:
+```bash
+curl -sS -w "\nHTTP %{http_code}\n" https://integrate.api.nvidia.com/v1/chat/completions \
+  -H "Authorization: Bearer $NVIDIA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"deepseek-ai/deepseek-v4-flash","messages":[{"role":"user","content":"hi"}],"max_tokens":16}'
+```
