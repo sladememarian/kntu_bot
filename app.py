@@ -574,12 +574,29 @@ async def casinogame_cmd(update: Update, context):
 
 
 def _get_game_url():
-    """Public base URL for the HTML5 casino (no trailing path)."""
-    # Prefer explicit WEB_URL (may be full URL with or without scheme)
+    """Public base URL for the HTML5 casino (no trailing path).
+
+    Priority:
+      1) CASINO_SIGNED_URL / WEB_URL_SIGNED  (Daytona signed preview — no auth headers)
+      2) WEB_URL
+      3) RAILWAY_* / default Daytona host
+    """
+    signed = (
+        os.environ.get("CASINO_SIGNED_URL")
+        or os.environ.get("WEB_URL_SIGNED")
+        or ""
+    ).strip().rstrip("/")
+    if signed:
+        if not signed.startswith("http"):
+            signed = "https://" + signed
+        if signed.endswith("/casino"):
+            return signed
+        return signed + "/casino"
+
     web_url = (os.environ.get("WEB_URL") or "").strip().rstrip("/")
     if web_url:
         if web_url.startswith("http://") or web_url.startswith("https://"):
-            return f"{web_url}/casino"
+            return web_url if web_url.endswith("/casino") else f"{web_url}/casino"
         return f"https://{web_url}/casino"
 
     domain = (
@@ -591,6 +608,70 @@ def _get_game_url():
     return f"https://{domain}/casino"
 
 
+async def _mint_signed_casino_url() -> str | None:
+    """Mint a Daytona signed preview URL for the casino port when credentials exist.
+
+    Signed URLs embed the token in the host so Telegram's in-app browser does not
+    need the x-daytona-preview-token header. Browser interstitial warning can still
+    appear once unless Tier-3 / custom proxy / skip header (not available in TG WV).
+    """
+    api_key = (os.environ.get("DAYTONA_API_KEY") or "").strip()
+    sandbox_id = (os.environ.get("DAYTONA_SANDBOX_ID") or "").strip()
+    if not api_key or not sandbox_id:
+        return None
+
+    port = int(os.environ.get("PORT") or os.environ.get("CASINO_PORT") or 8091)
+    expires = int(os.environ.get("DAYTONA_SIGNED_EXPIRES") or 3600)
+    api_url = (os.environ.get("DAYTONA_API_URL") or "https://app.daytona.io/api").rstrip("/")
+
+    cache = getattr(_mint_signed_casino_url, "_cache", None)
+    now = __import__("time").time()
+    if cache and cache.get("url") and cache.get("exp", 0) > now + 30:
+        return cache["url"]
+
+    import aiohttp as _aio
+
+    endpoint = (
+        f"{api_url}/sandbox/{sandbox_id}/ports/{port}/signed-preview-url"
+        f"?expiresInSeconds={expires}"
+    )
+    try:
+        timeout = _aio.ClientTimeout(total=15)
+        async with _aio.ClientSession(timeout=timeout) as session:
+            async with session.get(
+                endpoint, headers={"Authorization": f"Bearer {api_key}"}
+            ) as resp:
+                body_text = await resp.text()
+                if resp.status >= 300:
+                    logger.warning(
+                        "Daytona signed preview HTTP %s: %s",
+                        resp.status,
+                        body_text[:220],
+                    )
+                    return None
+                try:
+                    data = __import__("json").loads(body_text)
+                except Exception:
+                    logger.warning("Daytona signed preview non-JSON: %s", body_text[:220])
+                    return None
+        signed = data.get("url") or data.get("signedUrl") or data.get("previewUrl")
+        if not signed:
+            logger.warning("Daytona signed preview unexpected: %s", str(data)[:220])
+            return None
+        signed = str(signed).rstrip("/")
+        if not signed.endswith("/casino"):
+            signed = signed + "/casino"
+        _mint_signed_casino_url._cache = {
+            "url": signed,
+            "exp": now + max(60, expires - 60),
+        }
+        logger.info("Minted Daytona signed casino URL (ttl~%ss)", expires)
+        return signed
+    except Exception as e:
+        logger.warning("Daytona signed preview error: %s", e)
+        return None
+
+
 async def game_callback(update: Update, context):
     """Handle the 'Play' button click on a Telegram Game message."""
     query = update.callback_query
@@ -598,12 +679,22 @@ async def game_callback(update: Update, context):
         return
     if not query.game_short_name:
         return
-    base_url = _get_game_url()
+
+    base_url = await _mint_signed_casino_url()
+    if not base_url:
+        base_url = _get_game_url()
+
     chat_id = query.message.chat.id if query.message else 0
     user_id = query.from_user.id
     user_name = query.from_user.first_name or "Player"
-    from urllib.parse import quote
-    url = f"{base_url}?chat_id={chat_id}&user_id={user_id}&name={quote(user_name)}"
+    from urllib.parse import urlencode
+
+    qs = urlencode({
+        "chat_id": str(chat_id),
+        "user_id": str(user_id),
+        "name": user_name,
+    })
+    url = f"{base_url}?{qs}"
     logger.info("Game callback from %s: sending URL %s", user_id, url)
     try:
         await query.answer(url=url)
