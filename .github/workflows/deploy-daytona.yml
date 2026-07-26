@@ -47,6 +47,15 @@ jobs:
           fi
           echo "Toolbox proxy: $PROXY"
 
+          # 1b) Ensure sandbox is publicly accessible (no preview-token header needed).
+          echo "Setting sandbox public=true..."
+          curl -sS -o /dev/null -w 'set public: HTTP %{http_code}\n' \
+            -X PATCH \
+            -H "Authorization: Bearer ${API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d '{"public": true}' \
+            "${API_URL}/sandbox/${SANDBOX_ID}"
+
           # 2) Command to run inside the sandbox. Rebuilds and restarts the stack.
           REMOTE_CMD="cd ${PROJECT_DIR} && git pull --ff-only && docker compose up -d --build && docker compose ps"
           BODY=$(jq -n --arg cmd "$REMOTE_CMD" --arg cwd "$PROJECT_DIR" \
