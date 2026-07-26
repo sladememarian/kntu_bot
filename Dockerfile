@@ -1,23 +1,47 @@
-FROM python:3.13-slim
+# KNTU Bot 25 + real NousResearch Hermes Agent as Bob's brain
+# Hermes requires Python >=3.11,<3.14 — use 3.12.
+FROM python:3.12-slim
 
 WORKDIR /app
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PORT=8091
+    PORT=8091 \
+    HERMES_AGENT_DIR=/opt/hermes-agent \
+    HERMES_HOME=/app/hermes_home \
+    PYTHONPATH=/opt/hermes-agent:/app \
+    PATH=/opt/hermes-agent/.venv/bin:/usr/local/bin:/usr/bin:/bin
 
+# System deps for Hermes + git clone
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        ca-certificates curl git gcc g++ make \
+    && rm -rf /var/lib/apt/lists/*
+
+# uv (Hermes' supported installer)
+COPY --from=ghcr.io/astral-sh/uv:0.11.6 /uv /usr/local/bin/uv
+
+# --- Install real Hermes Agent (NousResearch) ---
+# Docs: https://hermes-agent.nousresearch.com/docs/guides/python-library
+ARG HERMES_GIT_REF=main
+RUN git clone --depth 1 --branch "${HERMES_GIT_REF}" \
+        https://github.com/NousResearch/hermes-agent.git ${HERMES_AGENT_DIR} \
+    && cd ${HERMES_AGENT_DIR} \
+    && UV_PYTHON=3.12 uv sync --no-dev \
+    && UV_PYTHON=3.12 uv pip install -e .
+
+# Bot Python deps into the same Hermes venv
 COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+RUN cd ${HERMES_AGENT_DIR} && UV_PYTHON=3.12 uv pip install -r /app/requirements.txt
 
+# App source
 COPY . ./
-
-# Ensure Bob session + hermes soul dirs exist
-RUN mkdir -p /app/data/bob_sessions /app/hermes
+RUN mkdir -p /app/data/bob_sessions /app/hermes /app/hermes_home \
+    && chmod +x /app/docker/entrypoint.sh
 
 EXPOSE 8091
 
-# Lightweight liveness: verifies the app + config import cleanly.
-HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
-    CMD python -c "import config; import handlers.bob_ai; import handlers.hermes_brain" || exit 1
+# Health: config + real Hermes AIAgent importable
+HEALTHCHECK --interval=30s --timeout=15s --start-period=45s --retries=4 \
+    CMD python -c "import config; from run_agent import AIAgent; import handlers.bob_ai" || exit 1
 
-CMD ["python", "app.py"]
+ENTRYPOINT ["/app/docker/entrypoint.sh"]
