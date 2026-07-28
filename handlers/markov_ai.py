@@ -13,6 +13,7 @@
 # ==========================================
 
 import random
+import os
 import re
 import math
 import threading
@@ -945,7 +946,7 @@ async def _search_gif(query: str) -> str | None:
         url = "https://tenor.googleapis.com/v2/search"
         params = {
             "q": query,
-            "key": "AIzaSyAyimkuYQYF_FXVALexPuGQctUWRURdCYQ",
+            "key": os.environ.get("TENOR_API_KEY", ""),
             "client_key": "kntu_bot25",
             "limit": 8,
             "media_filter": "gif",

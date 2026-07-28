@@ -15,7 +15,7 @@ nano /home/kntu_bot/.env
 ```env
 DISABLE_AIOHTTP_SERVER=false
 PORT=8091
-WEB_URL=https://8091-26f0e993-32b4-45f2-af64-a392bee6cc43.daytonaproxy01.eu
+WEB_URL=https://8091-8365a2c3-5e86-45fc-bf95-6b58a1f6a309.daytonaproxy01.eu
 
 # OpenCode — comma-separated, ONE line (first key → Hermes OPENCODE_ZEN_API_KEY)
 OPENCODE_API_KEYS=sk-key1,sk-key2,sk-key3

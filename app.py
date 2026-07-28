@@ -81,7 +81,7 @@ GAME_SHORT_NAME = os.environ.get("GAME_SHORT_NAME", "casino")
 _STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 
 # Daytona preview default (port 8091). Override with WEB_URL / RAILWAY_* env.
-_DEFAULT_GAME_HOST = "8091-26f0e993-32b4-45f2-af64-a392bee6cc43.daytonaproxy01.eu"
+_DEFAULT_GAME_HOST = "8091-8365a2c3-5e86-45fc-bf95-6b58a1f6a309.daytonaproxy01.eu"
 
 
 async def _serve_casino(request):

@@ -1,4 +1,4 @@
-const DAYTONA_HOST = "8091-26f0e993-32b4-45f2-af64-a392bee6cc43.daytonaproxy01.eu";
+const DAYTONA_HOST = "8091-8365a2c3-5e86-45fc-bf95-6b58a1f6a309.daytonaproxy01.eu";
 
 addEventListener("fetch", function(event) {
   event.respondWith(handleRequest(event.request));
