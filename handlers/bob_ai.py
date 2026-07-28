@@ -226,9 +226,12 @@ async def bobstats_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     memory_ok = "✅ enabled" if hs.get("memory_enabled") else "❌ disabled"
     age = hs.get("age_days", 0.0)
     tools = hs.get("toolsets")
-    tools_s = ", ".join(tools[:8]) if tools else "default"
-    if tools and len(tools) > 8:
-        tools_s += f" +{len(tools)-8} more"
+    if tools and isinstance(tools[0], str) and tools[0].startswith("ALL"):
+        tools_s = tools[0]
+    else:
+        tools_s = ", ".join(tools[:8]) if tools else "default"
+        if tools and len(tools) > 8:
+            tools_s += f" +{len(tools)-8} more"
     pool = hs.get("agent_pool_size", 0)
 
     # Model health info

@@ -338,30 +338,16 @@ def _resolve_model() -> str:
 # Toolsets
 # ---------------------------------------------------------------------------
 
-def _toolsets() -> list[str] | None:
-    raw = _env("HERMES_TOOLSETS")
-    if raw:
-        if raw.lower() in ("none", "off", "false", "0"):
-            return []
-        return _split(raw)
-    return [
-        "memory",
-        "session_search",
-        "skill_manage",
-        "skill_view",
-        "skills_list",
-        "web_search",
-        "web_extract",
-        "todo",
-        "kanban",
-        "cronjob",
-        "clarify",
-        "delegate_task",
-        "text_to_speech",
-        "tool_search",
-        "tool_describe",
-        "tool_call",
-    ]
+def _disabled_toolsets() -> list[str] | None:
+    """Tools too dangerous for a Telegram group bot.
+
+    All other tools (web_search, web_extract, memory, session_search, skills,
+    todo, clarify, delegate_task, text_to_speech, tool_search, etc.) are
+    automatically available when this list is used as disabled_toolsets.
+
+    Note: cronjob and kanban do NOT exist in hermes-agent v0.19.0.
+    """
+    return ["terminal", "execute_code", "write_file", "process", "patch"]
 
 
 # ---------------------------------------------------------------------------
@@ -376,7 +362,7 @@ def _make_agent(system: str, session_key: str = ""):
     from run_agent import AIAgent
 
     model, api_key, base_url, provider = _resolve_best_model()
-    toolsets = _toolsets()
+    disabled = _disabled_toolsets()
 
     if session_key and session_key in _agent_pool:
         cached = _agent_pool[session_key]
@@ -398,8 +384,8 @@ def _make_agent(system: str, session_key: str = ""):
         kwargs["api_key"] = api_key
     if base_url:
         kwargs["base_url"] = base_url
-    if toolsets is not None:
-        kwargs["enabled_toolsets"] = toolsets
+    if disabled:
+        kwargs["disabled_toolsets"] = disabled
 
     kwargs["ephemeral_system_prompt"] = system
 
@@ -546,7 +532,7 @@ def get_stats() -> dict[str, Any]:
     s["fallback_model"] = _env("FALLBACK_MODEL_1") or "big-pickle"
     s["api_key_set"] = bool(_env("NVIDIA_API_KEY") or _env("OPENCODE_API_KEY") or _env("GEMINI_API_KEY"))
     s["base_url"] = base_url
-    s["toolsets"] = _toolsets()
+    s["toolsets"] = ["ALL (except: " + ", ".join(_disabled_toolsets() or []) + ")"]
     s["memory_enabled"] = True
     s["agent_pool_size"] = len(_agent_pool)
     s["age_days"] = max(0.0, (time.time() - s.get("born", time.time())) / 86400.0)
