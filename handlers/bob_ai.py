@@ -217,6 +217,7 @@ async def bobstats_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     providers = hs.get("providers") or []
     prov_lines = [
         f"• *{p['name']}* — `{', '.join(p['models'][:3])}` (keys:{p['keys']})"
+        + (f" ⚠️ {p['note']}" if p.get("note") else "")
         for p in providers
     ] or ["• _no providers configured_"]
 
@@ -230,11 +231,21 @@ async def bobstats_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         tools_s += f" +{len(tools)-8} more"
     pool = hs.get("agent_pool_size", 0)
 
+    # Model health info
+    health = hs.get("model_health") or {}
+    last_working = hs.get("last_working_model", "—")
+    health_lines = []
+    for mname, mh in health.items():
+        status = "✅" if mh.get("healthy") else "❌ cooldown"
+        failures = mh.get("failures", 0)
+        health_lines.append(f"  `{mname}` {status} (fails:{failures})")
+    health_s = "\n".join(health_lines) if health_lines else "  _no data yet_"
+
     if lang == "fa":
         msg = (
             "🤖 *باب — موتور Hermes واقعی (NousResearch)*\n\n"
             f"🧠 AIAgent import: {import_ok}\n"
-            f"📡 مدل اصلی: *{hs.get('model') or '—'}*\n"
+            f"📡 مدل فعال: *{hs.get('model') or '—'}*\n"
             f"🔄 fallback: `{hs.get('fallback_model') or '—'}`\n"
             f"🔗 base: `{hs.get('base_url') or '—'}`\n"
             f"🛠 tools ({len(tools or [])}): `{tools_s}`\n"
@@ -245,6 +256,7 @@ async def bobstats_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"📜 SOUL.md: {soul_ok}\n"
             f"🎂 age: *{age:.1f}*d\n"
             f"📁 HERMES_HOME: `{hs.get('hermes_home') or '—'}`\n\n"
+            f"*Model Health:*\n  last working: *{last_working}*\n{health_s}\n\n"
             f"*Providers:*\n" + "\n".join(prov_lines) + "\n\n"
             f"_legacy: seen={legacy['legacy_seen']}, replies={legacy['legacy_replies']}_"
         )
@@ -252,7 +264,7 @@ async def bobstats_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         msg = (
             "🤖 *Bob — real Hermes Agent (NousResearch)*\n\n"
             f"🧠 AIAgent import: {import_ok}\n"
-            f"📡 Primary model: *{hs.get('model') or '—'}*\n"
+            f"📡 Active model: *{hs.get('model') or '—'}*\n"
             f"🔄 Fallback: `{hs.get('fallback_model') or '—'}`\n"
             f"🔗 Base: `{hs.get('base_url') or '—'}`\n"
             f"🛠 Tools ({len(tools or [])}): `{tools_s}`\n"
@@ -263,6 +275,7 @@ async def bobstats_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"📜 SOUL.md: {soul_ok}\n"
             f"🎂 Age: *{age:.1f}*d\n"
             f"📁 HERMES_HOME: `{hs.get('hermes_home') or '—'}`\n\n"
+            f"*Model Health:*\n  last working: *{last_working}*\n{health_s}\n\n"
             f"*Providers:*\n" + "\n".join(prov_lines) + "\n\n"
             f"_legacy: seen={legacy['legacy_seen']}, replies={legacy['legacy_replies']}_"
         )
