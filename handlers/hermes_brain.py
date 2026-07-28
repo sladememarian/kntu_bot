@@ -454,21 +454,43 @@ def _needs_search(text: str) -> bool:
 
 
 def _do_fallback_search(query: str, max_results: int = 5) -> str:
-    """Run DuckDuckGo search and return formatted results."""
+    """Search via Gemini Google Search grounding (works from EU sandbox)."""
+    gemini_key = _env("GEMINI_API_KEY") or _env("GOOGLE_API_KEY")
+    if not gemini_key:
+        logger.warning("No Gemini key for fallback search")
+        return ""
     try:
-        from duckduckgo_search import DDGS
-        with DDGS() as ddgs:
-            results = list(ddgs.text(query, max_results=max_results))
-            if results:
-                lines = []
-                for r in results:
-                    title = r.get("title", "")
-                    body = r.get("body", "")
-                    href = r.get("href", "")
-                    lines.append(f"- {title}: {body}" + (f" ({href})" if href else ""))
-                return "\n".join(lines)
+        import urllib.request
+        import urllib.parse
+        import json as _json
+
+        model = _env("GEMINI_MODEL") or "gemini-2.0-flash"
+        url = (
+            f"https://generativelanguage.googleapis.com/v1beta/models/"
+            f"{model}:generateContent?key={gemini_key}"
+        )
+        payload = _json.dumps({
+            "contents": [{"parts": [{"text": f"Search the web and summarize the top {max_results} results for: {query}"}]}],
+            "tools": [{"google_search": {}}],
+        }).encode()
+        req = urllib.request.Request(
+            url, data=payload,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            data = _json.loads(resp.read())
+        # Extract text from response
+        parts = (
+            data.get("candidates", [{}])[0]
+            .get("content", {})
+            .get("parts", [])
+        )
+        text = " ".join(p.get("text", "") for p in parts if p.get("text"))
+        if text:
+            return text[:3000]
     except Exception as e:
-        logger.warning("Fallback DuckDuckGo search failed: %s", e)
+        logger.warning("Gemini search grounding failed: %s", e)
     return ""
 
 
