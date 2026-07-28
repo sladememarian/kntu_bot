@@ -206,83 +206,100 @@ async def bob_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(reply)
 
 
+def _md_escape(text: str) -> str:
+    """Escape underscores for Telegram Markdown V1 (inside bold/outside backtick)."""
+    return str(text).replace("_", "\\_")
+
+
 async def bobstats_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not update.message:
         return
     chat_id = update.effective_chat.id
     lang = "fa" if get_lang(chat_id) == "fa" else "en"
 
-    hs = hermes_stats()
-    legacy = _legacy_brain_snapshot()
-    providers = hs.get("providers") or []
-    prov_lines = [
-        f"• *{p['name']}* — `{', '.join(p['models'][:3])}` (keys:{p['keys']})"
-        + (f" ⚠️ {p['note']}" if p.get("note") else "")
-        for p in providers
-    ] or ["• _no providers configured_"]
+    try:
+        hs = hermes_stats()
+        legacy = _legacy_brain_snapshot()
+        providers = hs.get("providers") or []
+        prov_lines = [
+            f"• *{_md_escape(p['name'])}* — `{', '.join(p['models'][:3])}` (keys:{p['keys']})"
+            + (f" ⚠️ {p['note']}" if p.get("note") else "")
+            for p in providers
+        ] or ["• _no providers configured_"]
 
-    import_ok = "✅" if hs.get("hermes_import_ok") else "❌ NOT LOADED"
-    soul_ok = "✅" if hs.get("soul_loaded") else "⚠️ missing"
-    memory_ok = "✅ enabled" if hs.get("memory_enabled") else "❌ disabled"
-    age = hs.get("age_days", 0.0)
-    tools = hs.get("toolsets")
-    if tools and isinstance(tools[0], str) and tools[0].startswith("ALL"):
-        tools_s = tools[0]
-    else:
-        tools_s = ", ".join(tools[:8]) if tools else "default"
-        if tools and len(tools) > 8:
-            tools_s += f" +{len(tools)-8} more"
-    pool = hs.get("agent_pool_size", 0)
+        import_ok = "✅" if hs.get("hermes_import_ok") else "❌ NOT LOADED"
+        soul_ok = "✅" if hs.get("soul_loaded") else "⚠️ missing"
+        memory_ok = "✅ enabled" if hs.get("memory_enabled") else "❌ disabled"
+        age = hs.get("age_days", 0.0)
+        tools = hs.get("toolsets")
+        if tools and isinstance(tools[0], str) and tools[0].startswith("ALL"):
+            tools_s = tools[0]
+        else:
+            tools_s = ", ".join(tools[:8]) if tools else "default"
+            if tools and len(tools) > 8:
+                tools_s += f" +{len(tools)-8} more"
+        pool = hs.get("agent_pool_size", 0)
 
-    # Model health info
-    health = hs.get("model_health") or {}
-    last_working = hs.get("last_working_model", "—")
-    health_lines = []
-    for mname, mh in health.items():
-        status = "✅" if mh.get("healthy") else "❌ cooldown"
-        failures = mh.get("failures", 0)
-        health_lines.append(f"  `{mname}` {status} (fails:{failures})")
-    health_s = "\n".join(health_lines) if health_lines else "  _no data yet_"
+        # Model health info
+        health = hs.get("model_health") or {}
+        last_working = hs.get("last_working_model", "—")
+        health_lines = []
+        for mname, mh in health.items():
+            status = "✅" if mh.get("healthy") else "❌ cooldown"
+            failures = mh.get("failures", 0)
+            health_lines.append(f"  `{mname}` {status} (fails:{failures})")
+        health_s = "\n".join(health_lines) if health_lines else "  no data yet"
 
-    if lang == "fa":
-        msg = (
-            "🤖 *باب — موتور Hermes واقعی (NousResearch)*\n\n"
-            f"🧠 AIAgent import: {import_ok}\n"
-            f"📡 مدل فعال: *{hs.get('model') or '—'}*\n"
-            f"🔄 fallback: `{hs.get('fallback_model') or '—'}`\n"
-            f"🔗 base: `{hs.get('base_url') or '—'}`\n"
-            f"🛠 tools ({len(tools or [])}): `{tools_s}`\n"
-            f"🧠 حافظه: {memory_ok}\n"
-            f"💬 calls: *{hs.get('calls', 0)}* · errors: *{hs.get('errors', 0)}*\n"
-            f"🗂 sessions: *{hs.get('sessions', session_count())}*\n"
-            f"♻️ agent pool: *{pool}*\n"
-            f"📜 SOUL.md: {soul_ok}\n"
-            f"🎂 age: *{age:.1f}*d\n"
-            f"📁 HERMES_HOME: `{hs.get('hermes_home') or '—'}`\n\n"
-            f"*Model Health:*\n  last working: *{last_working}*\n{health_s}\n\n"
-            f"*Providers:*\n" + "\n".join(prov_lines) + "\n\n"
-            f"_legacy: seen={legacy['legacy_seen']}, replies={legacy['legacy_replies']}_"
-        )
-    else:
-        msg = (
-            "🤖 *Bob — real Hermes Agent (NousResearch)*\n\n"
-            f"🧠 AIAgent import: {import_ok}\n"
-            f"📡 Active model: *{hs.get('model') or '—'}*\n"
-            f"🔄 Fallback: `{hs.get('fallback_model') or '—'}`\n"
-            f"🔗 Base: `{hs.get('base_url') or '—'}`\n"
-            f"🛠 Tools ({len(tools or [])}): `{tools_s}`\n"
-            f"🧠 Memory: {memory_ok}\n"
-            f"💬 Calls: *{hs.get('calls', 0)}* · Errors: *{hs.get('errors', 0)}*\n"
-            f"🗂 Sessions: *{hs.get('sessions', session_count())}*\n"
-            f"♻️ Agent pool: *{pool}*\n"
-            f"📜 SOUL.md: {soul_ok}\n"
-            f"🎂 Age: *{age:.1f}*d\n"
-            f"📁 HERMES_HOME: `{hs.get('hermes_home') or '—'}`\n\n"
-            f"*Model Health:*\n  last working: *{last_working}*\n{health_s}\n\n"
-            f"*Providers:*\n" + "\n".join(prov_lines) + "\n\n"
-            f"_legacy: seen={legacy['legacy_seen']}, replies={legacy['legacy_replies']}_"
-        )
-    await update.message.reply_text(msg, parse_mode="Markdown")
+        if lang == "fa":
+            msg = (
+                "🤖 *باب — موتور Hermes واقعی (NousResearch)*\n\n"
+                f"🧠 AIAgent import: {import_ok}\n"
+                f"📡 مدل فعال: `{hs.get('model') or '—'}`\n"
+                f"🔄 fallback: `{hs.get('fallback_model') or '—'}`\n"
+                f"🔗 base: `{hs.get('base_url') or '—'}`\n"
+                f"🛠 tools ({len(tools or [])}): `{tools_s}`\n"
+                f"🧠 حافظه: {memory_ok}\n"
+                f"💬 calls: *{hs.get('calls', 0)}* · errors: *{hs.get('errors', 0)}*\n"
+                f"🗂 sessions: *{hs.get('sessions', session_count())}*\n"
+                f"♻️ agent pool: *{pool}*\n"
+                f"📜 SOUL.md: {soul_ok}\n"
+                f"🎂 age: *{age:.1f}*d\n"
+                f"📁 HERMES\\_HOME: `{hs.get('hermes_home') or '—'}`\n\n"
+                f"*Model Health:*\n  last working: `{last_working}`\n{health_s}\n\n"
+                f"*Providers:*\n" + "\n".join(prov_lines) + "\n\n"
+                f"legacy: seen={legacy['legacy_seen']}, replies={legacy['legacy_replies']}"
+            )
+        else:
+            msg = (
+                "🤖 *Bob — real Hermes Agent (NousResearch)*\n\n"
+                f"🧠 AIAgent import: {import_ok}\n"
+                f"📡 Active model: `{hs.get('model') or '—'}`\n"
+                f"🔄 Fallback: `{hs.get('fallback_model') or '—'}`\n"
+                f"🔗 Base: `{hs.get('base_url') or '—'}`\n"
+                f"🛠 Tools ({len(tools or [])}): `{tools_s}`\n"
+                f"🧠 Memory: {memory_ok}\n"
+                f"💬 Calls: *{hs.get('calls', 0)}* · Errors: *{hs.get('errors', 0)}*\n"
+                f"🗂 Sessions: *{hs.get('sessions', session_count())}*\n"
+                f"♻️ Agent pool: *{pool}*\n"
+                f"📜 SOUL.md: {soul_ok}\n"
+                f"🎂 Age: *{age:.1f}*d\n"
+                f"📁 HERMES\\_HOME: `{hs.get('hermes_home') or '—'}`\n\n"
+                f"*Model Health:*\n  last working: `{last_working}`\n{health_s}\n\n"
+                f"*Providers:*\n" + "\n".join(prov_lines) + "\n\n"
+                f"legacy: seen={legacy['legacy_seen']}, replies={legacy['legacy_replies']}"
+            )
+        try:
+            await update.message.reply_text(msg, parse_mode="Markdown")
+        except Exception:
+            plain = msg.replace("*", "").replace("`", "").replace("_", "").replace("\\", "")
+            try:
+                await update.message.reply_text(plain)
+            except Exception as e2:
+                logger.error("bobstats reply failed: %s", e2)
+                await update.message.reply_text(f"❌ bobstats error: {e2}")
+    except Exception as e:
+        logger.exception("bobstats build failed")
+        await update.message.reply_text(f"❌ bobstats error: {e}")
 
 
 async def bob_listen(update: Update, context: ContextTypes.DEFAULT_TYPE):

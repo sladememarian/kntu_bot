@@ -14,6 +14,7 @@ import hashlib
 import json
 import logging
 import os
+import re
 import threading
 import time
 from pathlib import Path
@@ -408,6 +409,44 @@ def _make_agent(system: str, session_key: str = ""):
 
 
 # ---------------------------------------------------------------------------
+# Fallback web search (when Hermes tools can't invoke web_search)
+# ---------------------------------------------------------------------------
+_SEARCH_PATTERNS = re.compile(
+    r"(search|جستجو|سرچ|بگرد|پیدا کن|look up|find out|what is|who is|latest|news|"
+    r"چیه|کیه|آخرین|اخبار|google|گوگل|bing|بینگ)",
+    re.IGNORECASE,
+)
+
+
+def _needs_search(text: str) -> bool:
+    """Heuristic: does the user's message look like it wants web info?"""
+    if len(text) < 3:
+        return False
+    if text.startswith("/"):
+        return False
+    return bool(_SEARCH_PATTERNS.search(text))
+
+
+def _do_fallback_search(query: str, max_results: int = 5) -> str:
+    """Run DuckDuckGo search and return formatted results."""
+    try:
+        from duckduckgo_search import DDGS
+        with DDGS() as ddgs:
+            results = list(ddgs.text(query, max_results=max_results))
+            if results:
+                lines = []
+                for r in results:
+                    title = r.get("title", "")
+                    body = r.get("body", "")
+                    href = r.get("href", "")
+                    lines.append(f"- {title}: {body}" + (f" ({href})" if href else ""))
+                return "\n".join(lines)
+    except Exception as e:
+        logger.warning("Fallback DuckDuckGo search failed: %s", e)
+    return ""
+
+
+# ---------------------------------------------------------------------------
 # Main chat function
 # ---------------------------------------------------------------------------
 
@@ -430,6 +469,19 @@ def chat(
     if user_name:
         system += f"\n\nYou are talking to: {user_name}."
 
+    # Fallback web search: if user seems to want search, inject results as context
+    search_context = ""
+    if _needs_search(user_text):
+        search_context = _do_fallback_search(user_text)
+        if search_context:
+            system += (
+                "\n\n--- Web Search Results ---\n"
+                "The following web search results were found for the user's query. "
+                "Use them to give an accurate, up-to-date answer:\n\n"
+                f"{search_context}\n"
+                "--- End Search Results ---"
+            )
+
     session_key = f"bob_{chat_id}_{user_id}"
 
     history = load_history(chat_id, user_id)
@@ -439,6 +491,7 @@ def chat(
         "model": model,
         "engine": "hermes_native",
         "error": "",
+        "web_search": bool(search_context),
     }
 
     if not hermes_available():
