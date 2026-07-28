@@ -216,49 +216,55 @@ async def bobstats_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     legacy = _legacy_brain_snapshot()
     providers = hs.get("providers") or []
     prov_lines = [
-        f"• *{p['name']}* — `{', '.join(p['models'][:4])}` (keys:{p['keys']})"
+        f"• *{p['name']}* — `{', '.join(p['models'][:3])}` (keys:{p['keys']})"
         for p in providers
-    ] or ["• _no providers — set OPENCODE_API_KEYS_"]
+    ] or ["• _no providers configured_"]
 
     import_ok = "✅" if hs.get("hermes_import_ok") else "❌ NOT LOADED"
     soul_ok = "✅" if hs.get("soul_loaded") else "⚠️ missing"
+    memory_ok = "✅ enabled" if hs.get("memory_enabled") else "❌ disabled"
     age = hs.get("age_days", 0.0)
     tools = hs.get("toolsets")
-    tools_s = "none" if tools == [] else (",".join(tools or []) or "default")
+    tools_s = ", ".join(tools[:8]) if tools else "default"
+    if tools and len(tools) > 8:
+        tools_s += f" +{len(tools)-8} more"
+    pool = hs.get("agent_pool_size", 0)
 
     if lang == "fa":
         msg = (
             "🤖 *باب — موتور Hermes واقعی (NousResearch)*\n\n"
             f"🧠 AIAgent import: {import_ok}\n"
-            f"📡 آخرین موتور: *{hs.get('provider_last') or '—'}*\n"
-            f"🧩 مدل: `{hs.get('model_last') or hs.get('model') or '—'}`\n"
+            f"📡 مدل اصلی: *{hs.get('model') or '—'}*\n"
+            f"🔄 fallback: `{hs.get('fallback_model') or '—'}`\n"
             f"🔗 base: `{hs.get('base_url') or '—'}`\n"
-            f"🛠 tools: `{tools_s}`\n"
+            f"🛠 tools ({len(tools or [])}): `{tools_s}`\n"
+            f"🧠 حافظه: {memory_ok}\n"
             f"💬 calls: *{hs.get('calls', 0)}* · errors: *{hs.get('errors', 0)}*\n"
             f"🗂 sessions: *{hs.get('sessions', session_count())}*\n"
+            f"♻️ agent pool: *{pool}*\n"
             f"📜 SOUL.md: {soul_ok}\n"
             f"🎂 age: *{age:.1f}*d\n"
-            f"📁 HERMES_HOME: `{hs.get('hermes_home') or '—'}`\n"
-            f"📦 HERMES_AGENT_DIR: `{hs.get('hermes_agent_dir') or '—'}`\n\n"
+            f"📁 HERMES_HOME: `{hs.get('hermes_home') or '—'}`\n\n"
             f"*Providers:*\n" + "\n".join(prov_lines) + "\n\n"
-            f"_legacy archive: seen={legacy['legacy_seen']}, replies={legacy['legacy_replies']}_"
+            f"_legacy: seen={legacy['legacy_seen']}, replies={legacy['legacy_replies']}_"
         )
     else:
         msg = (
             "🤖 *Bob — real Hermes Agent (NousResearch)*\n\n"
             f"🧠 AIAgent import: {import_ok}\n"
-            f"📡 Last engine: *{hs.get('provider_last') or '—'}*\n"
-            f"🧩 Model: `{hs.get('model_last') or hs.get('model') or '—'}`\n"
-            f"🔗 base: `{hs.get('base_url') or '—'}`\n"
-            f"🛠 tools: `{tools_s}`\n"
-            f"💬 calls: *{hs.get('calls', 0)}* · errors: *{hs.get('errors', 0)}*\n"
-            f"🗂 sessions: *{hs.get('sessions', session_count())}*\n"
+            f"📡 Primary model: *{hs.get('model') or '—'}*\n"
+            f"🔄 Fallback: `{hs.get('fallback_model') or '—'}`\n"
+            f"🔗 Base: `{hs.get('base_url') or '—'}`\n"
+            f"🛠 Tools ({len(tools or [])}): `{tools_s}`\n"
+            f"🧠 Memory: {memory_ok}\n"
+            f"💬 Calls: *{hs.get('calls', 0)}* · Errors: *{hs.get('errors', 0)}*\n"
+            f"🗂 Sessions: *{hs.get('sessions', session_count())}*\n"
+            f"♻️ Agent pool: *{pool}*\n"
             f"📜 SOUL.md: {soul_ok}\n"
-            f"🎂 age: *{age:.1f}*d\n"
-            f"📁 HERMES_HOME: `{hs.get('hermes_home') or '—'}`\n"
-            f"📦 HERMES_AGENT_DIR: `{hs.get('hermes_agent_dir') or '—'}`\n\n"
+            f"🎂 Age: *{age:.1f}*d\n"
+            f"📁 HERMES_HOME: `{hs.get('hermes_home') or '—'}`\n\n"
             f"*Providers:*\n" + "\n".join(prov_lines) + "\n\n"
-            f"_legacy archive: seen={legacy['legacy_seen']}, replies={legacy['legacy_replies']}_"
+            f"_legacy: seen={legacy['legacy_seen']}, replies={legacy['legacy_replies']}_"
         )
     await update.message.reply_text(msg, parse_mode="Markdown")
 
