@@ -411,11 +411,34 @@ def _make_agent(system: str, session_key: str = ""):
 # ---------------------------------------------------------------------------
 # Fallback web search (when Hermes tools can't invoke web_search)
 # ---------------------------------------------------------------------------
+# Broad pattern: triggers on questions, research requests, factual queries, etc.
 _SEARCH_PATTERNS = re.compile(
-    r"(search|جستجو|سرچ|بگرد|پیدا کن|look up|find out|what is|who is|latest|news|"
-    r"چیه|کیه|آخرین|اخبار|google|گوگل|bing|بینگ)",
+    r"("
+    # English triggers
+    r"search|look up|find out|find me|what is|what are|who is|who are|"
+    r"how to|how do|how does|how much|how many|when did|when is|when was|"
+    r"where is|where are|where can|why is|why do|why does|"
+    r"latest|newest|trending|top \d|best \d|popular|"
+    r"news|article|research|explain|tell me about|"
+    r"github|reddit|stackoverflow|wikipedia|youtube|"
+    r"price of|weather|score|result|update|release|"
+    r"compare|difference between|vs\.?|versus|"
+    # Persian (Farsi) triggers
+    r"جستجو|سرچ|بگرد|پیدا کن|پیداکن|"
+    r"تحقیق|بررسی|چک کن|ببین|نگاه کن|"
+    r"چیه|چیست|کیه|کیست|چطور|چگونه|چرا|کجا|کِی|"
+    r"آخرین|جدیدترین|بهترین|محبوب|ترند|"
+    r"اخبار|خبر|مقاله|توضیح بده|بگو|"
+    r"گیتهاب|ویکی|یوتیوب|"
+    r"قیمت|آب و هوا|نتیجه|آپدیت|"
+    r"پروژه|ستاره|stars|star|"
+    r"مقایسه|فرق|تفاوت"
+    r")",
     re.IGNORECASE,
 )
+
+# Questions (marked by ?) almost always benefit from web search
+_QUESTION_MARK = re.compile(r"[?؟]")
 
 
 def _needs_search(text: str) -> bool:
@@ -424,6 +447,9 @@ def _needs_search(text: str) -> bool:
         return False
     if text.startswith("/"):
         return False
+    # Any question mark = likely wants info
+    if _QUESTION_MARK.search(text):
+        return True
     return bool(_SEARCH_PATTERNS.search(text))
 
 
@@ -476,10 +502,17 @@ def chat(
         if search_context:
             system += (
                 "\n\n--- Web Search Results ---\n"
-                "The following web search results were found for the user's query. "
-                "Use them to give an accurate, up-to-date answer:\n\n"
+                "You DO have web search capability. The following real-time web results "
+                "were found for the user's query. Use them to give an accurate, up-to-date "
+                "answer. NEVER say you can't search — you already did and here are the results:\n\n"
                 f"{search_context}\n"
                 "--- End Search Results ---"
+            )
+        else:
+            system += (
+                "\n\nNote: A web search was attempted but returned no results. "
+                "Answer as best you can from your knowledge. Do NOT say you can't search — "
+                "the search ran but found nothing relevant."
             )
 
     session_key = f"bob_{chat_id}_{user_id}"
