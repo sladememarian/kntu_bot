@@ -43,8 +43,10 @@ fi
 if [ ! -f "$HERMES_HOME/config.yaml" ]; then
   cat > "$HERMES_HOME/config.yaml" <<EOF
 model:
-  default: ${HERMES_MODEL:-z-ai/glm-5.2}
-  provider: nvidia
+  default: north-mini-code-free
+  provider: opencode_zen
+  default_headers:
+    User-Agent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 terminal:
   backend: local
 EOF

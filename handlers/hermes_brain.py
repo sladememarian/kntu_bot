@@ -345,7 +345,8 @@ def _disabled_toolsets() -> list[str] | None:
     todo, clarify, delegate_task, text_to_speech, tool_search, etc.) are
     automatically available when this list is used as disabled_toolsets.
 
-    Note: cronjob and kanban do NOT exist in hermes-agent v0.19.0.
+    Note: cronjob and kanban exist but require HERMES_INTERACTIVE=true and
+    HERMES_KANBAN_TASK=true env vars to pass their check_fn guards.
     """
     return ["terminal", "execute_code", "write_file", "process", "patch"]
 
