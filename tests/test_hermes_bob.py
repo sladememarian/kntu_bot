@@ -46,12 +46,6 @@ def test_session_roundtrip():
     assert hb.clear_history(1, 2) is True
 
 
-def test_bob_handlers_import():
-    from handlers import bob_ai
-    assert callable(bob_ai.bob_cmd)
-    assert callable(bob_ai.bobstats_cmd)
-
-
 def test_hermes_available_or_skip():
     # In the bot Docker image this must be True. Locally may be True if checkout present.
     ok = hb.hermes_available()

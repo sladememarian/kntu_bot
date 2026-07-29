@@ -157,12 +157,8 @@ _HELP_CATEGORIES = {
             "title": "🧠 هوش مصنوعی",
             "text": (
                 "🧠 *هوش مصنوعی*\n\n"
-                "🤖 /bob \\[متن\\] — باب! پسر مارکوف و اوفلیا\n"
-                "📊 /bobstats — مغز هرمس و پروایدرها\n"
-                "🧠 /bob reset — پاک کردن حافظهٔ گفتگو\n\n"
-                "💡 _باب با مغز هرمس‌استایل جواب می‌ده،_\n"
-                "_جواب‌هاش رو می‌سنجه و حس داره!_\n"
-                "_روزی ۲-۳ بار هم خودش حرف می‌زنه_ 😄"
+                "🤖 /bob — ربات همکار\n"
+                "📊 /bobstats — آمار\n\n"
             ),
         },
         "tools": {
@@ -328,12 +324,8 @@ _HELP_CATEGORIES = {
             "title": "🧠 AI",
             "text": (
                 "🧠 *Artificial Intelligence*\n\n"
-                "🤖 /bob \\[text\\] — Bob! son of Markov & Ophelia\n"
-                "📊 /bobstats — Hermes brain & providers\n"
-                "🧠 /bob reset — clear chat memory\n\n"
-                "💡 _Bob runs a Hermes-style brain,_\n"
-                "_judges his own replies, and has moods!_\n"
-                "_He also speaks up on his own 2-3x a day_ 😄"
+                "🤖 /bob — coworker bot\n"
+                "📊 /bobstats — stats\n\n"
             ),
         },
         "tools": {
